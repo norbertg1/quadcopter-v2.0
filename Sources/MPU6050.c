@@ -199,22 +199,6 @@ void MPU6050_Setup()
 	//printf("\nMPU6050 Setup Complete");
 }
 
-//Gets raw accelerometer data, performs no processing
-void Get_Accel_Values()
-{
-	char temp[2];
-	temp[0]=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_XOUT_H);
-	temp[1]=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_XOUT_L);
-	ACCEL_XOUT = (((temp[0]<<8) & 0xFF00)| (temp[1] & 0x00FF))-(float)Gx_offset*8192;//-ACCEL_XOUT_OFFSET;
-
-	temp[0]=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_YOUT_H);
-	temp[1]=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_YOUT_L);
-	ACCEL_YOUT = (((temp[0]<<8) & 0xFF00)| (temp[1] & 0x00FF))-(float)Gy_offset*8192;//+ACCEL_YOUT_OFFSET;
-
-	temp[0]=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_ZOUT_H);
-	temp[1]=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_ZOUT_L);
-	ACCEL_ZOUT = (((temp[0]<<8) & 0xFF00)| (temp[1] & 0x00FF))-(float)Gz_offset*8192;//-ACCEL_ZOUT_OFFSET;	
-}
 void Calibrate_Accel()
 {/*
 	int16_t ACCEL_XOUT_OFFSET_SUM = 0;
@@ -286,6 +270,23 @@ void Calibrate_Accel()
 	Gz_offset=1+Gz_sum/100;	*/
 }
 
+//Gets raw accelerometer data, performs no processing
+void Get_Accel_Values()
+{
+	char temp[2];
+	temp[0]=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_XOUT_H);
+	temp[1]=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_XOUT_L);
+	ACCEL_XOUT = (((temp[0]<<8) & 0xFF00)| (temp[1] & 0x00FF))-(float)Gx_offset*8192;//-ACCEL_XOUT_OFFSET;
+
+	temp[0]=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_YOUT_H);
+	temp[1]=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_YOUT_L);
+	ACCEL_YOUT = (((temp[0]<<8) & 0xFF00)| (temp[1] & 0x00FF))-(float)Gy_offset*8192;//+ACCEL_YOUT_OFFSET;
+
+	temp[0]=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_ZOUT_H);
+	temp[1]=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_ZOUT_L);
+	ACCEL_ZOUT = (((temp[0]<<8) & 0xFF00)| (temp[1] & 0x00FF))-(float)Gz_offset*8192;//-ACCEL_ZOUT_OFFSET;	
+}
+//Convert Acceleration values to G, 1 G = 9.81 m*s^-2
 void Convert_Accel()
 {
 	ACCEL_Gx = (float)ACCEL_XOUT/8192;
@@ -293,6 +294,7 @@ void Convert_Accel()
 	ACCEL_Gz = (float)ACCEL_ZOUT/8192;
 	ACCEL = pow(pow(ACCEL_Gx,2)+pow(ACCEL_Gy,2)+pow(ACCEL_Gz,2),0.5);
 }
+
 void Calibrate_Gyros()
 {
 	int32_t GYRO_XOUT_OFFSET_SUM = 0;
@@ -350,7 +352,6 @@ void Get_Gyro_Rates()
 	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_GYRO_ZOUT_H, &temp[4], 1);
 	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_GYRO_ZOUT_L, &temp[5], 1);
 	
-	GYRO_XOUT = ((temp[0]<<8)|temp[1]);
 	GYRO_XOUT = ((temp[0]<<8)|temp[1]) + GYRO_XOUT_OFFSET;
 	GYRO_YOUT = ((temp[2]<<8)|temp[3]) + GYRO_YOUT_OFFSET;
 	GYRO_ZOUT = ((temp[4]<<8)|temp[5]) + GYRO_ZOUT_OFFSET;
@@ -365,11 +366,44 @@ void Get_Gyro_Rates()
 	GYRO_ZANGLE += (float)GYRO_ZRATE*dt;
 }
 
+void RAW_convert(char *MPU_6050_buffer){
+	ACCEL_XOUT = (((MPU_6050_buffer[0]<<8) & 0xFF00)| (MPU_6050_buffer[1] & 0x00FF))-(float)Gx_offset*8192;
+	ACCEL_YOUT = (((MPU_6050_buffer[2]<<8) & 0xFF00)| (MPU_6050_buffer[3] & 0x00FF))-(float)Gy_offset*8192;
+	ACCEL_ZOUT = (((MPU_6050_buffer[4]<<8) & 0xFF00)| (MPU_6050_buffer[5] & 0x00FF))-(float)Gz_offset*8192;
+	
+	TEMP = (((((signed short)MPU_6050_buffer[6]<<8) & 0xFF00) | ((signed short)MPU_6050_buffer[7] & 0x00FF)));
+	TEMP = (TEMP/340)+36.53;	//see datasheet
+	
+	GYRO_XOUT = ((MPU_6050_buffer[8]<<8)|MPU_6050_buffer[9]) + GYRO_XOUT_OFFSET;
+	GYRO_YOUT = ((MPU_6050_buffer[10]<<8)|MPU_6050_buffer[11]) + GYRO_YOUT_OFFSET;
+	GYRO_ZOUT = ((MPU_6050_buffer[12]<<8)|MPU_6050_buffer[13]) + GYRO_ZOUT_OFFSET;
+	
+	GYRO_XRATE = (float)GYRO_XOUT/gyro_xsensitivity;
+	GYRO_YRATE = (float)GYRO_YOUT/gyro_ysensitivity;
+	GYRO_ZRATE = (float)GYRO_ZOUT/gyro_zsensitivity;
+}
+
+void DMAread_MPU6050(){
+	char MPU_6050_buffer[14];
+	
+	DMA_I2CReadMultiRegisters(MPU6050_ADDRESS,MPU6050_RA_ACCEL_XOUT_H,&MPU_6050_buffer[0],14);
+	RAW_convert(&MPU_6050_buffer[0]);	
+}
+void read_MPU6050(){
+	char MPU_6050_buffer[14];
+	
+	I2CReadMultiRegisters(MPU6050_ADDRESS,MPU6050_RA_ACCEL_XOUT_H,&MPU_6050_buffer[0],14);
+	RAW_convert(&MPU_6050_buffer[0]);	
+}
 //Converts the already acquired accelerometer data into 3D euler angles
-void Get_Accel_Angles()
+void Get_Angles()
 {
 	ACCEL_XANGLE = (57.295*atan((float)-ACCEL_YOUT/ sqrt(pow((float)ACCEL_ZOUT,2)+pow((float)ACCEL_XOUT,2))))-XANGLE_OFFSET;
-	ACCEL_YANGLE = (57.295*atan((float)ACCEL_XOUT/ sqrt(pow((float)ACCEL_ZOUT,2)+pow((float)ACCEL_YOUT,2))))-YANGLE_OFFSET;	
+	ACCEL_YANGLE = (57.295*atan((float)ACCEL_XOUT/ sqrt(pow((float)ACCEL_ZOUT,2)+pow((float)ACCEL_YOUT,2))))-YANGLE_OFFSET;
+	
+	GYRO_XANGLE += (float)GYRO_XRATE*dt;
+	GYRO_YANGLE += (float)GYRO_YRATE*dt;
+	GYRO_ZANGLE += (float)GYRO_ZRATE*dt;
 }
 
 //Runs a complementary filter configured via float a

@@ -1,84 +1,88 @@
 /*
  * dma.c
  *
- *  Created on: Jun 21, 2014
- *      Author: B21665
+ *  Created on: Dec 5, 2015
+ *      Author: Norbi
  */
 #include "init.h"
 
+char uart_data;
+long adc_data[15];
 
-/** DMA Initialization **********************************************/
-void dma_init(void)
-{ 
-	int j;
+//****************************************************************************
+//**** DMA Receiver Routine ****************************************** ******
+//***************************************************************************
 
-	//enable DMA clocks
-	SIM_SCGC6 |= SIM_SCGC6_DMAMUX_MASK; 
+void DMA_Init(DMA_MemMapPtr DMA_Channel, uint8_t dma_source, int index,
+		uint32_t source_addr, uint32_t dest_addr, uint32_t num_bytes,uint32_t bytes_per_xfer)
+{
+	/* num_bytes is total bytes */
+	/* setup depends on how many bytes per transfer */
+
+	SIM_SCGC6 |= SIM_SCGC6_DMAMUX_MASK;
 	SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
 
-	// Clear Destination memory  
-	for( j=0; j < BUFF_SIZE; j=j+4)
-		*((uint32_t *)(DESTINATION_ADDRESS+j)) = 0xAA;
+	uint32_t ssize_dsize_attr;
 
-	// Config DMA Mux for UART0 operation
-	// Disable DMA Mux channel first
-	DMAMUX0_CHCFG0 = 0x00;
+	/* setup ssize and dsize parameter for TCD ATTR register based on transfer size assigned above */
+	/* 0:32bit; 1:8-bit, 2:16-bit  */
+	switch (bytes_per_xfer) {
+	case 8:
+	default:
+		ssize_dsize_attr = 1;
+		break; /* 8-bit */
+	case 16:
+		ssize_dsize_attr = 2;
+		break; /* 16-bit */
+	case 32:
+		ssize_dsize_attr = 0;
+		break; /* 32-bit */
 
-	// Clear pending errors and/or the done bit 
-	if (((DMA_DSR_BCR0 & DMA_DSR_BCR_DONE_MASK) == DMA_DSR_BCR_DONE_MASK)
-			| ((DMA_DSR_BCR0 & DMA_DSR_BCR_BES_MASK) == DMA_DSR_BCR_BES_MASK)
-			| ((DMA_DSR_BCR0 & DMA_DSR_BCR_BED_MASK) == DMA_DSR_BCR_BED_MASK)
-			| ((DMA_DSR_BCR0 & DMA_DSR_BCR_CE_MASK) == DMA_DSR_BCR_CE_MASK))
-		DMA_DSR_BCR0 |= DMA_DSR_BCR_DONE_MASK;
-
-	// Set Source Address (this is the UART0_D register
-	DMA_SAR0 = (uint32_t)&UART0_D;
-
-	// Set BCR to know how many bytes to transfer
-	DMA_DSR_BCR0 = DMA_DSR_BCR_BCR(4);
-
-	// Clear Source size and Destination size fields.  
-	DMA_DCR0 &= ~(DMA_DCR_SSIZE_MASK 
-			| DMA_DCR_DSIZE_MASK
-	);
-
-	// Set DMA 
-	DMA_DCR0 |= (DMA_DCR_EINT_MASK		// Int. enable... used if FREEDOM macro is set
-			| DMA_DCR_ERQ_MASK			//Enable Peripheral request
-			| DMA_DCR_CS_MASK			//Single read/write per request
-			| DMA_DCR_EADREQ_MASK		//Enable Async. DMA Requests
-			| DMA_DCR_SSIZE(1)			//Source size is 8-bit
-			| DMA_DCR_DINC_MASK			//Destination address increments
-			| DMA_DCR_DSIZE(1)			//Destination size is 8-bit
-			| DMA_DCR_DMOD(2)			//32-bytes circular buffer enabled
-			| DMA_DCR_D_REQ_MASK		//DMA request is cleared
-	);
-
-	// Set destination address
-	DMA_DAR0 = DESTINATION_ADDRESS;
-
-	// Enables the DMA channel and select the DMA Channel Source  
-	DMAMUX0_CHCFG0 |= DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(2); 
-	//Enable channel 0, Request source = UART 0 Receive
-}
-
-/*
-/	Handles interrupt request of DMA channel 0 at the end of the data transfer
-*/
-void DMA0_IRQHandler(void)
-{
-	int j;
-	int k;
-	uint32_t word;
-	DMA_DSR_BCR0 |= DMA_DSR_BCR_DONE_MASK; // Clear interrupt
-//	put("Successful DMA transfer of 4 bytes from UART0_D to DESTINATION_ADDRESS 0x20001000 \n\r");
-//	put("The following characters were successfully transferred \n\r");
-	for(j = DESTINATION_ADDRESS; j < DESTINATION_END; j += 4 ){
-		word = (*((uint32_t *)j));
-		for(k = 0; k < 4; k += 1){
-//			out_char(word);
-			word = word >> 8;
-		}
 	}
-	//put("\n\r DMA request disabled \n\r");
+
+	DMA_SAR_REG(DMA_Channel, index)= source_addr;              // Source address 
+	DMA_DCR_REG(DMA_Channel, index)|= 0x0000; // Source address increments 0 bytes (uint32)
+	DMA_DAR_REG(DMA_Channel, index)|= dest_addr;           // Destination address 
+	DMA_DCR_REG(DMA_Channel, index)|= ssize_dsize_attr << DMA_DCR_DINC_SHIFT; // Destination offset increments 
+	DMA_DCR_REG(DMA_Channel, index)|= DMA_DCR_ERQ_MASK|DMA_DCR_CS_MASK;
+	I2C1_C1 |= I2C_C1_DMAEN_MASK|I2C_C1_IICIE_MASK;
+	//DMA_DLAST_SGA_REG(DMA_Channel, index) = -num_bytes; // Destination address shift, go to back to beginning of buffer
+	DMA_DSR_BCR_REG(DMA_Channel, index)= num_bytes; //Stop the transfer when all bytes is transfered
+	//DMA_BITER_ELINKNO_REG(DMA_Channel, index)  = citer_biter;                                        // Major loop iterations
+	//DMA_CITER_ELINKNO_REG(DMA_Channel, index)  = citer_biter;                                        // Set current interation count  
+	DMA_DCR_REG(DMA_Channel, index)|= ((ssize_dsize_attr<<DMA_DCR_DSIZE_SHIFT)|(ssize_dsize_attr<<DMA_DCR_SSIZE_SHIFT)); // Source a destination size 0:32bit; 1:8-bit, 2:16-bit
+	//DMA_CSR_REG(DMA_Channel, index)            = DMA_CSR_INTMAJOR_MASK | DMA_CSR_DREQ_MASK;          // Enable end of loop DMA interrupt, disable request at end of major iteration              
+
+	DMAMUX_CHCFG_REG(DMAMUX0_BASE_PTR,index)= (DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(dma_source)); // DMA source DMA Mux to tie source to DMA channel
+
 }
+
+void DMA_UART_init(DMA_MemMapPtr DMA_Channel, uint8_t dma_source, int index,
+		uint32_t source_addr, uint32_t dest_addr, uint32_t num_bytes,uint32_t bytes_per_xfer) {
+	
+	DMA_Init(DMA_Channel, dma_source, index,source_addr,dest_addr, num_bytes,bytes_per_xfer );
+	UART0_C5 |= UART0_C5_RDMAE_MASK;	//Enable UART0 to generate DMA request
+		}
+void DMA_ADC_init(DMA_MemMapPtr DMA_Channel, uint8_t dma_source, int index,
+		uint32_t source_addr, uint32_t dest_addr, uint32_t num_bytes,uint32_t bytes_per_xfer) {
+	
+	DMA_Init(DMA_Channel, dma_source, index,source_addr,dest_addr, num_bytes,bytes_per_xfer );
+	UART0_C5 |= UART0_C5_RDMAE_MASK;	//Enable UART0 to generate DMA request
+		}
+/*void init_DMA() {
+	DMA_RX_Init(DMA_BASE_PTR, I2C1_SOURCE, CHANNEL_0,
+			(uint32_t) (&(I2C1_D )),(uint32_t)(&(MPU_6050_buffer[0])), 12,8 ); //DMA SLAVE
+
+		}*/ //2015.12.10
+void DMA_starttransfer(DMA_MemMapPtr DMA_Channel, uint8_t index, uint32_t num_bytes)
+{
+	DMA_DSR_REG(DMA_Channel, index) = 0;
+	//DMA_DSR_BCR0 |= DMA_DSR_BCR_DONE_MASK;
+	DMA_DAR0 = (uint32_t)(&MPU_6050_buffer[0]);
+	DMA_DSR_BCR0|= num_bytes;
+	DMA_DSR_BCR0|= num_bytes;
+	//DMA_DSR_BCR0 |= DMA_DSR_BCR_DONE_MASK;
+	DMA_DCR_REG(DMA_Channel, index)|= DMA_DCR_START_MASK;
+}
+
+

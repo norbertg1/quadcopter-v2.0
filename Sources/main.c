@@ -16,7 +16,7 @@ void Zero_Sensors()
 	for(x=0; x<100; x++)
 	{
 		Get_Accel_Values();
-		Get_Accel_Angles();
+		Get_Angles();
 		BUFFER_XANGLE += ACCEL_XANGLE;
 		BUFFER_YANGLE += ACCEL_YANGLE;
 		Delay_mS(1);
@@ -150,7 +150,7 @@ int main(void)
 //	a=0.9994;
 	dt=0.0025;
 	
-//	ADC0_SC1A = (23 | 0b1000000);		//start ADC conversion	2015.11.23
+	ADC0_SC1A = (8 | 0b1000000);		//start ADC conversion
 	enable_PID_interrupts
 	enable_SDcard_interrupts
 	uint16_t p=0,t=0;

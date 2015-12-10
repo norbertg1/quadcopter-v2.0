@@ -74,10 +74,12 @@ void PID_Interrupt(void)
 	tt[0]=t-ticker;
 	t=ticker;
 	No++;
-//	Get_Temp();	//300
-	Get_Gyro_Rates();	//897
-	Get_Accel_Values();	//681
-	Get_Accel_Angles();	//882
+
+	//DMAread_MPU6050();
+	read_MPU6050();
+	tt[1]=t-ticker;
+	t=ticker;
+	Get_Angles();	//882
 	second_order_complementary_filter();
 //	complementary_filter();	//68
 //	Convert_Accel();
@@ -145,7 +147,7 @@ void PID_Interrupt(void)
 		uart_putchar(UART1_BASE_PTR,'\n');
 	}
 #endif
-	//enable_irq(INT_ADC0 - 16); adc_flag=0;	2015.12.01
+	enable_irq(INT_ADC0 - 16); adc_flag=0;
 	clear_PID_interrupt
 	tt[6]=t-ticker;
 	t=ticker;
@@ -207,7 +209,7 @@ void bluetooth_getchar()
 	if(c=='b')				{Alt_Kd-=0.5;			dataout=(char)Alt_Kd;}
 	if(c=='n')				{Alt_Ki+=0.5;			dataout=(char)Alt_Ki;}
 	if(c=='m')				{Alt_Ki-=0.5;			dataout=(char)Alt_Ki;}
-	uart_putchar(UART1_BASE_PTR,dataout);
+	uart_putchar(UART0_BASE_PTR,dataout);
 #endif
 	if(setpoint_x>15) setpoint_x=15;
 	if(setpoint_x<-15) setpoint_x=-15;
@@ -217,7 +219,7 @@ void bluetooth_getchar()
 #if !PID_tuning
 	uart_putchar(UART1_BASE_PTR,(char)(10*BATT_VOLT));
 #endif
-	enable_irq(INT_PORTA - 16);
+	//enable_irq(INT_PORTA - 16); 2015.12.9
 }
 
 void bluetooth_lostconnection()
@@ -267,4 +269,9 @@ void ADC()
 		}
 #endif
 	ADC0_SC1A=adc_register;	
+}
+
+void ADC_DMA()
+{
+	
 }

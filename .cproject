@@ -98,7 +98,7 @@
 						</tool>
 					</fileInfo>
 					<sourceEntries>
-						<entry excluding="Sources/ff10b/src/option/syscall.c|Sources/ff10b/doc/img/app4.c|Sources/ff10b/doc/img/app3.c|Sources/ff10b/doc/img/app2.c|Sources/ff10b/doc/img/app1.c|Sources/ff10b/src/option/ccsbcs.c|Sources/ff10b/src/option/cc950.c|Sources/ff10b/src/option/cc949.c|Sources/ff10b/src/option/cc936.c|Sources/ff10b/src/option/cc932.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Sources/processor_specific_functions/eDMA_i2c.h|Sources/processor_specific_functions/eDMA_i2c.c|Sources/ff10b/src/option/syscall.c|Sources/ff10b/doc/img/app4.c|Sources/ff10b/doc/img/app3.c|Sources/ff10b/doc/img/app2.c|Sources/ff10b/doc/img/app1.c|Sources/ff10b/src/option/ccsbcs.c|Sources/ff10b/src/option/cc950.c|Sources/ff10b/src/option/cc949.c|Sources/ff10b/src/option/cc936.c|Sources/ff10b/src/option/cc932.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

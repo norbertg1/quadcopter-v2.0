@@ -12,7 +12,7 @@
 #define i2c_Stop()             I2C1_C1 &= ~I2C_C1_MST_MASK;\
                                I2C1_C1 &= ~I2C_C1_TX_MASK
 
-#define i2c_Wait()              I2C_Variable=0; while((I2C1_S & I2C_S_IICIF_MASK)==0 && I2C_Variable<5000) {I2C_Variable++;} \
+#define i2c_Wait()              I2C_Variable=0; while((I2C1_S & I2C_S_IICIF_MASK)==0 && I2C_Variable<2000) {I2C_Variable++;} \
                                   I2C1_S |= I2C_S_IICIF_MASK;
 
 void Init_I2C(void);
@@ -20,5 +20,6 @@ void IIC_StartTransmission (char SlaveID, char Mode);
 void I2CWriteRegister(char SlaveID, char u8RegisterAddress, char u8Data);
 char I2CReadRegister(char SlaveID, char u8RegisterAddress);
 void I2CReadMultiRegisters(char SlaveID, char u8RegisterAddress, char * r,char n);
+void DMA_I2CReadMultiRegisters(char SlaveID, char u8RegisterAddress, char * r,char n);
 
 int I2C_Variable;

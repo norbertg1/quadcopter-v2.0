@@ -39,8 +39,8 @@
 #include "processor_specific_functions/KL25Z/PWM.h"
 #include "processor_specific_functions/KL25Z/SPI.h"
 #include "processor_specific_functions/KL25Z/uart.h"
+#include "processor_specific_functions/KL25Z/ADC.h"
 #include "processor_specific_functions/KL25Z/dma.h"
-//#include "processor_specific_functions/ADC.h"
 #endif
 
 #include "interrupts.h"

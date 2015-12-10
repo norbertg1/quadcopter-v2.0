@@ -29,7 +29,7 @@ extern void __thumb_startup(void);
  */
 void Default_Handler()
 {
-	__asm("bkpt");
+__asm("bkpt");
 }
 
 /**
@@ -106,7 +106,7 @@ void (* const InterruptVector[])() __attribute__ ((section(".vectortable"))) = {
     /* Interrupts */
     DMA0_IRQHandler, /* DMA Channel 0 Transfer Complete and Error */
     DMA1_IRQHandler, /* DMA Channel 1 Transfer Complete and Error */
-    DMA2_IRQHandler, /* DMA Channel 2 Transfer Complete and Error */
+    ADC_DMA, /* DMA Channel 2 Transfer Complete and Error */
     DMA3_IRQHandler, /* DMA Channel 3 Transfer Complete and Error */
     MCM_IRQHandler, /* Normal Interrupt */
     FTFL_IRQHandler, /* FTFL Interrupt */
@@ -119,7 +119,7 @@ void (* const InterruptVector[])() __attribute__ ((section(".vectortable"))) = {
     bluetooth_getchar, /* UART0 Status and Error interrupt */
     UART1_IRQHandler, /* UART1 Status and Error interrupt */
     UART2_IRQHandler, /* UART2 Status and Error interrupt */
-    ADC0_IRQHandler, /* ADC0 interrupt */
+    ADC, /* ADC0 interrupt */
     CMP0_IRQHandler, /* CMP0 interrupt */
     FTM0_IRQHandler, /* FTM0 fault, overflow and channels interrupt */
     PID_Interrupt, /* FTM1 fault, overflow and channels interrupt */

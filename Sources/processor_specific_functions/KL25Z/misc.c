@@ -82,7 +82,7 @@ void initTimer1()		//TPM2 Timer for SDcard save
     TPM2_SC |= TPM_SC_CMOD(1);	//Enable the counter and interrupts
 }
 
-void initBluetooth()
+void initBluetooth()		//Configure interrupt on lost signal
 {
 	PORTA_PCR5 = PORT_PCR_MUX(1);
 	GPIOA_PDDR &= ~(1<<5);

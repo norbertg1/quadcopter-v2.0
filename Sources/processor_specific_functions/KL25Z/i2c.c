@@ -103,7 +103,6 @@ void I2CReadMultiRegisters(char SlaveID, char RegisterAddress, char * r, char n)
   i2c_EnableAck();
   i = I2C1_D ; // Dummy read
   i2c_Wait();
-
   for(i=0;i<n-2;i++) // le n-1 bytes
   {
     *r = I2C1_D;
@@ -117,6 +116,32 @@ void I2CReadMultiRegisters(char SlaveID, char RegisterAddress, char * r, char n)
   i2c_Stop(); // Envia STOP por ser o ultimo byte
   *r = I2C1_D; // Le ultimo byte
   Pause();
+}
+
+void DMA_I2CReadMultiRegisters(char SlaveID, char RegisterAddress, char * r, char n)
+{
+  char i;
+  IIC_StartTransmission(SlaveID,MWSR);
+  i2c_Wait();
+  i2c_write_byte(RegisterAddress);
+  i2c_Wait();
+  i2c_RepeatedStart();
+  i2c_write_byte((SlaveID << 1) | 0x01);
+  i2c_Wait();
+  i2c_EnterRxMode();
+  i2c_EnableAck();
+  i = I2C1_D ; // Dummy read
+  i2c_Wait();
+  
+  DMA_starttransfer(DMA_BASE_PTR,0, 14);
+/*
+  i2c_DisableAck(); // Desabilita ACK por ser o penultimo byte a ler
+  *r = I2C1_D; // Le penultimo byte
+  r++;
+  i2c_Wait();
+  i2c_Stop(); // Envia STOP por ser o ultimo byte
+  *r = I2C1_D; // Le ultimo byte
+  Pause();*/
 }
 
 void I2C_search()

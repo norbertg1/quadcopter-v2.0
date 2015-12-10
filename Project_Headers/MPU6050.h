@@ -167,11 +167,15 @@ float TEMP;
 
 float timeConstant;
 
+char MPU_6050_buffer[14];
+
 void Get_Accel_Values();
 void Get_Temp();
-void Get_Accel_Angles();
+void Get_Angles();
 void Get_Gyro_Rates();
 void complementary_filter();
 void second_order_complementary_filter();
 void Convert_Accel();
 void init_MPU6050();
+void DMAread_MPU6050();
+void read_MPU6050();
