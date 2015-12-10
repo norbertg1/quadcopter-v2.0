@@ -154,6 +154,7 @@ int main(void)
 	enable_PID_interrupts
 	enable_SDcard_interrupts
 	uint16_t p=0,t=0;
+	UART0_S1 &= UART_S1_OR_MASK;		//UARTra kell
 	while(1)
 	{	  
 		error(&fr);

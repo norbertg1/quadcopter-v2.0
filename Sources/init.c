@@ -32,7 +32,7 @@ void Init()
 	initTimer0();		//Timer for PID interrupt
 	initTimer1();		//Timer for SDcard log interrupt 
 	init_PWM_LED();		//A panelon levo LEDek PWM meghajtasa 	vagy ez
-//	InitUARTs();
+	InitUARTs();
 //	DMA_uart_init(DMA_BASE_PTR,UART0_SOURCE,CHANNEL_1,(uint32_t)(&UART0_D),(uint32_t)(&uart_data),1,8);	//beallitani az interruptot még!!!
 //	initBluetooth(); //Interrupt on lost signal
 	initInterrupts();
