@@ -147,7 +147,7 @@ void PID_Interrupt(void)
 		uart_putchar(UART1_BASE_PTR,'\n');
 	}
 #endif
-	enable_irq(INT_ADC0 - 16); adc_flag=0;
+	//enable_irq(INT_ADC0 - 16); adc_flag=0;
 	clear_PID_interrupt
 	tt[6]=t-ticker;
 	t=ticker;
@@ -248,6 +248,16 @@ void ADC()
 	BATT_VOLT=batt1_vol+batt2_vol+batt3_vol;
 	if((batt1_vol<BATTERY_MINIMUM_VOLTAGE || batt2_vol<BATTERY_MINIMUM_VOLTAGE || batt3_vol<BATTERY_MINIMUM_VOLTAGE) && No>400) LOW_BATT_FLAG=1;
 #else 
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 0)	{adc_temp[2]+=ADC0_RA;	adc_register=4 | 0b1000000; ADC0_CFG2 &= ~ADC_CFG2_MUXSEL_MASK;}	//ADC0_DP0, ADC0_SE0, select ADxxa channels
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 4)	{adc_temp[2]+=ADC0_RA;	adc_register=3 | 0b1000000;}										//ADC0_DM0, ADC0_SE4a
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 3)	{adc_temp[2]+=ADC0_RA;	adc_register=7 | 0b1000000;}										//ADC0_DP0, ADC0_SE3
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 7)	{adc_temp[2]+=ADC0_RA;	adc_register=4 | 0b1000000; ADC0_CFG2 |= ADC_CFG2_MUXSEL_MASK;}		//ADC0_DP0, ADC0_SE7a, select ADxxb channels
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 4)	{adc_temp[2]+=ADC0_RA;	adc_register=5 | 0b1000000;}										//ADC0_SE4b
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 5)	{adc_temp[2]+=ADC0_RA;	adc_register=6 | 0b1000000;}										//ADC0_SE5b
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 6)	{adc_temp[2]+=ADC0_RA;	adc_register=8/*7*/ | 0b1000000; ADC0_CFG2 &= ~ADC_CFG2_MUXSEL_MASK;}	//ADC0_SE6b, select ADxxa channels
+//	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 7)	{adc_temp[2]+=ADC0_RA;	adc_register=8 | 0b1000000;}										//ADC0_SE7b	KONFLIKT UART0!!!!
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 0)	{adc_temp[2]+=ADC0_RA;	adc_register=8 | 0b1000000;}
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 0)	{adc_temp[2]+=ADC0_RA;	adc_register=8 | 0b1000000;}
 	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 23)	{adc_temp[0]+=ADC0_RA;	adc_register=21 | 0b1000000;}	//read conversation result; start new conversation
 	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 21)	{adc_temp[1]+=ADC0_RA;	adc_register=0 | 0b1000000;}
 	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 0)	{adc_temp[2]+=ADC0_RA;	adc_register=8 | 0b1000000;}

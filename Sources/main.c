@@ -150,7 +150,7 @@ int main(void)
 //	a=0.9994;
 	dt=0.0025;
 	
-	ADC0_SC1A = (8 | 0b1000000);		//start ADC conversion
+//	ADC0_SC1A = (8 | 0b1000000);		//start ADC conversion
 	enable_PID_interrupts
 	enable_SDcard_interrupts
 	uint16_t p=0,t=0;

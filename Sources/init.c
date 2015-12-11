@@ -8,8 +8,8 @@ void initInterrupts()		//MAX priority is 3!
 	set_irq_priority (INT_UART0 - 16, 0);
 /*	enable_irq(INT_PORTA - 16);					//Interrupt from bluetooth module when lost signal
 	set_irq_priority (INT_PORTA - 16, 3);*/
-	enable_irq(INT_ADC0 - 16);		// Initialize the NVIC to enable the specified IRQ
-    set_irq_priority (INT_ADC0 - 16, 4); //Set priority 4 */
+//	enable_irq(INT_ADC0 - 16);		// Initialize the NVIC to enable the specified IRQ
+//   set_irq_priority (INT_ADC0 - 16, 4); //Set priority 4 */
 	//enable_irq(INT_TPM2 - 16);		//SDcard log interrupt Initialize the NVIC to enable the specified IRQ
 	//set_irq_priority (INT_TPM2 - 16, 3); //Set priority 3
 }
@@ -19,8 +19,8 @@ void Init()
 	InitClock();
 	InitSysTick();
 	//initSysTick(); //K20
-	InitADC();
-	InitADCpins();
+//	InitADC();
+//	InitADCpins();
 //	DMA_ADC_init(DMA_BASE_PTR,ADC_SOURCE,CHANNEL_2,(uint32_t)(&ADC0_RA),(uint32_t)(&adc_data[0]),15,32); //atalakitas nagysaga 32bit??
 	initLEDs();			//A panelon levo LEDek inicializalasa	vagy ez
 	init_Motor_PWM();
