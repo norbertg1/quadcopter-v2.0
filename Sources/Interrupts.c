@@ -10,7 +10,7 @@
 #define integral_max 0.5
 #define integral_alt_max 10 
 
-float Kp=12,Kd=2.0,Ki=100,zKp=2.5,zKd=0.7,Alt_Kp=0/*25*/,Alt_Kd=0/*20*/,Alt_Ki=0/*0.5*/,Kp_mem,Kd_mem;
+float Kp=6.5,Kd=2.0/*2*/,Ki=0/*100*/,zKp=2.5,zKd=0.7,Alt_Kp=0/*25*/,Alt_Kd=0/*20*/,Alt_Ki=0/*0.5*/,Kp_mem,Kd_mem;
 int basepower=-50,setpoint_x=0,setpoint_y=0,setpoint_z=0,No=0,flag_kyb;
 float setpoint_alt=0;
 int A_f,B_f,C_f,D_f,A,B,C,D;
@@ -19,7 +19,7 @@ short flag,LOW_BATT_FLAG;
 char flag_landing=0;
 float output_ALT=0;
 float output_x,output_y,output_z;// csak debugoolas vegett deklaralva fent
-long adc[8],adc_temp[8];
+long adc[15],adc_temp[15];
 float batt1_vol,batt2_vol,batt3_vol,BATT_VOLT;
 char adc_flag=0;
 
@@ -80,7 +80,7 @@ void PID_Interrupt(void)
 	tt[1]=t-ticker;
 	t=ticker;
 	Get_Angles();	//882
-	second_order_complementary_filter();
+	second_order_complementary_filter();		//kikiserletezeni 2015.12.23
 //	complementary_filter();	//68
 //	Convert_Accel();
 	tt[1]=t-ticker;
@@ -96,20 +96,20 @@ void PID_Interrupt(void)
 	if(basepower<170) {errorSum_x=0, errorSum_y=0;}
 	tt[2]=t-ticker;
 	t=ticker;
-	output_x=PID_pitchroll(setpoint_x,COMPLEMENTARY_XANGLE,&errorSum_x,GYRO_XRATE);
-	output_y=PID_pitchroll(setpoint_y,-COMPLEMENTARY_YANGLE,&errorSum_y,-GYRO_YRATE);
-	output_z=PID_yaw(setpoint_z,-GYRO_ZANGLE,-GYRO_ZRATE);
+	output_x=PID_pitchroll(setpoint_x,-COMPLEMENTARY_XANGLE,&errorSum_x,GYRO_XRATE);
+	output_y=PID_pitchroll(setpoint_y,COMPLEMENTARY_YANGLE,&errorSum_y,-GYRO_YRATE);
+	output_z=PID_yaw(setpoint_z,GYRO_ZANGLE,GYRO_ZRATE);
 	tt[3]=t-ticker;
 	t=ticker;
-	A_f=basepower-output_y-output_z+output_ALT;
-	C_f=basepower+output_y-output_z+output_ALT;
-	B_f=basepower-output_x+output_z+output_ALT; //ha a B motor van feljebb mint a D motor akkor a COMPLEMENTARY_XANGLE pozitiv
-	D_f=basepower+output_x+output_z+output_ALT;
+	A_f=basepower+output_y-output_z+output_ALT;
+	C_f=basepower-output_y-output_z+output_ALT;
+	B_f=basepower+output_x+output_z+output_ALT; //ha a B motor van feljebb mint a D motor akkor a COMPLEMENTARY_XANGLE pozitiv
+	D_f=basepower-output_x+output_z+output_ALT;
 	A=Convert_FORCEtoPWM(A_f),B=Convert_FORCEtoPWM(B_f),C=Convert_FORCEtoPWM(C_f),D=Convert_FORCEtoPWM(D_f);
 	tt[4]=t-ticker;
 	t=ticker;
 	SetMotorPWM(A,B,C,D);	//180
-	if(abs(COMPLEMENTARY_XANGLE)>25 || 25<abs(COMPLEMENTARY_YANGLE) || flag_landing==1) 
+	if(abs(COMPLEMENTARY_XANGLE)>35 || 35<abs(COMPLEMENTARY_YANGLE) || flag_landing==1) 
 		{
 			//SetMotorPWM(0,0,0,0);
 			//set_irq_priority (INT_PIT1 - 16, 1);
@@ -117,17 +117,17 @@ void PID_Interrupt(void)
 			flag_landing=1;
 			if(No%50 == 0 && (A>50 || B>50 || C>50 || D>50)) basepower-=5;
 			Kp_mem=Kp;Kd_mem=Kd;
-			Kp=5; Kd=1;
+			//Kp=5; Kd=1;
 			setpoint_alt=1;
-			if(A<50 && B<50 && C<50 && D<50) {flag_landing=0; Kp=Kp_mem; Kd=Kd_mem;}
+			//if(A<50 && B<50 && C<50 && D<50) {flag_landing=0; Kp=Kp_mem; Kd=Kd_mem;}
 			setpoint_alt=0;
 		}
 	if(abs(No-flag_kyb)>40) 
 		{
-		if(No%7 == 0 && setpoint_x>0) setpoint_x-=1;
-		if(No%7 == 0 && setpoint_x<0) setpoint_x+=1;
-		if(No%7 == 0 && setpoint_y>0) setpoint_y-=1;
-		if(No%7 == 0 && setpoint_y<0) setpoint_y+=1;
+		if(No%5 == 0 && setpoint_x>0) setpoint_x-=1;
+		if(No%5 == 0 && setpoint_x<0) setpoint_x+=1;
+		if(No%5 == 0 && setpoint_y>0) setpoint_y-=1;
+		if(No%5 == 0 && setpoint_y<0) setpoint_y+=1;
 		}
 	tt[5]=t-ticker;
 	t=ticker;
@@ -140,14 +140,14 @@ void PID_Interrupt(void)
 		}
 #if DATA_OVER_UART
 	//uart_putchar(UART1_BASE_PTR,(char)(D));
-	if(No%20==0)	{
+	if(No%15==0)	{
 		char c[sizeof(float)],i;
-		memcpy(c, &COMPLEMENTARY_XANGLE, sizeof(float));
-		for(i;i<sizeof(float);i++) uart_putchar(UART1_BASE_PTR,c[i]);
-		uart_putchar(UART1_BASE_PTR,'\n');
+		memcpy(c, &COMPLEMENTARY_YANGLE, sizeof(float));
+		for(i=0;i<sizeof(float);i++) uart_putchar(UART2_BASE_PTR,c[i]);
+		uart_putchar(UART2_BASE_PTR,255);
 	}
 #endif
-	//enable_irq(INT_ADC0 - 16); adc_flag=0;
+	enable_irq(INT_ADC0 - 16); adc_flag=0;
 	clear_PID_interrupt
 	tt[6]=t-ticker;
 	t=ticker;
@@ -158,9 +158,9 @@ void SDcardw_Interrupt(void)
 	char data[71];
 	UINT x;
 	int ttt=ticker;
-	write_dT(data,12,(int)No,(int)(100*COMPLEMENTARY_XANGLE),(int)(100*COMPLEMENTARY_YANGLE),(int)(tt[0]),(int)(tt[1]),
-			(int)(tt[2]),(int)tt[3],(int)(tt[4]),(int)(tt[7]),
-			(int)(tt[8]),(int)(abs(ticker)),0/*elapsed_s*/);//,(int)RTC_TSR);	//963	
+	write_dT(data,12,(int)No,(int)(100*COMPLEMENTARY_XANGLE),(int)(100*COMPLEMENTARY_YANGLE),(int)(A),(int)(B),
+			(int)(C),(int)D,(int)(basepower),(int)(100*batt1_vol),
+			(int)(100*batt2_vol),(int)(abs(ticker)),0/*elapsed_s*/);//,(int)RTC_TSR);	//963	
 	tt[7]=ttt-ticker;
 	ttt=ticker;
 	f_write(&fil,data,71,&x);	//168	itt valami tortenik, mert minden 7. lefutasnal 165 helyett 7566ig tart 
@@ -176,40 +176,40 @@ void SDcardw_Interrupt(void)
 void bluetooth_getchar()
 {
 	char c;
-	c=uart_getchar(UART0_BASE_PTR);
+	c=uart_getchar(UART1_BASE_PTR);
 	
-	if(c==0x23)				{setpoint_x+=3;setpoint_y+=3;	flag_kyb=No;}	//forward
-	if(c==0x24)				{setpoint_x-=3;setpoint_y-=3;	flag_kyb=No;}	//back
-	if(c==0x25)				{setpoint_x+=3;setpoint_y-=3;	flag_kyb=No;}	//right
-	if(c==0x26)				{setpoint_x-=3;setpoint_y+=3;	flag_kyb=No;}	//left
+	if(c=='d')				{setpoint_x+=3;setpoint_y+=3;	flag_kyb=No;}	//forward
+	if(c=='a')				{setpoint_x-=3;setpoint_y-=3;	flag_kyb=No;}	//back
+	if(c=='w')				{setpoint_x+=3;setpoint_y-=3;	flag_kyb=No;}	//right
+	if(c=='s')				{setpoint_x-=3;setpoint_y+=3;	flag_kyb=No;}	//left
 	if(c==',')				setpoint_z-=4;		
 	if(c=='.')				setpoint_z+=4;
 	if(c=='+')				basepower+=2;
 	if(c=='-')				basepower-=2;
-	if(c=='*')				basepower+=10;
-	if(c=='/')				basepower-=10;
-	if(c=='w')				{setpoint_alt+=0.5;	uart_putchar(UART1_BASE_PTR,(char)(setpoint_alt));}
-	if(c=='s')				{setpoint_alt-=0.5;	uart_putchar(UART1_BASE_PTR,(char)(setpoint_alt));}
+	if(c=='9')				basepower+=10;
+	if(c=='6')				basepower-=10;
+//	if(c=='w')				{setpoint_alt+=0.5;	uart_putchar(UART1_BASE_PTR,(char)(setpoint_alt));}
+//	if(c=='s')				{setpoint_alt-=0.5;	uart_putchar(UART1_BASE_PTR,(char)(setpoint_alt));}
 	if(c=='c')				{setpoint_x=0;setpoint_y=0;setpoint_z=0;setpoint_alt=1;}
 	if(c=='0')				flag_landing=1;
-	if(c=='~')				{SetMotorPWM(0,0,0,0); disable_irq(INT_TPM1 - 16);}	//turn off 
+	if(c=='1' || c=='x')				{SetMotorPWM(0,0,0,0); disable_irq(INT_TPM1 - 16);}	//turn off 
 #if PID_tuning	
 	char dataout;
-	if(c=='e')				{Kp+=0.5;				dataout=(char)(Kp);}	
-	if(c=='d')				{Kp-=0.5;				dataout=(char)(Kp);}
-	if(c=='r')				{Kd+=0.05;				dataout=(char)(Kd);}
-	if(c=='f')				{Kd-=0.05;				dataout=(char)(Kd);}
-	if(c=='t')				{Ki+=1;					dataout=(char)(Ki);}
-	if(c=='g')				{Ki-=1;					dataout=(char)(Ki);}
-	if(c=='z')				{timeConstant+=0.01;	dataout=(char)100*timeConstant;}
-	if(c=='h')				{timeConstant-=0.01;	dataout=(char)100*timeConstant;}
+	if(c=='r')				{Kp+=0.5;				dataout=(char)(Kp);}	
+	if(c=='f')				{Kp-=0.5;				dataout=(char)(Kp);}
+	if(c=='t')				{Kd+=0.05;				dataout=(char)(Kd);}
+	if(c=='g')				{Kd-=0.05;				dataout=(char)(Kd);}
+	if(c=='y')				{Ki+=1;					dataout=(char)(Ki);}
+	if(c=='h')				{Ki-=1;					dataout=(char)(Ki);}
+	if(c=='u')				{timeConstant+=0.1;	dataout=(char)10*timeConstant;}
+	if(c=='j')				{timeConstant-=0.1;	dataout=(char)10*timeConstant;}
 	if(c=='y')				{Alt_Kp++;				dataout=(char)Alt_Kp;}
 	if(c=='x')				{Alt_Kp--;				dataout=(char)Alt_Kp;}
 	if(c=='v')				{Alt_Kd+=0.5;			dataout=(char)Alt_Kd;}
 	if(c=='b')				{Alt_Kd-=0.5;			dataout=(char)Alt_Kd;}
 	if(c=='n')				{Alt_Ki+=0.5;			dataout=(char)Alt_Ki;}
 	if(c=='m')				{Alt_Ki-=0.5;			dataout=(char)Alt_Ki;}
-	uart_putchar(UART0_BASE_PTR,dataout);
+	uart_putchar(UART1_BASE_PTR,dataout);
 #endif
 	if(setpoint_x>15) setpoint_x=15;
 	if(setpoint_x<-15) setpoint_x=-15;
@@ -247,34 +247,37 @@ void ADC()
 	batt3_vol=0.99*batt3_vol+0.01*((float)(adc[2]<<mode)/4955-batt1_vol-batt2_vol);
 	BATT_VOLT=batt1_vol+batt2_vol+batt3_vol;
 	if((batt1_vol<BATTERY_MINIMUM_VOLTAGE || batt2_vol<BATTERY_MINIMUM_VOLTAGE || batt3_vol<BATTERY_MINIMUM_VOLTAGE) && No>400) LOW_BATT_FLAG=1;
-#else 
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 0)	{adc_temp[2]+=ADC0_RA;	adc_register=4 | 0b1000000; ADC0_CFG2 &= ~ADC_CFG2_MUXSEL_MASK;}	//ADC0_DP0, ADC0_SE0, select ADxxa channels
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 4)	{adc_temp[2]+=ADC0_RA;	adc_register=3 | 0b1000000;}										//ADC0_DM0, ADC0_SE4a
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 3)	{adc_temp[2]+=ADC0_RA;	adc_register=7 | 0b1000000;}										//ADC0_DP0, ADC0_SE3
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 7)	{adc_temp[2]+=ADC0_RA;	adc_register=4 | 0b1000000; ADC0_CFG2 |= ADC_CFG2_MUXSEL_MASK;}		//ADC0_DP0, ADC0_SE7a, select ADxxb channels
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 4)	{adc_temp[2]+=ADC0_RA;	adc_register=5 | 0b1000000;}										//ADC0_SE4b
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 5)	{adc_temp[2]+=ADC0_RA;	adc_register=6 | 0b1000000;}										//ADC0_SE5b
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 6)	{adc_temp[2]+=ADC0_RA;	adc_register=8/*7*/ | 0b1000000; ADC0_CFG2 &= ~ADC_CFG2_MUXSEL_MASK;}	//ADC0_SE6b, select ADxxa channels
-//	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 7)	{adc_temp[2]+=ADC0_RA;	adc_register=8 | 0b1000000;}										//ADC0_SE7b	KONFLIKT UART0!!!!
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 0)	{adc_temp[2]+=ADC0_RA;	adc_register=8 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 0)	{adc_temp[2]+=ADC0_RA;	adc_register=8 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 23)	{adc_temp[0]+=ADC0_RA;	adc_register=21 | 0b1000000;}	//read conversation result; start new conversation
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 21)	{adc_temp[1]+=ADC0_RA;	adc_register=0 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 0)	{adc_temp[2]+=ADC0_RA;	adc_register=8 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 8)	{adc_temp[3]+=ADC0_RA;	adc_register=9 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 9)	{adc_temp[4]+=ADC0_RA;	adc_register=14 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 14)	{adc_temp[5]+=ADC0_RA;	adc_register=15 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 15)	{adc_temp[6]+=ADC0_RA;	adc_register=19 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 19)	{adc_temp[7]+=ADC0_RA;	adc_register=23 | 0b1000000; adc_flag++;}
+#else
+	static uint8_t MUXSEL_FLAG=0;
+	//read conversation result; start new conversation
+/*	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 0)	{adc_temp[0]+=ADC0_RA;	adc_register=4 	| 0b1000000;}										//read ADC0_DP0, ADC0_SE0,  start conversation ADC0_DM0, ADC_SE4a
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 4)	{adc_temp[1]+=ADC0_RA;	adc_register=3 	| 0b1000000;}										//read ADC0_DM0, ADC0_SE4a, start conversation ADC0_DP3, ADC_SE3
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 3)	{adc_temp[2]+=ADC0_RA;	adc_register=7 	| 0b1000000;}										//read ADC0_DP3, ADC0_SE3,	start conversatuon ADC0_DM3, ADC0_SE7a
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 7)	{adc_temp[3]+=ADC0_RA;	adc_register=4 	| 0b1000000; ADC0_CFG2 |= ADC_CFG2_MUXSEL_MASK;}	//read ADC0_DM3, ADC0_SE7a, start conversation ADC0_SE4b, select ADxxb channels
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 4)	{adc_temp[4]+=ADC0_RA;	adc_register=5 	| 0b1000000;}	*/									//read ADC0_SE4b,	start conversation ADC0_SE5b
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 5)	{adc_temp[5]+=ADC0_RA;	adc_register=6 	| 0b1000000;}										//read ADC0_SE5b,	start conversation ADC0_SE6b
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 6)	{adc_temp[6]+=ADC0_RA;	adc_register=7 	| 0b1000000;}										//read ADC0_SE6b,	start conversation ADC0_SE7b
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 7)	{adc_temp[7]+=ADC0_RA;	adc_register=8	| 0b1000000; ADC0_CFG2 &= ~ADC_CFG2_MUXSEL_MASK;}	//read ADC0_SE7b,	start conversation ADC0_SE8, select ADxxa channels
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 8)	{adc_temp[8]+=ADC0_RA;	adc_register=9  | 0b1000000;}										//read ADC0_SE8,	start conversation ADC0_SE9
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 9)	{adc_temp[9]+=ADC0_RA;	adc_register=11 | 0b1000000;}										//read ADC0_SE9,	start conversation ADC0_SE11
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 11)	{adc_temp[10]+=ADC0_RA;	adc_register=12 | 0b1000000;}										//read ADC0_SE11,	start conversation ADC0_SE12
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 12)	{adc_temp[11]+=ADC0_RA;	adc_register=13 | 0b1000000;}										//read ADC0_SE12,	start conversation ADC0_SE13
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 13)	{adc_temp[12]+=ADC0_RA;	adc_register=14	| 0b1000000;}										//read ADC0_SE13,	start conversation ADC0_SE14
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 14)	{adc_temp[13]+=ADC0_RA;	adc_register=15 | 0b1000000;}										//read ADC0_SE14,	start conversation ADC0_SE15
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 15)	{adc_temp[14]+=ADC0_RA;	adc_register=23 | 0b1000000;}										//read ADC0_SE15,	start conversation ADC0_SE23
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 23)	{adc_temp[15]+=ADC0_RA;	adc_register=5	| 0b1000000; adc_flag++;ADC0_CFG2 |= ADC_CFG2_MUXSEL_MASK;}//read ADC0_SE23,	start conversation ADC0_SE0
 	if(adc_flag>=ADC_avg) 
 		{
 		int i;
-		for(i=0;i<8;i++)	{adc[i]=adc_temp[i]/(adc_flag); adc_temp[i]=0;}
-		batt1_vol=0.99*batt1_vol+0.01*(float)(adc[0]<<mode)/13538;
-		batt2_vol=0.99*batt2_vol+0.01*((float)(adc[1]<<mode)/7019-batt1_vol);
-		batt3_vol=0.99*batt3_vol+0.01*((float)(adc[2]<<mode)/4955-batt1_vol-batt2_vol);
+		for(i=0;i<16;i++)	{adc[i]=adc_temp[i]/(adc_flag); adc_temp[i]=0;}
+		batt1_vol=0.99*batt1_vol+0.01*(float)(adc[13]<<mode)/17007; //16500, 22939
+		batt2_vol=0.99*batt2_vol+0.01*((float)(adc[6]<<mode)/10292-batt1_vol);//10646
+		batt3_vol=0.99*batt3_vol+0.01*((float)(adc[7]<<mode)/5612-batt1_vol-batt2_vol);
 		BATT_VOLT=batt1_vol+batt2_vol+batt3_vol;
-		if((batt1_vol<BATTERY_MINIMUM_VOLTAGE || batt2_vol<BATTERY_MINIMUM_VOLTAGE || batt3_vol<BATTERY_MINIMUM_VOLTAGE) && No>400) LOW_BATT_FLAG=1;
+		if((batt1_vol<BATTERY_MINIMUM_VOLTAGE || batt2_vol<BATTERY_MINIMUM_VOLTAGE || batt3_vol<BATTERY_MINIMUM_VOLTAGE) && No>2000) 
+			{
+			LOW_BATT_FLAG=1;
+			}
 		disable_irq(INT_ADC0 - 16);
 		}
 #endif

@@ -36,11 +36,11 @@ void calibrate_ESC()						//ESC kalibrasa, 1. Az MCU-t ne a kalibralando ESCrol 
 	LED_Toggle_RED;
 	Delay_mS(100);
 	LED_Toggle_RED;
-	SetMotorPWM(999,0,999,999);	//2. Adjunk 100% PWM-et majd csatlakoztassuk a kalibrálni kivant ESC-et(tápellátása meg kell hogy legyen szakitva)
+	SetMotorPWM(999,999,999,999);	//2. Adjunk 100% PWM-et majd csatlakoztassuk a kalibrálni kivant ESC-et(tápellátása meg kell hogy legyen szakitva)
 	Delay_mS(7000);						//3. Csatlakoztassuk a kalibralando ESCet a tapfeszültséghez
 	LED_On_RED;
 	SetMotorPWM(1,1,1,1);
-	Delay_mS(7000);
+	Delay_mS(2000);
 	int A=0,B=0,C=0,D=0;
 	int x=190;
 	while(1)							//4. Varjuk ki még lefut a program
@@ -56,13 +56,14 @@ void motor_test()
 	int i,j;
 	for(i=0;i<4;i++)
 	{
-		for(j=0;j<300;j++)
+		for(j=0;j<150;j++)
 		{
-			Delay_mS(10);
-			if(i==0) SetMotorPWM(j,0,0,0);
-			if(i==1) SetMotorPWM(0,j,0,0);
-			if(i==2) SetMotorPWM(0,0,j,0);
-			if(i==3) SetMotorPWM(0,0,0,j);
+			Delay_mS(5);
+			//if(i==0) SetMotorPWM(j,0,0,0);
+			//if(i==1) SetMotorPWM(0,j,0,0);
+			//if(i==2) SetMotorPWM(0,0,j,0);
+			//if(i==3) SetMotorPWM(0,0,0,j);
+			SetMotorPWM(j,j,j,j);
 		}
 	}
 }
@@ -133,7 +134,7 @@ void error(FRESULT *fr)
 }
 
 int main(void)
-{	
+   {	
 	Init();
 	Set_LEDPWM(0,0,0);
 //	calibrate_ESC();	//MPU6050 plug off!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -145,24 +146,24 @@ int main(void)
 	fr=f_write(&fil," No.    A     B     C     D   acc.x acc.y acc.z res.x res.y res.z timer\r\n",70,&x);	
 	
 	Zero_Sensors();
+while(1)	{motor_test();}
 //	motor_start(basepower);
 	a=1.0/(1+(1.0/400.0));
 //	a=0.9994;
 	dt=0.0025;
 	
-//	ADC0_SC1A = (8 | 0b1000000);		//start ADC conversion
+	ADC0_SC1A = (8 | 0b1000000);		//start ADC conversion
 	enable_PID_interrupts
 	enable_SDcard_interrupts
 	uint16_t p=0,t=0;
-	UART0_S1 &= UART_S1_OR_MASK;		//UARTra kell
 	while(1)
 	{	  
+		UART1_S1 &= UART_S1_OR_MASK;		//UARTra kell debuggolásnal, receive overrun
 		error(&fr);
 		t++;
 		//Set_LEDPWM(0,0,p);
-		SetMotorPWM(p,p,p,p);	//
-		if(t>200) {p++,t=0; if(p==1000) p=0;}
 		SDcardw_Interrupt();
+	//	ADC();
 	//	FTM0_C4V=(15600/2)-200*COMPLEMENTARY_YANGLE;	//GREEN LED PWM gyro+acc
 	//	FTM0_C2V=(15600/2)+200*COMPLEMENTARY_YANGLE;	//RED LED PWM	gyro+acc
 	//	FTM0_C4V=(15600/2)-200*(relative_altittude-setpoint_alt)*10;	//GREEN LED PWM press

@@ -52,7 +52,7 @@ float filter_xterm[3] = {0,0,0};
 float filter_yterm[3] = {0,0,0};
 
 float TEMP;
-float timeConstant=0.35;//0.35;
+float timeConstant=15;//0.35;//0.35;
 
 float Gx_offset=0,Gy_offset=0,Gz_offset=0;
 float XANGLE_OFFSET=0,YANGLE_OFFSET=0;
@@ -200,74 +200,20 @@ void MPU6050_Setup()
 }
 
 void Calibrate_Accel()
-{/*
-	int16_t ACCEL_XOUT_OFFSET_SUM = 0;
-	int32_t ACCEL_YOUT_OFFSET_SUM = 0;
-	int32_t ACCEL_ZOUT_OFFSET_SUM = 0;
-
-	int xx,k=0;
-	char temp[6];
-	int x = 0;
-	for(x = 0; x<1; x++)
-	{
-		for(k=0;k<10;k++){	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_ACCEL_XOUT_H, &temp[0], 1); xx=temp[0];}
-		temp[0]=xx/10;
-		for(k=0;k<10;k++){	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_ACCEL_XOUT_L, &temp[1], 1); xx=temp[1];}
-		temp[1]=xx/10;
-		for(k=0;k<10;k++){	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_ACCEL_YOUT_H, &temp[2], 1); xx=temp[2];}
-		temp[2]=xx/10;
-		for(k=0;k<10;k++){	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_ACCEL_YOUT_L, &temp[3], 1); xx=temp[3];}
-		temp[3]=xx/10;
-		for(k=0;k<10;k++){	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_ACCEL_ZOUT_H, &temp[4], 1); xx=temp[4];}
-		temp[4]=xx/10;
-		for(k=0;k<10;k++){	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_ACCEL_ZOUT_L, &temp[5], 1); xx=temp[5];}
-		temp[5]=xx/10;
-		I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_ACCEL_YOUT_H, &temp[2], 1);
-		I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_ACCEL_YOUT_L, &temp[3], 1);
-		I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_ACCEL_ZOUT_H, &temp[4], 1);
-		I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_ACCEL_ZOUT_L, &temp[5], 1);
- 
-		ACCEL_XOUT_OFFSET_SUM = ((temp[0]<<8)|temp[1]);
-		ACCEL_YOUT_OFFSET_SUM = ((temp[2]<<8)|temp[3]);
-		ACCEL_ZOUT_OFFSET_SUM = 8192+(float)((temp[4]<<8)|temp[5]);
- 
-		Delay_mS(1);
-	}	
-	ACCEL_XOUT_OFFSET = (float)ACCEL_XOUT_OFFSET_SUM/10;	//462
-	ACCEL_YOUT_OFFSET = (float)ACCEL_YOUT_OFFSET_SUM/10;	//-8
-	ACCEL_ZOUT_OFFSET = (float)ACCEL_ZOUT_OFFSET_SUM/10;	//-400	*/
-/*	
-	ACCEL_XOUT_OFFSET = 330;
-	ACCEL_YOUT_OFFSET = -51;
-	ACCEL_ZOUT_OFFSET = -384;*/
+{
 	double XANGLE_SUM=0,YANGLE_SUM=0,Gx_sum=0,Gy_sum=0,Gz_sum=0;
 	int x;
 	
 	for(x=0;x<1000;x++)
 	{
-		Get_Accel_Values();
-		Get_Accel_Angles();
+		read_MPU6050();
+		Get_Angles();
 		XANGLE_SUM=XANGLE_SUM+ACCEL_XANGLE;
 		YANGLE_SUM=YANGLE_SUM+ACCEL_YANGLE;
 	}
 	XANGLE_OFFSET=XANGLE_SUM/1000;
 	YANGLE_OFFSET=YANGLE_SUM/1000;
-//	XANGLE_OFFSET=2;
-//	YANGLE_OFFSET=2;
-	
-//	int x;
-/*	
-	for(x=0;x<100;x++)
-	{
-		Get_Accel_Values();
-		Convert_Accel();
-		Gx_sum=Gx_sum+ACCEL_Gx;
-		Gy_sum=Gy_sum+ACCEL_Gy;
-		Gz_sum=Gz_sum+ACCEL_Gz;
-	}
-	Gx_offset=Gx_sum/100;
-	Gy_offset=Gy_sum/100;
-	Gz_offset=1+Gz_sum/100;	*/
+
 }
 
 //Gets raw accelerometer data, performs no processing
@@ -439,7 +385,7 @@ void init_MPU6050()
 {
 	MPU6050_Test_I2C();
 	MPU6050_Setup();
-	Delay_mS(5000);
+	Delay_mS(1000);
 	Calibrate_Gyros();
-//	Calibrate_Accel();
+	Calibrate_Accel();
 }

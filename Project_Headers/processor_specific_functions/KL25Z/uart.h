@@ -34,6 +34,8 @@ void uart_putchar (UART_MemMapPtr channel, char ch);
 char uart_getchar (UART_MemMapPtr channel);
 int uart_getchar_present (UART_MemMapPtr channel);
 void uart_transmitdata(UART_MemMapPtr channel,char TransData[]);
+void uart1_init (int sysclk, int baud);
+void uart2_init (int sysclk, int baud);
 
 extern ByteQueue SDA_SERIAL_OUTGOING_QUEUE;
 extern ByteQueue SDA_SERIAL_INCOMING_QUEUE;

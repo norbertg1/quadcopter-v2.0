@@ -35,4 +35,5 @@
 *.d
 *.args
 *.apconfig
+*.launch
 /FLASH/

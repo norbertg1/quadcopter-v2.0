@@ -26,17 +26,17 @@ void init_Motor_PWM()
 	//Setup Channels 0,1,2,3
 	TPM0_C0SC = TPM_CnSC_MSB_MASK | TPM_CnSC_ELSB_MASK;	//M1	Channel Mode select, Edge or level select
 	TPM0_C2SC = TPM_CnSC_MSB_MASK | TPM_CnSC_ELSB_MASK;	//M2	Channel Mode select, Edge or level select
-	TPM0_C3SC = TPM_CnSC_MSB_MASK | TPM_CnSC_ELSB_MASK;	//M3	Channel Mode select, Edge or level select
+	TPM0_C5SC = TPM_CnSC_MSB_MASK | TPM_CnSC_ELSB_MASK;	//M3	Channel Mode select, Edge or level select
 	TPM0_C4SC = TPM_CnSC_MSB_MASK | TPM_CnSC_ELSB_MASK;	//M4	Channel Mode select, Edge or level select
 	
 	TPM0_C0V = 0; 	//M1	Set duty cycle to 0%
 	TPM0_C2V = 0;	//M2	Set duty cycle to 0%
-	TPM0_C3V = 0;	//M3	Set duty cycle to 0%
+	TPM0_C5V = 0;	//M3	Set duty cycle to 0%
 	TPM0_C4V = 0;	//M4	Set duty cycle to 0%
 	
     PORTD_PCR0 = PORT_PCR_MUX(4);		//M1 - A	TPM0_CH0
     PORTA_PCR5  = PORT_PCR_MUX(3);     	//M2 - B	TPM0_CH2	
-    PORTC_PCR4 = PORT_PCR_MUX(4);		//M3 - C	TPM0_CH3
+    PORTC_PCR9 = PORT_PCR_MUX(3);		//M3 - C	TPM0_CH5
     PORTD_PCR4 = PORT_PCR_MUX(4);		//M4 - D	TPM0_CH4
         
     TPM0_SC |= TPM_SC_CMOD(1);	//Enable the counter
