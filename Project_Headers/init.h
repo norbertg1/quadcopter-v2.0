@@ -8,7 +8,7 @@
 #ifndef INIT_H_
 #define INIT_H_
 
-#define KL25Z
+#define K40
 
 #include <stdint.h>
 #include <stdio.h>
@@ -41,6 +41,23 @@
 #include "processor_specific_functions/KL25Z/uart.h"
 #include "processor_specific_functions/KL25Z/ADC.h"
 #include "processor_specific_functions/KL25Z/dma.h"
+#endif
+
+//KL25Z
+#ifdef K40
+#include "processor_specific_functions\K40\sys\arm_cm0.h"
+#include "processor_specific_functions\K40\sys\ARM_SysTick.h"
+#include "processor_specific_functions\K40\sys\CrystalClock.h"
+#include "processor_specific_functions\K40\sys\derivative.h"
+#include "processor_specific_functions\K40\sys\MK20D10.h"
+
+#include "processor_specific_functions/K40/i2c.h"
+#include "processor_specific_functions/K40/misc.h"
+#include "processor_specific_functions/K40/PWM.h"
+#include "processor_specific_functions/K40/SPI.h"
+#include "processor_specific_functions/K40/uart.h"
+#include "processor_specific_functions/K40/ADC.h"
+#include "processor_specific_functions/K40/dma.h"
 #endif
 
 #include "interrupts.h"

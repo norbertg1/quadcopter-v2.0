@@ -11,8 +11,12 @@
 extern "C" {
 #endif
 
-/* Word to be written in SIM_COP in order to disable the Watchdog */
-#define KINETIS_WDOG_DISABLED_CTRL	0x0
+/* Unlocking Watchdog sequence words*/
+#define KINETIS_WDOG_UNLOCK_SEQ_1	0xC520
+#define KINETIS_WDOG_UNLOCK_SEQ_2	0xD928
+
+/* Word to be written in in STCTRLH after unlocking sequence in order to disable the Watchdog */
+#define KINETIS_WDOG_DISABLED_CTRL	0xD2
 
 /* 
 	Initializes the Kinetis hardware: e.g. disables the Watchdog

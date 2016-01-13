@@ -1,6 +1,7 @@
 Sources/main.c
-Project_Settings/Linker_Files/MKL25Z128_flash.ld
-Project_Settings/Debugger/MKL25Z128.mem
+Project_Settings/Linker_Files/MK20DX256_ram.ld
+Project_Settings/Linker_Files/MK20DX256_flash.ld
+Project_Settings/Debugger/MK20DX256.mem
 Project_Settings/Startup_Code/kinetis_sysinit.h
 Project_Settings/Startup_Code/kinetis_sysinit.c
 Project_Settings/Startup_Code/runtime_configuration.h
@@ -9,8 +10,6 @@ Project_Settings/Startup_Code/__arm_end.c
 Project_Settings/Debugger/init_kinetis.tcl
 Project_Settings/Debugger/mass_erase_kinetis.tcl
 Project_Headers/derivative.h
-Project_Headers/MKL25Z4.h
-Sources/sa_mtb.c
-Project_Headers/bme.h
+Project_Headers/MK20D10.h
 .settings/com.freescale.core.ide.newprojectwizard.prefs
 ReferencedRSESystems.xml
