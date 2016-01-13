@@ -146,10 +146,8 @@ int main(void)
 	fr=f_write(&fil," No.    A     B     C     D   acc.x acc.y acc.z res.x res.y res.z timer\r\n",70,&x);	
 	
 	Zero_Sensors();
-while(1)	{motor_test();}
-//	motor_start(basepower);
+	motor_test();
 	a=1.0/(1+(1.0/400.0));
-//	a=0.9994;
 	dt=0.0025;
 	
 	ADC0_SC1A = (8 | 0b1000000);		//start ADC conversion

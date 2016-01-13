@@ -270,9 +270,9 @@ void ADC()
 		{
 		int i;
 		for(i=0;i<16;i++)	{adc[i]=adc_temp[i]/(adc_flag); adc_temp[i]=0;}
-		batt1_vol=0.99*batt1_vol+0.01*(float)(adc[13]<<mode)/17007; //16500, 22939
-		batt2_vol=0.99*batt2_vol+0.01*((float)(adc[6]<<mode)/10292-batt1_vol);//10646
-		batt3_vol=0.99*batt3_vol+0.01*((float)(adc[7]<<mode)/5612-batt1_vol-batt2_vol);
+		batt1_vol=0.99*batt1_vol+0.01*(float)(adc[13]<<mode)/22172;	//17007, 16500, 22939
+		batt2_vol=0.99*batt2_vol+0.01*((float)(adc[6]<<mode)/13442-batt1_vol);//10646
+		batt3_vol=0.99*batt3_vol+0.01*((float)(adc[7]<<mode)/7347-batt1_vol-batt2_vol);
 		BATT_VOLT=batt1_vol+batt2_vol+batt3_vol;
 		if((batt1_vol<BATTERY_MINIMUM_VOLTAGE || batt2_vol<BATTERY_MINIMUM_VOLTAGE || batt3_vol<BATTERY_MINIMUM_VOLTAGE) && No>2000) 
 			{

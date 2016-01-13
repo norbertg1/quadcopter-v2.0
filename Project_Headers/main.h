@@ -8,7 +8,7 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#define MOTOR_MAX 500
+#define MOTOR_MAX 700
 #define	MOTOR_MIN 1
 #define MOTOR 1
 #define PID_tuning 1
