@@ -26,7 +26,7 @@ void init_Motor_PWM()
 
 	init_PWM();
 	//Setup Channels
-	FTM0_C1SC |= FTM_CnSC_ELSB_MASK | FTM_CnSC_MSB_MASK; //Edge or level select
+/*	FTM0_C1SC |= FTM_CnSC_ELSB_MASK | FTM_CnSC_MSB_MASK; //Edge or level select
 	FTM0_C1SC &= ~FTM_CnSC_ELSA_MASK; //Edge or level Select
 	
 	FTM0_C6SC |= FTM_CnSC_ELSB_MASK | FTM_CnSC_MSB_MASK; //Edge or level select
@@ -50,9 +50,11 @@ void init_Motor_PWM()
 	//Status and Control bits 
 	FTM0_SC =  FTM_SC_PS(4) | FTM_SC_CLKS(1); // Selects Clock source to be "system clock" or (01)
 	
+	SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTC_MASK | SIM_SCGC5_PORTD_MASK;
+	
     PORTD_PCR0 = PORT_PCR_MUX(4);		//M1 - A	TPM0_CH0
     PORTA_PCR5  = PORT_PCR_MUX(3);     	//M2 - B	TPM0_CH2	
-    PORTC_PCR9 = PORT_PCR_MUX(3);		//M3 - C	TPM0_CH5
-    PORTD_PCR4 = PORT_PCR_MUX(4);		//M4 - D	TPM0_CH4
+    //PORTC_PCR9 = PORT_PCR_MUX(3);		//M3 - C	TPM0_CH5
+    //PORTD_PCR4 = PORT_PCR_MUX(4);		//M4 - D	TPM0_CH4*/
         
 }
