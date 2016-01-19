@@ -39,7 +39,7 @@ Sources/ff10b/src/diskio.o: ../Sources/ff10b/src/diskio.c
 	@echo 'Building file: $<'
 	@echo 'Executing target #20 $<'
 	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/ff10b/src/diskio.args" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/ff10b/src/diskio.o"
+	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/ff10b/src/diskio.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/ff10b/src/diskio.o"
 	@echo 'Finished building: $<'
 	@echo ' '
 
@@ -47,7 +47,7 @@ Sources/ff10b/src/ff.o: ../Sources/ff10b/src/ff.c
 	@echo 'Building file: $<'
 	@echo 'Executing target #21 $<'
 	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/ff10b/src/ff.args" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/ff10b/src/ff.o"
+	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/ff10b/src/ff.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/ff10b/src/ff.o"
 	@echo 'Finished building: $<'
 	@echo ' '
 

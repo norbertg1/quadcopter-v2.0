@@ -192,7 +192,7 @@ void bluetooth_getchar()
 //	if(c=='s')				{setpoint_alt-=0.5;	uart_putchar(UART1_BASE_PTR,(char)(setpoint_alt));}
 	if(c=='c')				{setpoint_x=0;setpoint_y=0;setpoint_z=0;setpoint_alt=1;}
 	if(c=='0')				flag_landing=1;
-	if(c=='1' || c=='x')				{SetMotorPWM(0,0,0,0); disable_irq(INT_TPM1 - 16);}	//turn off 
+	if(c=='1' || c=='x')				{SetMotorPWM(0,0,0,0); disable_irq(INT_PIT0 - 16);}	//turn off 
 #if PID_tuning	
 	char dataout;
 	if(c=='r')				{Kp+=0.5;				dataout=(char)(Kp);}	

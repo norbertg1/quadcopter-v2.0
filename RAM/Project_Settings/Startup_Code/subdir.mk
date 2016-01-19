@@ -46,7 +46,7 @@ Project_Settings/Startup_Code/__arm_end.o: ../Project_Settings/Startup_Code/__ar
 	@echo 'Building file: $<'
 	@echo 'Executing target #22 $<'
 	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Project_Settings/Startup_Code/__arm_end.args" -MMD -MP -MF"$(@:%.o=%.d)" -o"Project_Settings/Startup_Code/__arm_end.o"
+	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Project_Settings/Startup_Code/__arm_end.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Project_Settings/Startup_Code/__arm_end.o"
 	@echo 'Finished building: $<'
 	@echo ' '
 
@@ -54,7 +54,7 @@ Project_Settings/Startup_Code/__arm_start.o: ../Project_Settings/Startup_Code/__
 	@echo 'Building file: $<'
 	@echo 'Executing target #23 $<'
 	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Project_Settings/Startup_Code/__arm_start.args" -MMD -MP -MF"$(@:%.o=%.d)" -o"Project_Settings/Startup_Code/__arm_start.o"
+	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Project_Settings/Startup_Code/__arm_start.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Project_Settings/Startup_Code/__arm_start.o"
 	@echo 'Finished building: $<'
 	@echo ' '
 
@@ -62,7 +62,7 @@ Project_Settings/Startup_Code/kinetis_sysinit.o: ../Project_Settings/Startup_Cod
 	@echo 'Building file: $<'
 	@echo 'Executing target #24 $<'
 	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Project_Settings/Startup_Code/kinetis_sysinit.args" -MMD -MP -MF"$(@:%.o=%.d)" -o"Project_Settings/Startup_Code/kinetis_sysinit.o"
+	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Project_Settings/Startup_Code/kinetis_sysinit.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Project_Settings/Startup_Code/kinetis_sysinit.o"
 	@echo 'Finished building: $<'
 	@echo ' '
 

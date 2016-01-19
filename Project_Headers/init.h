@@ -27,7 +27,7 @@
 
 //KL25Z
 #ifdef KL25Z
-#include "processor_specific_functions\KL25Z\sys\arm_cm0.h"
+#include "processor_specific_functions\KL25Z\sys\arm_cm4.h"
 #include "processor_specific_functions\KL25Z\sys\ARM_SysTick.h"
 //#include "processor_specific_functions\KL25Z\sys\bme.h"
 #include "processor_specific_functions\KL25Z\sys\CrystalClock.h"
@@ -45,9 +45,9 @@
 
 //KL25Z
 #ifdef K40
-#include "processor_specific_functions\K40\sys\arm_cm0.h"
-#include "processor_specific_functions\K40\sys\ARM_SysTick.h"
-#include "processor_specific_functions\K40\sys\CrystalClock.h"
+#include "processor_specific_functions\K40\sys\arm_cm4.h"
+#include "processor_specific_functions\K40\sys\systick.h"
+#include "processor_specific_functions\K40\sys\clock.h"
 #include "processor_specific_functions\K40\sys\derivative.h"
 #include "processor_specific_functions\K40\sys\MK20D10.h"
 

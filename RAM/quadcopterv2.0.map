@@ -1576,7 +1576,7 @@ END GROUP
                 0x000009b4       0x33 C:/Freescale/CW MCU v10.6/MCU/ARM_GCC_Support/ewl/lib/armv7e-m\librt.a(__arm_eabi_init.o)
  .ARM.attributes
                 0x000009e7       0x33 C:/Freescale/CW MCU v10.6/MCU/ARM_GCC_Support/ewl/lib/armv7e-m\libc.a(errno.o)
-OUTPUT(quadcopterv2.1.elf elf32-littlearm)
+OUTPUT(quadcopterv2.0.elf elf32-littlearm)
 
 .debug_info     0x00000000    0x1041c
  .debug_info    0x00000000      0x357 ./Project_Settings/Startup_Code/kinetis_sysinit.o

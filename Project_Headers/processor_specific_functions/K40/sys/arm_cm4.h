@@ -1,41 +1,25 @@
 /*
- * File:		arm_cm0.h
+ * File:		arm_cm4.h
  * Purpose:		Definitions common to all ARM Cortex M4 processors
  *
  * Notes:
  */
 
-#ifndef _CPU_ARM_CM0_H
-#define _CPU_ARM_CM0_H
+#ifndef _CPU_ARM_CM4_H
+#define _CPU_ARM_CM4_H
 
-/*ARM Cortex M0 implementation for interrupt priority shift*/
-#define ARM_INTERRUPT_LEVEL_BITS          2
+
+/*ARM Cortex M4 implementation for interrupt priority shift*/
+#define ARM_INTERRUPT_LEVEL_BITS          4
 
 /***********************************************************************/
-// function prototypes for arm_cm0.c
+// function prototypes for arm_cm4.c
 void stop (void);
 void wait (void);
 void write_vtor (int);
 void enable_irq (int);
 void disable_irq (int);
 void set_irq_priority (int, int);
-
-/***********************************************************************/
-  /*!< Macro to enable all interrupts. */
-#ifndef KEIL
-#define EnableInterrupts asm(" CPSIE i");
-#else
-#define EnableInterrupts  __enable_irq()
-#endif
-
-  /*!< Macro to disable all interrupts. */
-#ifndef KEIL
-#define DisableInterrupts asm(" CPSID i");
-#else
-#define DisableInterrupts __disable_irq()
-#endif
-/***********************************************************************/
-
 
 /*
  * Misc. Defines
@@ -88,3 +72,4 @@ typedef volatile uint32		vuint32; /* 32 bits */
 
 /***********************************************************************/
 #endif	/* _CPU_ARM_CM4_H */
+

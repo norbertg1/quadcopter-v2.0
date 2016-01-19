@@ -5,7 +5,7 @@
  */
  
 #include "kinetis_sysinit.h"
-#include "derivative.h"
+#include "processor_specific_functions\K40\sys\derivative.h"
 
 /**
  **===========================================================================

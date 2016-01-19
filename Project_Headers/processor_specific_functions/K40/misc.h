@@ -20,7 +20,11 @@
 #define	LED_On_GREEN	GPIOB_PCOR = 1<<19;		//A zöld be kapcsolása
 #define	LED_Off_GREEN	GPIOB_PSOR = 1<<19;		//A zöld ki kapcsolása
 //------------------------LED_init---------------------------------------------
-
+#define enable_PID_interrupts		PIT_TCTRL1 |= PIT_TCTRL_TIE_MASK;
+#define enable_SDcard_interrupts	PIT_TCTRL2 |= PIT_TCTRL_TIE_MASK;
+#define clear_PID_interrupt			PIT_TFLG1  |= PIT_TFLG_TIF_MASK;
+#define clear_SDcard_interrupt		PIT_TFLG2  |= PIT_TFLG_TIF_MASK;
+//-----------------------Timer module settings---------------------------------
 #define elapsed_s	RTC_TSR
 #define ticker	PIT_CVAL0/100		//ezzel a szamlaloval tudok idor mértni ket esemeny közt 
 #define PIT0_OVERFLOW_FREQUENCY 400

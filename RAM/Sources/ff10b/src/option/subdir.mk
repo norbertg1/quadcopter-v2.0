@@ -32,7 +32,7 @@ Sources/ff10b/src/option/unicode.o: ../Sources/ff10b/src/option/unicode.c
 	@echo 'Building file: $<'
 	@echo 'Executing target #19 $<'
 	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/ff10b/src/option/unicode.args" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/ff10b/src/option/unicode.o"
+	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/ff10b/src/option/unicode.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/ff10b/src/option/unicode.o"
 	@echo 'Finished building: $<'
 	@echo ' '
 

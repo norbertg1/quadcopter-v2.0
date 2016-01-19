@@ -8,11 +8,6 @@
 #ifndef INTERRUPTS_H_
 #define INTERRUPTS_H_
 
-#define enable_PID_interrupts		TPM1_SC |= TPM_SC_TOIE_MASK;
-#define enable_SDcard_interrupts	TPM2_SC |= TPM_SC_TOIE_MASK;
-#define clear_PID_interrupt			TPM1_SC |= TPM_SC_TOF_MASK;
-#define clear_SDcard_interrupt		TPM2_SC |= TPM_SC_TOF_MASK;
-
 void PID_Interrupt(void);
 void SDcardw_Interrupt(void);
 void bluetooth_getchar();

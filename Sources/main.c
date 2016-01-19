@@ -129,14 +129,14 @@ int abs(int number)
 
 void error(FRESULT *fr)
 {
-	LED_Off_RED
-	if(*fr==0)	Set_LEDPWM(0,0,5);
+	//LED_Off_RED
+	//if(*fr==0)	Set_LEDPWM(0,0,5);
 }
 
 int main(void)
    {	
 	Init();
-	Set_LEDPWM(0,0,0);
+	//Set_LEDPWM(0,0,0); helyett LCDre valami
 //	calibrate_ESC();	//MPU6050 plug off!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //	calibrate_BATT_voltmeter();
 	UINT x=5;

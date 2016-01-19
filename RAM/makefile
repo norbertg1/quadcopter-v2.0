@@ -15,8 +15,8 @@ RM := "$(GNU_Make_Install_DirEnv)/rm" -rf
 -include sources.mk
 -include subdir.mk
 -include Sources/subdir.mk
--include Sources/processor_specific_functions/KL25Z/subdir.mk
--include Sources/processor_specific_functions/KL25Z/sys/subdir.mk
+-include Sources/processor_specific_functions/K40/subdir.mk
+-include Sources/processor_specific_functions/K40/sys/subdir.mk
 -include Sources/ff10b/src/option/subdir.mk
 -include Sources/ff10b/src/subdir.mk
 -include Project_Settings/Startup_Code/subdir.mk
@@ -47,30 +47,30 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-quadcopterv2.1.elf \
+quadcopterv2.0.elf \
 
 EXECUTABLES_QUOTED += \
-"quadcopterv2.1.elf" \
+"quadcopterv2.0.elf" \
 
 EXECUTABLES_OS_FORMAT += \
-quadcopterv2.1.elf \
+quadcopterv2.0.elf \
 
 
 # All Target
-all: warning-messages explicit-dependencies quadcopterv2.1.elf secondary-outputs
+all: warning-messages explicit-dependencies quadcopterv2.0.elf secondary-outputs
 
 # Tool invocations
-quadcopterv2.1.elf: $(OBJS) $(USER_OBJS) ../Project_Settings/Linker_Files/MK20DX256_ram.ld
+quadcopterv2.0.elf: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Executing target #25 $@'
 	@echo 'Invoking: ARM Ltd Windows GCC C Linker'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc"  $(USER_OBJS_QUOTED) $(LIBS_QUOTED) @"quadcopterv2.args" -o"quadcopterv2.1.elf"
+	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc"  $(USER_OBJS_QUOTED) $(LIBS_QUOTED) @"quadcopterv2.args" -o"quadcopterv2.0.elf"
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(S_DEPS_QUOTED) "./*/*/*.o" "./*/*/*/*.o" "./*/*/*/*/*.o" "./*/*.o"  $(S_UPPER_DEPS_QUOTED) $(ASM_DEPS_QUOTED) $(ASM_UPPER_DEPS_QUOTED) $(SX_DEPS_QUOTED) $(EXECUTABLES_QUOTED) "./*/*/*.d" "./*/*/*/*.d" "./*/*/*/*/*.d" "./*/*.d"  $(ProjDirPath)/RAM/quadcopterv2.1.elf
+	-$(RM) $(S_DEPS_QUOTED) "./*/*/*.o" "./*/*/*/*.o" "./*/*/*/*/*.o" "./*/*.o"  $(S_UPPER_DEPS_QUOTED) $(ASM_DEPS_QUOTED) $(ASM_UPPER_DEPS_QUOTED) $(SX_DEPS_QUOTED) $(EXECUTABLES_QUOTED) "./*/*/*.d" "./*/*/*/*.d" "./*/*/*/*/*.d" "./*/*.d"  $(ProjDirPath)/RAM/quadcopterv2.0.elf
 	-@echo ' '
 
 secondary-outputs:
@@ -80,7 +80,7 @@ secondary-outputs:
 
 -include ../makefile.targets
 
-explicit-dependencies: ../Project_Settings/Linker_Files/MK20DX256_ram.ld 
+explicit-dependencies: 
 
 warning-messages: 
 

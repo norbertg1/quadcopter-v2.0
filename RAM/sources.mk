@@ -60,8 +60,8 @@ OBJS_OS_FORMAT :=
 # Every subdirectory with source files must be described here
 SUBDIRS := \
 Sources \
-Sources/processor_specific_functions/KL25Z \
-Sources/processor_specific_functions/KL25Z/sys \
+Sources/processor_specific_functions/K40 \
+Sources/processor_specific_functions/K40/sys \
 Sources/ff10b/src/option \
 Sources/ff10b/src \
 Project_Settings/Startup_Code \
