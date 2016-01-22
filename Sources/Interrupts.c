@@ -176,7 +176,7 @@ void SDcardw_Interrupt(void)
 void bluetooth_getchar()
 {
 	char c;
-	c=uart_getchar(UART1_BASE_PTR);
+	c=uart_getchar(UART0_BASE_PTR);
 	
 	if(c=='d')				{setpoint_x+=3;setpoint_y+=3;	flag_kyb=No;}	//forward
 	if(c=='a')				{setpoint_x-=3;setpoint_y-=3;	flag_kyb=No;}	//back

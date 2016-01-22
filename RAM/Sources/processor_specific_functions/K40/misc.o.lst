@@ -1,0 +1,819 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"misc.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	I2C_Variable,4,4
+  19              		.comm	uart_data,1,1
+  20              		.comm	adc_data,60,4
+  21              		.comm	Kp,4,4
+  22              		.comm	Kd,4,4
+  23              		.comm	Ki,4,4
+  24              		.comm	zKp,4,4
+  25              		.comm	zKd,4,4
+  26              		.comm	basepower,4,4
+  27              		.comm	setpoint_x,4,4
+  28              		.comm	setpoint_y,4,4
+  29              		.comm	setpoint_z,4,4
+  30              		.comm	setpoint_alt,4,4
+  31              		.comm	batt1_vol,4,4
+  32              		.comm	batt2_vol,4,4
+  33              		.comm	batt3_vol,4,4
+  34              		.comm	BATT_VOLT,4,4
+  35              		.comm	FatFs,560,4
+  36              		.comm	fil,548,4
+  37              		.comm	GYRO_XOUT_OFFSET,2,2
+  38              		.comm	GYRO_YOUT_OFFSET,2,2
+  39              		.comm	GYRO_ZOUT_OFFSET,2,2
+  40              		.comm	ACCEL_XOUT_OFFSET,2,2
+  41              		.comm	ACCEL_YOUT_OFFSET,2,2
+  42              		.comm	ACCEL_ZOUT_OFFSET,2,2
+  43              		.comm	GYRO_XANGLE,4,4
+  44              		.comm	GYRO_YANGLE,4,4
+  45              		.comm	GYRO_ZANGLE,4,4
+  46              		.comm	GYRO_XOUT,2,2
+  47              		.comm	GYRO_YOUT,2,2
+  48              		.comm	GYRO_ZOUT,2,2
+  49              		.comm	ACCEL_XOUT,2,2
+  50              		.comm	ACCEL_YOUT,2,2
+  51              		.comm	ACCEL_ZOUT,2,2
+  52              		.comm	ACCEL_Gx,4,4
+  53              		.comm	ACCEL_Gy,4,4
+  54              		.comm	ACCEL_Gz,4,4
+  55              		.comm	ACCEL,8,8
+  56              		.comm	GYRO_XRATE,4,4
+  57              		.comm	GYRO_YRATE,4,4
+  58              		.comm	GYRO_ZRATE,4,4
+  59              		.comm	ACCEL_XANGLE,4,4
+  60              		.comm	ACCEL_YANGLE,4,4
+  61              		.comm	gyro_xsensitivity,4,4
+  62              		.comm	gyro_ysensitivity,4,4
+  63              		.comm	gyro_zsensitivity,4,4
+  64              		.comm	a,4,4
+  65              		.comm	dt,4,4
+  66              		.comm	COMPLEMENTARY_XANGLE,4,4
+  67              		.comm	COMPLEMENTARY_YANGLE,4,4
+  68              		.comm	filter_xterm,12,4
+  69              		.comm	filter_yterm,12,4
+  70              		.comm	XANGLE_OFFSET,4,4
+  71              		.comm	YANGLE_OFFSET,4,4
+  72              		.comm	TEMP,4,4
+  73              		.comm	timeConstant,4,4
+  74              		.comm	MPU_6050_buffer,14,4
+  75              		.comm	AC1,2,2
+  76              		.comm	AC2,2,2
+  77              		.comm	AC3,2,2
+  78              		.comm	B1,2,2
+  79              		.comm	B2,2,2
+  80              		.comm	MB,2,2
+  81              		.comm	MC,2,2
+  82              		.comm	MD,2,2
+  83              		.comm	AC4,2,2
+  84              		.comm	AC5,2,2
+  85              		.comm	AC6,2,2
+  86              		.comm	T,4,4
+  87              		.comm	absolute_altittude,4,4
+  88              		.comm	start_altittude,4,4
+  89              		.comm	relative_altittude,4,4
+  90              		.comm	P,4,4
+  91              		.align	2
+  92              		.global	init_Ticker
+  93              		.thumb
+  94              		.thumb_func
+  96              	init_Ticker:
+  97              	.LFB0:
+  98              		.file 1 "../Sources/processor_specific_functions/K40/misc.c"
+   1:../Sources/processor_specific_functions/K40/misc.c **** #include "init.h"
+   2:../Sources/processor_specific_functions/K40/misc.c **** //#include "processor_specific_functions/KL25Z/sys/MKL25Z4.h"
+   3:../Sources/processor_specific_functions/K40/misc.c **** 
+   4:../Sources/processor_specific_functions/K40/misc.c **** #define TPM0_CLOCK			(CORE_CLOCK/2)
+   5:../Sources/processor_specific_functions/K40/misc.c **** #define TPM0_CLK_PRESCALE	4  				// Prescale Selector value - see comments in Status Control (SC) s
+   6:../Sources/processor_specific_functions/K40/misc.c **** #define PID_frequency 		400				//PID frequency
+   7:../Sources/processor_specific_functions/K40/misc.c **** #define LOG_frequency 		400				//SDcard frequency
+   8:../Sources/processor_specific_functions/K40/misc.c **** 
+   9:../Sources/processor_specific_functions/K40/misc.c **** /*
+  10:../Sources/processor_specific_functions/K40/misc.c ****  * FRDM-KL25Z
+  11:../Sources/processor_specific_functions/K40/misc.c ****  * LED:
+  12:../Sources/processor_specific_functions/K40/misc.c ****  * 	initLEDS() - initialize RGB LEDs on freedom board, must called first!
+  13:../Sources/processor_specific_functions/K40/misc.c ****  * 	xLED_Toggle() - Turn On/Off x LED, where x=R,G,B
+  14:../Sources/processor_specific_functions/K40/misc.c ****  *  xLED_Off	  - Turn Off x LED where x=R,G,B
+  15:../Sources/processor_specific_functions/K40/misc.c ****  *  xLED_On		  - Turn On x LED where x=R,G,B
+  16:../Sources/processor_specific_functions/K40/misc.c ****  *  
+  17:../Sources/processor_specific_functions/K40/misc.c ****  * ------------------------------------------------------------------------------------------------
+  18:../Sources/processor_specific_functions/K40/misc.c ****  *  initTimer0 - setup timer module TPM1, #define PID_frequency 400	is the frequency
+  19:../Sources/processor_specific_functions/K40/misc.c ****  *  initTimer1 - setup timer module TPM2, #define LOG_frequency 400	is the frequencz
+  20:../Sources/processor_specific_functions/K40/misc.c ****  *  
+  21:../Sources/processor_specific_functions/K40/misc.c ****  * Created by Norbi 2015.11
+  22:../Sources/processor_specific_functions/K40/misc.c ****  */
+  23:../Sources/processor_specific_functions/K40/misc.c **** 
+  24:../Sources/processor_specific_functions/K40/misc.c **** void init_Ticker()	//Timer modul, idõmérési célokra
+  25:../Sources/processor_specific_functions/K40/misc.c **** {
+  99              		.loc 1 25 0
+ 100              		.cfi_startproc
+ 101              		@ args = 0, pretend = 0, frame = 0
+ 102              		@ frame_needed = 1, uses_anonymous_args = 0
+ 103              		@ link register save eliminated.
+ 104 0000 80B4     		push	{r7}
+ 105              	.LCFI0:
+ 106              		.cfi_def_cfa_offset 4
+ 107              		.cfi_offset 7, -4
+ 108 0002 00AF     		add	r7, sp, #0
+ 109              	.LCFI1:
+ 110              		.cfi_def_cfa_register 7
+  26:../Sources/processor_specific_functions/K40/misc.c **** 	/*Enable Timer, Value are in PIT_CVALn register, prescaler is 
+  27:../Sources/processor_specific_functions/K40/misc.c **** 	  PIT is downcounting from
+  28:../Sources/processor_specific_functions/K40/misc.c **** 	  1s = 2 990 428 value in counter with prescaler 16 - my mesurement
+  29:../Sources/processor_specific_functions/K40/misc.c **** 	  48Mhz/16 = 48 000 000/16=3 000 000 novekedes 1masodperc alatt, maximum 0,02184533s merese utanna
+  30:../Sources/processor_specific_functions/K40/misc.c **** 	*/
+  31:../Sources/processor_specific_functions/K40/misc.c **** 	SIM_SCGC6  |= SIM_SCGC6_PIT_MASK;	//Enable clock
+ 111              		.loc 1 31 0
+ 112 0004 4FF4E043 		mov	r3, #28672
+ 113 0008 C4F20403 		movt	r3, 16388
+ 114 000c 4FF4E042 		mov	r2, #28672
+ 115 0010 C4F20402 		movt	r2, 16388
+ 116 0014 02F58152 		add	r2, r2, #4128
+ 117 0018 02F11C02 		add	r2, r2, #28
+ 118 001c 1268     		ldr	r2, [r2, #0]
+ 119 001e 42F40002 		orr	r2, r2, #8388608
+ 120 0022 03F58153 		add	r3, r3, #4128
+ 121 0026 03F11C03 		add	r3, r3, #28
+ 122 002a 1A60     		str	r2, [r3, #0]
+  32:../Sources/processor_specific_functions/K40/misc.c **** 	PIT_MCR    = 0;		//Timers are stopped in Debug mode.
+ 123              		.loc 1 32 0
+ 124 002c 4FF4E043 		mov	r3, #28672
+ 125 0030 C4F20303 		movt	r3, 16387
+ 126 0034 4FF00002 		mov	r2, #0
+ 127 0038 1A60     		str	r2, [r3, #0]
+  33:../Sources/processor_specific_functions/K40/misc.c **** 	PIT_MCR    |= PIT_MCR_FRZ_MASK;		//Timers are stopped in Debug mode.
+ 128              		.loc 1 33 0
+ 129 003a 4FF4E043 		mov	r3, #28672
+ 130 003e C4F20303 		movt	r3, 16387
+ 131 0042 4FF4E042 		mov	r2, #28672
+ 132 0046 C4F20302 		movt	r2, 16387
+ 133 004a 1268     		ldr	r2, [r2, #0]
+ 134 004c 42F00102 		orr	r2, r2, #1
+ 135 0050 1A60     		str	r2, [r3, #0]
+  34:../Sources/processor_specific_functions/K40/misc.c **** 	PIT_LDVAL0	= 6553500;
+ 136              		.loc 1 34 0
+ 137 0052 4FF4E043 		mov	r3, #28672
+ 138 0056 C4F20303 		movt	r3, 16387
+ 139 005a 4FF69C72 		movw	r2, #65436
+ 140 005e C0F26302 		movt	r2, 99
+ 141 0062 C3F80021 		str	r2, [r3, #256]
+  35:../Sources/processor_specific_functions/K40/misc.c **** 	PIT_TCTRL0 |= PIT_TCTRL_TEN_MASK;	//Enable Timer 
+ 142              		.loc 1 35 0
+ 143 0066 4FF4E043 		mov	r3, #28672
+ 144 006a C4F20303 		movt	r3, 16387
+ 145 006e 4FF4E042 		mov	r2, #28672
+ 146 0072 C4F20302 		movt	r2, 16387
+ 147 0076 D2F80821 		ldr	r2, [r2, #264]
+ 148 007a 42F00102 		orr	r2, r2, #1
+ 149 007e C3F80821 		str	r2, [r3, #264]
+  36:../Sources/processor_specific_functions/K40/misc.c **** }
+ 150              		.loc 1 36 0
+ 151 0082 BD46     		mov	sp, r7
+ 152 0084 80BC     		pop	{r7}
+ 153 0086 7047     		bx	lr
+ 154              		.cfi_endproc
+ 155              	.LFE0:
+ 157              		.align	2
+ 158              		.global	RTC
+ 159              		.thumb
+ 160              		.thumb_func
+ 162              	RTC:
+ 163              	.LFB1:
+  37:../Sources/processor_specific_functions/K40/misc.c **** 
+  38:../Sources/processor_specific_functions/K40/misc.c **** void RTC()		//Increment RTC_TSR register every second	KL25
+  39:../Sources/processor_specific_functions/K40/misc.c **** {
+ 164              		.loc 1 39 0
+ 165              		.cfi_startproc
+ 166              		@ args = 0, pretend = 0, frame = 0
+ 167              		@ frame_needed = 1, uses_anonymous_args = 0
+ 168 0088 80B5     		push	{r7, lr}
+ 169              	.LCFI2:
+ 170              		.cfi_def_cfa_offset 8
+ 171              		.cfi_offset 7, -8
+ 172              		.cfi_offset 14, -4
+ 173 008a 00AF     		add	r7, sp, #0
+ 174              	.LCFI3:
+ 175              		.cfi_def_cfa_register 7
+  40:../Sources/processor_specific_functions/K40/misc.c **** 	
+  41:../Sources/processor_specific_functions/K40/misc.c **** 	SIM_SCGC6 |= SIM_SCGC6_RTC_MASK;	//enable clock to RTC
+ 176              		.loc 1 41 0
+ 177 008c 4FF4E043 		mov	r3, #28672
+ 178 0090 C4F20403 		movt	r3, 16388
+ 179 0094 4FF4E042 		mov	r2, #28672
+ 180 0098 C4F20402 		movt	r2, 16388
+ 181 009c 02F58152 		add	r2, r2, #4128
+ 182 00a0 02F11C02 		add	r2, r2, #28
+ 183 00a4 1268     		ldr	r2, [r2, #0]
+ 184 00a6 42F00052 		orr	r2, r2, #536870912
+ 185 00aa 03F58153 		add	r3, r3, #4128
+ 186 00ae 03F11C03 		add	r3, r3, #28
+ 187 00b2 1A60     		str	r2, [r3, #0]
+  42:../Sources/processor_specific_functions/K40/misc.c **** 	RTC_TSR  = 1;	//Clear the time invalid flag (TIF)
+ 188              		.loc 1 42 0
+ 189 00b4 4FF45043 		mov	r3, #53248
+ 190 00b8 C4F20303 		movt	r3, 16387
+ 191 00bc 4FF00102 		mov	r2, #1
+ 192 00c0 1A60     		str	r2, [r3, #0]
+  43:../Sources/processor_specific_functions/K40/misc.c **** 	RTC_CR |= RTC_CR_OSCE_MASK;
+ 193              		.loc 1 43 0
+ 194 00c2 4FF45043 		mov	r3, #53248
+ 195 00c6 C4F20303 		movt	r3, 16387
+ 196 00ca 4FF45042 		mov	r2, #53248
+ 197 00ce C4F20302 		movt	r2, 16387
+ 198 00d2 1269     		ldr	r2, [r2, #16]
+ 199 00d4 42F48072 		orr	r2, r2, #256
+ 200 00d8 1A61     		str	r2, [r3, #16]
+  44:../Sources/processor_specific_functions/K40/misc.c **** 	Delay_mS(100);
+ 201              		.loc 1 44 0
+ 202 00da 4FF06400 		mov	r0, #100
+ 203 00de FFF7FEFF 		bl	Delay_mS
+  45:../Sources/processor_specific_functions/K40/misc.c **** 	RTC_SR |= RTC_SR_TCE_MASK;
+ 204              		.loc 1 45 0
+ 205 00e2 4FF45043 		mov	r3, #53248
+ 206 00e6 C4F20303 		movt	r3, 16387
+ 207 00ea 4FF45042 		mov	r2, #53248
+ 208 00ee C4F20302 		movt	r2, 16387
+ 209 00f2 5269     		ldr	r2, [r2, #20]
+ 210 00f4 42F01002 		orr	r2, r2, #16
+ 211 00f8 5A61     		str	r2, [r3, #20]
+  46:../Sources/processor_specific_functions/K40/misc.c **** 	
+  47:../Sources/processor_specific_functions/K40/misc.c **** 
+  48:../Sources/processor_specific_functions/K40/misc.c **** 	/*SIM_SCGC6 |= SIM_SCGC6_RTC_MASK;	Masodperc szamlalo
+  49:../Sources/processor_specific_functions/K40/misc.c **** 	RTC_CR |= RTC_CR_OSCE_MASK;
+  50:../Sources/processor_specific_functions/K40/misc.c **** 	Delay_mS(100);
+  51:../Sources/processor_specific_functions/K40/misc.c **** 	RTC_SR = 0;
+  52:../Sources/processor_specific_functions/K40/misc.c **** 	RTC_TSR =  0;
+  53:../Sources/processor_specific_functions/K40/misc.c **** 	RTC_SR |= RTC_SR_TCE_MASK;*/
+  54:../Sources/processor_specific_functions/K40/misc.c **** }
+ 212              		.loc 1 54 0
+ 213 00fa 80BD     		pop	{r7, pc}
+ 214              		.cfi_endproc
+ 215              	.LFE1:
+ 217              		.align	2
+ 218              		.global	initTimer0
+ 219              		.thumb
+ 220              		.thumb_func
+ 222              	initTimer0:
+ 223              	.LFB2:
+  55:../Sources/processor_specific_functions/K40/misc.c **** 
+  56:../Sources/processor_specific_functions/K40/misc.c **** 
+  57:../Sources/processor_specific_functions/K40/misc.c **** /*-------------------------------PIT Timer--------------------------------------------------*/
+  58:../Sources/processor_specific_functions/K40/misc.c **** //------------------------------------------------------------------------------------------//
+  59:../Sources/processor_specific_functions/K40/misc.c **** /*------------------------------------------------------------------------------------------*/
+  60:../Sources/processor_specific_functions/K40/misc.c **** /*
+  61:../Sources/processor_specific_functions/K40/misc.c ****  * PIT0 - PID Interrupt
+  62:../Sources/processor_specific_functions/K40/misc.c ****  * PIT1 - SD card write interrupt
+  63:../Sources/processor_specific_functions/K40/misc.c ****  */
+  64:../Sources/processor_specific_functions/K40/misc.c **** 
+  65:../Sources/processor_specific_functions/K40/misc.c **** void initTimer0()		//PIT0 Timer for PID
+  66:../Sources/processor_specific_functions/K40/misc.c **** {
+ 224              		.loc 1 66 0
+ 225              		.cfi_startproc
+ 226              		@ args = 0, pretend = 0, frame = 0
+ 227              		@ frame_needed = 1, uses_anonymous_args = 0
+ 228              		@ link register save eliminated.
+ 229 00fc 80B4     		push	{r7}
+ 230              	.LCFI4:
+ 231              		.cfi_def_cfa_offset 4
+ 232              		.cfi_offset 7, -4
+ 233 00fe 00AF     		add	r7, sp, #0
+ 234              	.LCFI5:
+ 235              		.cfi_def_cfa_register 7
+  67:../Sources/processor_specific_functions/K40/misc.c **** 	SIM_SCGC6 |= SIM_SCGC6_PIT_MASK;
+ 236              		.loc 1 67 0
+ 237 0100 4FF4E043 		mov	r3, #28672
+ 238 0104 C4F20403 		movt	r3, 16388
+ 239 0108 4FF4E042 		mov	r2, #28672
+ 240 010c C4F20402 		movt	r2, 16388
+ 241 0110 02F58152 		add	r2, r2, #4128
+ 242 0114 02F11C02 		add	r2, r2, #28
+ 243 0118 1268     		ldr	r2, [r2, #0]
+ 244 011a 42F40002 		orr	r2, r2, #8388608
+ 245 011e 03F58153 		add	r3, r3, #4128
+ 246 0122 03F11C03 		add	r3, r3, #28
+ 247 0126 1A60     		str	r2, [r3, #0]
+  68:../Sources/processor_specific_functions/K40/misc.c **** 	PIT_MCR = PIT_MCR_FRZ_MASK;		// Enable PIT module clock with debug freeze
+ 248              		.loc 1 68 0
+ 249 0128 4FF4E043 		mov	r3, #28672
+ 250 012c C4F20303 		movt	r3, 16387
+ 251 0130 4FF00102 		mov	r2, #1
+ 252 0134 1A60     		str	r2, [r3, #0]
+  69:../Sources/processor_specific_functions/K40/misc.c **** 	PIT_LDVAL0 = CORE_CLOCK / PIT0_OVERFLOW_FREQUENCY;	// Calculate and Load timer reset value
+ 253              		.loc 1 69 0
+ 254 0136 4FF4E043 		mov	r3, #28672
+ 255 013a C4F20303 		movt	r3, 16387
+ 256 013e 4AF68012 		movw	r2, #43392
+ 257 0142 C0F20302 		movt	r2, 3
+ 258 0146 C3F80021 		str	r2, [r3, #256]
+  70:../Sources/processor_specific_functions/K40/misc.c **** 	PIT_TCTRL0 = PIT_TCTRL_TIE_MASK;	// Enable timer interrupt
+ 259              		.loc 1 70 0
+ 260 014a 4FF4E043 		mov	r3, #28672
+ 261 014e C4F20303 		movt	r3, 16387
+ 262 0152 4FF00202 		mov	r2, #2
+ 263 0156 C3F80821 		str	r2, [r3, #264]
+  71:../Sources/processor_specific_functions/K40/misc.c **** //	PIT0_TCTRL0 |= PIT_TCTRL_TEN_MASK;	// Enable timer
+  72:../Sources/processor_specific_functions/K40/misc.c **** }
+ 264              		.loc 1 72 0
+ 265 015a BD46     		mov	sp, r7
+ 266 015c 80BC     		pop	{r7}
+ 267 015e 7047     		bx	lr
+ 268              		.cfi_endproc
+ 269              	.LFE2:
+ 271              		.align	2
+ 272              		.global	initTimer1
+ 273              		.thumb
+ 274              		.thumb_func
+ 276              	initTimer1:
+ 277              	.LFB3:
+  73:../Sources/processor_specific_functions/K40/misc.c **** 
+  74:../Sources/processor_specific_functions/K40/misc.c **** void initTimer1()		//TPM2 Timer for SDcard save
+  75:../Sources/processor_specific_functions/K40/misc.c **** {
+ 278              		.loc 1 75 0
+ 279              		.cfi_startproc
+ 280              		@ args = 0, pretend = 0, frame = 0
+ 281              		@ frame_needed = 1, uses_anonymous_args = 0
+ 282              		@ link register save eliminated.
+ 283 0160 80B4     		push	{r7}
+ 284              	.LCFI6:
+ 285              		.cfi_def_cfa_offset 4
+ 286              		.cfi_offset 7, -4
+ 287 0162 00AF     		add	r7, sp, #0
+ 288              	.LCFI7:
+ 289              		.cfi_def_cfa_register 7
+  76:../Sources/processor_specific_functions/K40/misc.c **** 	SIM_SCGC6 |= SIM_SCGC6_PIT_MASK;
+ 290              		.loc 1 76 0
+ 291 0164 4FF4E043 		mov	r3, #28672
+ 292 0168 C4F20403 		movt	r3, 16388
+ 293 016c 4FF4E042 		mov	r2, #28672
+ 294 0170 C4F20402 		movt	r2, 16388
+ 295 0174 02F58152 		add	r2, r2, #4128
+ 296 0178 02F11C02 		add	r2, r2, #28
+ 297 017c 1268     		ldr	r2, [r2, #0]
+ 298 017e 42F40002 		orr	r2, r2, #8388608
+ 299 0182 03F58153 		add	r3, r3, #4128
+ 300 0186 03F11C03 		add	r3, r3, #28
+ 301 018a 1A60     		str	r2, [r3, #0]
+  77:../Sources/processor_specific_functions/K40/misc.c **** 	PIT_MCR = PIT_MCR_FRZ_MASK;		// Enable PIT module clock with debug freeze	
+ 302              		.loc 1 77 0
+ 303 018c 4FF4E043 		mov	r3, #28672
+ 304 0190 C4F20303 		movt	r3, 16387
+ 305 0194 4FF00102 		mov	r2, #1
+ 306 0198 1A60     		str	r2, [r3, #0]
+  78:../Sources/processor_specific_functions/K40/misc.c **** 	PIT_LDVAL1 = CORE_CLOCK / PIT1_OVERFLOW_FREQUENCY;	// Calculate and Load timer reset value
+ 307              		.loc 1 78 0
+ 308 019a 4FF4E043 		mov	r3, #28672
+ 309 019e C4F20303 		movt	r3, 16387
+ 310 01a2 4AF68012 		movw	r2, #43392
+ 311 01a6 C0F20302 		movt	r2, 3
+ 312 01aa C3F81021 		str	r2, [r3, #272]
+  79:../Sources/processor_specific_functions/K40/misc.c **** 	PIT_TCTRL1 = PIT_TCTRL_TIE_MASK;	// Enable timer interrupt
+ 313              		.loc 1 79 0
+ 314 01ae 4FF4E043 		mov	r3, #28672
+ 315 01b2 C4F20303 		movt	r3, 16387
+ 316 01b6 4FF00202 		mov	r2, #2
+ 317 01ba C3F81821 		str	r2, [r3, #280]
+  80:../Sources/processor_specific_functions/K40/misc.c **** //	PIT_TCTRL1 |= PIT_TCTRL_TEN_MASK;	// Enable timer
+  81:../Sources/processor_specific_functions/K40/misc.c **** }
+ 318              		.loc 1 81 0
+ 319 01be BD46     		mov	sp, r7
+ 320 01c0 80BC     		pop	{r7}
+ 321 01c2 7047     		bx	lr
+ 322              		.cfi_endproc
+ 323              	.LFE3:
+ 325              		.align	2
+ 326              		.global	initBluetooth
+ 327              		.thumb
+ 328              		.thumb_func
+ 330              	initBluetooth:
+ 331              	.LFB4:
+  82:../Sources/processor_specific_functions/K40/misc.c **** 
+  83:../Sources/processor_specific_functions/K40/misc.c **** void initBluetooth()		//Configure interrupt on lost signal
+  84:../Sources/processor_specific_functions/K40/misc.c **** {
+ 332              		.loc 1 84 0
+ 333              		.cfi_startproc
+ 334              		@ args = 0, pretend = 0, frame = 0
+ 335              		@ frame_needed = 1, uses_anonymous_args = 0
+ 336              		@ link register save eliminated.
+ 337 01c4 80B4     		push	{r7}
+ 338              	.LCFI8:
+ 339              		.cfi_def_cfa_offset 4
+ 340              		.cfi_offset 7, -4
+ 341 01c6 00AF     		add	r7, sp, #0
+ 342              	.LCFI9:
+ 343              		.cfi_def_cfa_register 7
+  85:../Sources/processor_specific_functions/K40/misc.c **** 	PORTA_PCR5 = PORT_PCR_MUX(1);
+ 344              		.loc 1 85 0
+ 345 01c8 4FF41043 		mov	r3, #36864
+ 346 01cc C4F20403 		movt	r3, 16388
+ 347 01d0 4FF48072 		mov	r2, #256
+ 348 01d4 5A61     		str	r2, [r3, #20]
+  86:../Sources/processor_specific_functions/K40/misc.c **** 	GPIOA_PDDR &= ~(1<<5);
+ 349              		.loc 1 86 0
+ 350 01d6 4FF47043 		mov	r3, #61440
+ 351 01da C4F20F03 		movt	r3, 16399
+ 352 01de 4FF47042 		mov	r2, #61440
+ 353 01e2 C4F20F02 		movt	r2, 16399
+ 354 01e6 5269     		ldr	r2, [r2, #20]
+ 355 01e8 22F02002 		bic	r2, r2, #32
+ 356 01ec 5A61     		str	r2, [r3, #20]
+  87:../Sources/processor_specific_functions/K40/misc.c **** 	PORTA_PCR5 |= PORT_PCR_IRQC(0b1011);
+ 357              		.loc 1 87 0
+ 358 01ee 4FF41043 		mov	r3, #36864
+ 359 01f2 C4F20403 		movt	r3, 16388
+ 360 01f6 4FF41042 		mov	r2, #36864
+ 361 01fa C4F20402 		movt	r2, 16388
+ 362 01fe 5269     		ldr	r2, [r2, #20]
+ 363 0200 42F43022 		orr	r2, r2, #720896
+ 364 0204 5A61     		str	r2, [r3, #20]
+  88:../Sources/processor_specific_functions/K40/misc.c **** }
+ 365              		.loc 1 88 0
+ 366 0206 BD46     		mov	sp, r7
+ 367 0208 80BC     		pop	{r7}
+ 368 020a 7047     		bx	lr
+ 369              		.cfi_endproc
+ 370              	.LFE4:
+ 372              		.align	2
+ 373              		.global	initRed
+ 374              		.thumb
+ 375              		.thumb_func
+ 377              	initRed:
+ 378              	.LFB5:
+  89:../Sources/processor_specific_functions/K40/misc.c **** 
+  90:../Sources/processor_specific_functions/K40/misc.c **** void initRed()		//A panelon levõ piros LED inicializálása
+  91:../Sources/processor_specific_functions/K40/misc.c **** {
+ 379              		.loc 1 91 0
+ 380              		.cfi_startproc
+ 381              		@ args = 0, pretend = 0, frame = 0
+ 382              		@ frame_needed = 1, uses_anonymous_args = 0
+ 383              		@ link register save eliminated.
+ 384 020c 80B4     		push	{r7}
+ 385              	.LCFI10:
+ 386              		.cfi_def_cfa_offset 4
+ 387              		.cfi_offset 7, -4
+ 388 020e 00AF     		add	r7, sp, #0
+ 389              	.LCFI11:
+ 390              		.cfi_def_cfa_register 7
+  92:../Sources/processor_specific_functions/K40/misc.c **** 	SIM_SCGC5 |= SIM_SCGC5_PORTB_MASK;
+ 391              		.loc 1 92 0
+ 392 0210 4FF4E043 		mov	r3, #28672
+ 393 0214 C4F20403 		movt	r3, 16388
+ 394 0218 4FF4E042 		mov	r2, #28672
+ 395 021c C4F20402 		movt	r2, 16388
+ 396 0220 02F58152 		add	r2, r2, #4128
+ 397 0224 02F11802 		add	r2, r2, #24
+ 398 0228 1268     		ldr	r2, [r2, #0]
+ 399 022a 42F48062 		orr	r2, r2, #1024
+ 400 022e 03F58153 		add	r3, r3, #4128
+ 401 0232 03F11803 		add	r3, r3, #24
+ 402 0236 1A60     		str	r2, [r3, #0]
+  93:../Sources/processor_specific_functions/K40/misc.c **** 	PORTB_PCR18 = PORT_PCR_MUX(1);
+ 403              		.loc 1 93 0
+ 404 0238 4FF42043 		mov	r3, #40960
+ 405 023c C4F20403 		movt	r3, 16388
+ 406 0240 4FF48072 		mov	r2, #256
+ 407 0244 9A64     		str	r2, [r3, #72]
+  94:../Sources/processor_specific_functions/K40/misc.c **** 	GPIOB_PSOR |= 1<<18;
+ 408              		.loc 1 94 0
+ 409 0246 4FF24003 		movw	r3, #61504
+ 410 024a C4F20F03 		movt	r3, 16399
+ 411 024e 4FF24002 		movw	r2, #61504
+ 412 0252 C4F20F02 		movt	r2, 16399
+ 413 0256 5268     		ldr	r2, [r2, #4]
+ 414 0258 42F48022 		orr	r2, r2, #262144
+ 415 025c 5A60     		str	r2, [r3, #4]
+  95:../Sources/processor_specific_functions/K40/misc.c **** 	GPIOB_PDDR |= 1<<18;
+ 416              		.loc 1 95 0
+ 417 025e 4FF24003 		movw	r3, #61504
+ 418 0262 C4F20F03 		movt	r3, 16399
+ 419 0266 4FF24002 		movw	r2, #61504
+ 420 026a C4F20F02 		movt	r2, 16399
+ 421 026e 5269     		ldr	r2, [r2, #20]
+ 422 0270 42F48022 		orr	r2, r2, #262144
+ 423 0274 5A61     		str	r2, [r3, #20]
+  96:../Sources/processor_specific_functions/K40/misc.c **** }
+ 424              		.loc 1 96 0
+ 425 0276 BD46     		mov	sp, r7
+ 426 0278 80BC     		pop	{r7}
+ 427 027a 7047     		bx	lr
+ 428              		.cfi_endproc
+ 429              	.LFE5:
+ 431              		.align	2
+ 432              		.global	initGreen
+ 433              		.thumb
+ 434              		.thumb_func
+ 436              	initGreen:
+ 437              	.LFB6:
+  97:../Sources/processor_specific_functions/K40/misc.c **** 
+  98:../Sources/processor_specific_functions/K40/misc.c **** void initGreen()		//A panelon levõ piros LED inicializálása
+  99:../Sources/processor_specific_functions/K40/misc.c **** {
+ 438              		.loc 1 99 0
+ 439              		.cfi_startproc
+ 440              		@ args = 0, pretend = 0, frame = 0
+ 441              		@ frame_needed = 1, uses_anonymous_args = 0
+ 442              		@ link register save eliminated.
+ 443 027c 80B4     		push	{r7}
+ 444              	.LCFI12:
+ 445              		.cfi_def_cfa_offset 4
+ 446              		.cfi_offset 7, -4
+ 447 027e 00AF     		add	r7, sp, #0
+ 448              	.LCFI13:
+ 449              		.cfi_def_cfa_register 7
+ 100:../Sources/processor_specific_functions/K40/misc.c **** 	SIM_SCGC5 |= SIM_SCGC5_PORTB_MASK;
+ 450              		.loc 1 100 0
+ 451 0280 4FF4E043 		mov	r3, #28672
+ 452 0284 C4F20403 		movt	r3, 16388
+ 453 0288 4FF4E042 		mov	r2, #28672
+ 454 028c C4F20402 		movt	r2, 16388
+ 455 0290 02F58152 		add	r2, r2, #4128
+ 456 0294 02F11802 		add	r2, r2, #24
+ 457 0298 1268     		ldr	r2, [r2, #0]
+ 458 029a 42F48062 		orr	r2, r2, #1024
+ 459 029e 03F58153 		add	r3, r3, #4128
+ 460 02a2 03F11803 		add	r3, r3, #24
+ 461 02a6 1A60     		str	r2, [r3, #0]
+ 101:../Sources/processor_specific_functions/K40/misc.c **** 	PORTB_PCR19 = PORT_PCR_MUX(1);
+ 462              		.loc 1 101 0
+ 463 02a8 4FF42043 		mov	r3, #40960
+ 464 02ac C4F20403 		movt	r3, 16388
+ 465 02b0 4FF48072 		mov	r2, #256
+ 466 02b4 DA64     		str	r2, [r3, #76]
+ 102:../Sources/processor_specific_functions/K40/misc.c **** 	GPIOB_PSOR |= 1<<19;
+ 467              		.loc 1 102 0
+ 468 02b6 4FF24003 		movw	r3, #61504
+ 469 02ba C4F20F03 		movt	r3, 16399
+ 470 02be 4FF24002 		movw	r2, #61504
+ 471 02c2 C4F20F02 		movt	r2, 16399
+ 472 02c6 5268     		ldr	r2, [r2, #4]
+ 473 02c8 42F40022 		orr	r2, r2, #524288
+ 474 02cc 5A60     		str	r2, [r3, #4]
+ 103:../Sources/processor_specific_functions/K40/misc.c **** 	GPIOB_PDDR |= 1<<19;
+ 475              		.loc 1 103 0
+ 476 02ce 4FF24003 		movw	r3, #61504
+ 477 02d2 C4F20F03 		movt	r3, 16399
+ 478 02d6 4FF24002 		movw	r2, #61504
+ 479 02da C4F20F02 		movt	r2, 16399
+ 480 02de 5269     		ldr	r2, [r2, #20]
+ 481 02e0 42F40022 		orr	r2, r2, #524288
+ 482 02e4 5A61     		str	r2, [r3, #20]
+ 104:../Sources/processor_specific_functions/K40/misc.c **** }
+ 483              		.loc 1 104 0
+ 484 02e6 BD46     		mov	sp, r7
+ 485 02e8 80BC     		pop	{r7}
+ 486 02ea 7047     		bx	lr
+ 487              		.cfi_endproc
+ 488              	.LFE6:
+ 490              		.align	2
+ 491              		.global	initBlue
+ 492              		.thumb
+ 493              		.thumb_func
+ 495              	initBlue:
+ 496              	.LFB7:
+ 105:../Sources/processor_specific_functions/K40/misc.c **** 
+ 106:../Sources/processor_specific_functions/K40/misc.c **** void initBlue()		//A panelon levõ piros LED inicializálása, NOT TESTED
+ 107:../Sources/processor_specific_functions/K40/misc.c **** {
+ 497              		.loc 1 107 0
+ 498              		.cfi_startproc
+ 499              		@ args = 0, pretend = 0, frame = 0
+ 500              		@ frame_needed = 1, uses_anonymous_args = 0
+ 501              		@ link register save eliminated.
+ 502 02ec 80B4     		push	{r7}
+ 503              	.LCFI14:
+ 504              		.cfi_def_cfa_offset 4
+ 505              		.cfi_offset 7, -4
+ 506 02ee 00AF     		add	r7, sp, #0
+ 507              	.LCFI15:
+ 508              		.cfi_def_cfa_register 7
+ 108:../Sources/processor_specific_functions/K40/misc.c **** 	SIM_SCGC5 |= SIM_SCGC5_PORTD_MASK;
+ 509              		.loc 1 108 0
+ 510 02f0 4FF4E043 		mov	r3, #28672
+ 511 02f4 C4F20403 		movt	r3, 16388
+ 512 02f8 4FF4E042 		mov	r2, #28672
+ 513 02fc C4F20402 		movt	r2, 16388
+ 514 0300 02F58152 		add	r2, r2, #4128
+ 515 0304 02F11802 		add	r2, r2, #24
+ 516 0308 1268     		ldr	r2, [r2, #0]
+ 517 030a 42F48052 		orr	r2, r2, #4096
+ 518 030e 03F58153 		add	r3, r3, #4128
+ 519 0312 03F11803 		add	r3, r3, #24
+ 520 0316 1A60     		str	r2, [r3, #0]
+ 109:../Sources/processor_specific_functions/K40/misc.c **** 	PORTD_PCR1 = PORT_PCR_MUX(1);
+ 521              		.loc 1 109 0
+ 522 0318 4FF44043 		mov	r3, #49152
+ 523 031c C4F20403 		movt	r3, 16388
+ 524 0320 4FF48072 		mov	r2, #256
+ 525 0324 5A60     		str	r2, [r3, #4]
+ 110:../Sources/processor_specific_functions/K40/misc.c **** 	GPIOD_PSOR |= 1<<1;
+ 526              		.loc 1 110 0
+ 527 0326 4FF2C003 		movw	r3, #61632
+ 528 032a C4F20F03 		movt	r3, 16399
+ 529 032e 4FF2C002 		movw	r2, #61632
+ 530 0332 C4F20F02 		movt	r2, 16399
+ 531 0336 5268     		ldr	r2, [r2, #4]
+ 532 0338 42F00202 		orr	r2, r2, #2
+ 533 033c 5A60     		str	r2, [r3, #4]
+ 111:../Sources/processor_specific_functions/K40/misc.c **** 	GPIOD_PDDR |= 1<<1;
+ 534              		.loc 1 111 0
+ 535 033e 4FF2C003 		movw	r3, #61632
+ 536 0342 C4F20F03 		movt	r3, 16399
+ 537 0346 4FF2C002 		movw	r2, #61632
+ 538 034a C4F20F02 		movt	r2, 16399
+ 539 034e 5269     		ldr	r2, [r2, #20]
+ 540 0350 42F00202 		orr	r2, r2, #2
+ 541 0354 5A61     		str	r2, [r3, #20]
+ 112:../Sources/processor_specific_functions/K40/misc.c **** }
+ 542              		.loc 1 112 0
+ 543 0356 BD46     		mov	sp, r7
+ 544 0358 80BC     		pop	{r7}
+ 545 035a 7047     		bx	lr
+ 546              		.cfi_endproc
+ 547              	.LFE7:
+ 549              		.align	2
+ 550              		.global	initLEDs
+ 551              		.thumb
+ 552              		.thumb_func
+ 554              	initLEDs:
+ 555              	.LFB8:
+ 113:../Sources/processor_specific_functions/K40/misc.c **** void initLEDs()
+ 114:../Sources/processor_specific_functions/K40/misc.c **** {
+ 556              		.loc 1 114 0
+ 557              		.cfi_startproc
+ 558              		@ args = 0, pretend = 0, frame = 0
+ 559              		@ frame_needed = 1, uses_anonymous_args = 0
+ 560 035c 80B5     		push	{r7, lr}
+ 561              	.LCFI16:
+ 562              		.cfi_def_cfa_offset 8
+ 563              		.cfi_offset 7, -8
+ 564              		.cfi_offset 14, -4
+ 565 035e 00AF     		add	r7, sp, #0
+ 566              	.LCFI17:
+ 567              		.cfi_def_cfa_register 7
+ 115:../Sources/processor_specific_functions/K40/misc.c **** 	initRed();
+ 568              		.loc 1 115 0
+ 569 0360 FFF7FEFF 		bl	initRed
+ 116:../Sources/processor_specific_functions/K40/misc.c **** 	initGreen();
+ 570              		.loc 1 116 0
+ 571 0364 FFF7FEFF 		bl	initGreen
+ 117:../Sources/processor_specific_functions/K40/misc.c **** 	initBlue();
+ 572              		.loc 1 117 0
+ 573 0368 FFF7FEFF 		bl	initBlue
+ 118:../Sources/processor_specific_functions/K40/misc.c **** }
+ 574              		.loc 1 118 0
+ 575 036c 80BD     		pop	{r7, pc}
+ 576              		.cfi_endproc
+ 577              	.LFE8:
+ 579              	.Letext0:
+ 580              		.file 2 "c:\\freescale\\cw mcu v10.6\\cross_tools\\arm-none-eabi-gcc-4_7_3\\bin\\../lib/gcc/arm-no
+ 581              		.file 3 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions\\K40\
+ 582              		.file 4 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/integer.h"
+ 583              		.file 5 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/ff.h"
+ 584              		.file 6 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/i
+ 585              		.file 7 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/d
+ 586              		.file 8 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/interrupts.h"
+ 587              		.file 9 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/SDcard.h"
+ 588              		.file 10 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/MPU6050.h"
+ 589              		.file 11 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/BMP180.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 misc.c
+                            *COM*:00000004 I2C_Variable
+                            *COM*:00000001 uart_data
+                            *COM*:0000003c adc_data
+                            *COM*:00000004 Kp
+                            *COM*:00000004 Kd
+                            *COM*:00000004 Ki
+                            *COM*:00000004 zKp
+                            *COM*:00000004 zKd
+                            *COM*:00000004 basepower
+                            *COM*:00000004 setpoint_x
+                            *COM*:00000004 setpoint_y
+                            *COM*:00000004 setpoint_z
+                            *COM*:00000004 setpoint_alt
+                            *COM*:00000004 batt1_vol
+                            *COM*:00000004 batt2_vol
+                            *COM*:00000004 batt3_vol
+                            *COM*:00000004 BATT_VOLT
+                            *COM*:00000230 FatFs
+                            *COM*:00000224 fil
+                            *COM*:00000002 GYRO_XOUT_OFFSET
+                            *COM*:00000002 GYRO_YOUT_OFFSET
+                            *COM*:00000002 GYRO_ZOUT_OFFSET
+                            *COM*:00000002 ACCEL_XOUT_OFFSET
+                            *COM*:00000002 ACCEL_YOUT_OFFSET
+                            *COM*:00000002 ACCEL_ZOUT_OFFSET
+                            *COM*:00000004 GYRO_XANGLE
+                            *COM*:00000004 GYRO_YANGLE
+                            *COM*:00000004 GYRO_ZANGLE
+                            *COM*:00000002 GYRO_XOUT
+                            *COM*:00000002 GYRO_YOUT
+                            *COM*:00000002 GYRO_ZOUT
+                            *COM*:00000002 ACCEL_XOUT
+                            *COM*:00000002 ACCEL_YOUT
+                            *COM*:00000002 ACCEL_ZOUT
+                            *COM*:00000004 ACCEL_Gx
+                            *COM*:00000004 ACCEL_Gy
+                            *COM*:00000004 ACCEL_Gz
+                            *COM*:00000008 ACCEL
+                            *COM*:00000004 GYRO_XRATE
+                            *COM*:00000004 GYRO_YRATE
+                            *COM*:00000004 GYRO_ZRATE
+                            *COM*:00000004 ACCEL_XANGLE
+                            *COM*:00000004 ACCEL_YANGLE
+                            *COM*:00000004 gyro_xsensitivity
+                            *COM*:00000004 gyro_ysensitivity
+                            *COM*:00000004 gyro_zsensitivity
+                            *COM*:00000004 a
+                            *COM*:00000004 dt
+                            *COM*:00000004 COMPLEMENTARY_XANGLE
+                            *COM*:00000004 COMPLEMENTARY_YANGLE
+                            *COM*:0000000c filter_xterm
+                            *COM*:0000000c filter_yterm
+                            *COM*:00000004 XANGLE_OFFSET
+                            *COM*:00000004 YANGLE_OFFSET
+                            *COM*:00000004 TEMP
+                            *COM*:00000004 timeConstant
+                            *COM*:0000000e MPU_6050_buffer
+                            *COM*:00000002 AC1
+                            *COM*:00000002 AC2
+                            *COM*:00000002 AC3
+                            *COM*:00000002 B1
+                            *COM*:00000002 B2
+                            *COM*:00000002 MB
+                            *COM*:00000002 MC
+                            *COM*:00000002 MD
+                            *COM*:00000002 AC4
+                            *COM*:00000002 AC5
+                            *COM*:00000002 AC6
+                            *COM*:00000004 T
+                            *COM*:00000004 absolute_altittude
+                            *COM*:00000004 start_altittude
+                            *COM*:00000004 relative_altittude
+                            *COM*:00000004 P
+C:\Users\Norbert\AppData\Local\Temp\ccKdQMPh.s:91     .text:00000000 $t
+C:\Users\Norbert\AppData\Local\Temp\ccKdQMPh.s:96     .text:00000000 init_Ticker
+C:\Users\Norbert\AppData\Local\Temp\ccKdQMPh.s:162    .text:00000088 RTC
+C:\Users\Norbert\AppData\Local\Temp\ccKdQMPh.s:222    .text:000000fc initTimer0
+C:\Users\Norbert\AppData\Local\Temp\ccKdQMPh.s:276    .text:00000160 initTimer1
+C:\Users\Norbert\AppData\Local\Temp\ccKdQMPh.s:330    .text:000001c4 initBluetooth
+C:\Users\Norbert\AppData\Local\Temp\ccKdQMPh.s:377    .text:0000020c initRed
+C:\Users\Norbert\AppData\Local\Temp\ccKdQMPh.s:436    .text:0000027c initGreen
+C:\Users\Norbert\AppData\Local\Temp\ccKdQMPh.s:495    .text:000002ec initBlue
+C:\Users\Norbert\AppData\Local\Temp\ccKdQMPh.s:554    .text:0000035c initLEDs
+                     .debug_frame:00000010 $d
+                           .group:00000000 wm4.1.6111752e1bd0a440bd5209819217ec83
+                           .group:00000000 wm4.init.h.9.6215b16d96e0eb787ba872245cf7290f
+                           .group:00000000 wm4.stdint.h.10.90b695f550ca6cc3fb08fa83baf01e05
+                           .group:00000000 wm4.newlib.h.8.a9901dc52d1357e3e94003403d43f8b5
+                           .group:00000000 wm4.config.h.193.5fb8ef056cdff92dec3dee9552839d8c
+                           .group:00000000 wm4._ansi.h.23.95dee4059009fe3ab635a191bb73dc66
+                           .group:00000000 wm4.stdio.h.31.f48311dde756a2aec27351b58a280fb9
+                           .group:00000000 wm4.stddef.h.187.9e651b6b8b16e149c1353259404973ea
+                           .group:00000000 wm4.stdarg.h.34.3a23a216c0c293b3d2ea2e89281481e6
+                           .group:00000000 wm4._default_types.h.6.1dbd2e581fd590860c7c17f21d147e91
+                           .group:00000000 wm4.lock.h.2.9bc98482741e5e2a9450b12934a684ea
+                           .group:00000000 wm4.stddef.h.349.31f4c5baff3fa2689010b32028da9c47
+                           .group:00000000 wm4.reent.h.16.9e42f0e588b85e70b2bf6572af57ce64
+                           .group:00000000 wm4.types.h.23.0d949686bbcadd1621462d4fa1f884f9
+                           .group:00000000 wm4.stddef.h.40.cf962ebbec441b3ac67502735f0765db
+                           .group:00000000 wm4.types.h.2.e9cec8c90ab35f77d9f499e06ae02400
+                           .group:00000000 wm4.types.h.80.1f2c84c0d57dd52dd9936095d9ac218e
+                           .group:00000000 wm4.stdio.h.2.4aa87247282eca6c8f36f9de33d8df1a
+                           .group:00000000 wm4.stdio.h.63.dfdea6580b080784d08faace69b6ed76
+                           .group:00000000 wm4.stdarg.h.31.fa591a4b1df9e413e9f5b8097f9ae89d
+                           .group:00000000 wm4.string.h.8.ef946ad0bc9ad5c970c365dcd1fc4b0a
+                           .group:00000000 wm4.stddef.h.161.e50ff8a9d5d1abbc15641da28ac571bf
+                           .group:00000000 wm4.string.h.86.d5c872ff52e2712c985b588a0ef39f3c
+                           .group:00000000 wm4.math.h.35.07c7797db9e98c6f49a07908290b45ed
+                           .group:00000000 wm4.arm_cm4.h.9.78faaf62d86eb97a647af1ebafb07a11
+                           .group:00000000 wm4.SysTick.h.3.6f4da7f8fb96288ed4bbb4cee119df1f
+                           .group:00000000 wm4.Clock.h.3.a53d5ed3b11823f56a6aca141130352b
+                           .group:00000000 wm4.MK40X256VMD100.h.96.72dc045102cc699ba440f8fa0b280550
+                           .group:00000000 wm4.i2c.h.1.3f1b2e4dcc6bdba977be59d8a51e893b
+                           .group:00000000 wm4.misc.h.9.baaf43d8702a540222c668d182f75475
+                           .group:00000000 wm4.PWM.h.9.e42d58c40ee648255e53f4e4738007a9
+                           .group:00000000 wm4.SPI.h.9.60f1cb4029034538da62861db028322d
+                           .group:00000000 wm4.ADC.h.9.e7a31df2daef26f2c286655e5d3c10dd
+                           .group:00000000 wm4.dma.h.9.96660ff1bef0aa806d84c8ba8408982d
+                           .group:00000000 wm4.main.h.9.81396d5b502c9a6873858dab1b488864
+                           .group:00000000 wm4.ffconf.h.6.276819a3a49a7ae37f54890eecb94e63
+                           .group:00000000 wm4.ff.h.45.a981520ef44c98f5ccd354741039de67
+                           .group:00000000 wm4.SDcard.h.13.e5067f919396cc348c323ee4b231e5ee
+                           .group:00000000 wm4.diskio.h.6.da50361b93ad53e5f0de9110dc9ad28d
+                           .group:00000000 wm4.MPU6050.h.9.b96a5ef9f24cf228b62beca78b916cfc
+                           .group:00000000 wm4.BMP180.h.9.1e786092deac7b246665fc1406fb0f7b
+
+UNDEFINED SYMBOLS
+Delay_mS

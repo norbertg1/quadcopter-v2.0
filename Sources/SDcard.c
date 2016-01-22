@@ -36,7 +36,7 @@
 char command(char cmd, int arg)
 {
 	CS_LOW
-	uint16 i;
+	int i;
 	spi_send( cmd );		//
 	spi_send(arg>>24);
 	spi_send(arg>>16);

@@ -1,0 +1,791 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"uart.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	I2C_Variable,4,4
+  19              		.comm	uart_data,1,1
+  20              		.comm	adc_data,60,4
+  21              		.comm	Kp,4,4
+  22              		.comm	Kd,4,4
+  23              		.comm	Ki,4,4
+  24              		.comm	zKp,4,4
+  25              		.comm	zKd,4,4
+  26              		.comm	basepower,4,4
+  27              		.comm	setpoint_x,4,4
+  28              		.comm	setpoint_y,4,4
+  29              		.comm	setpoint_z,4,4
+  30              		.comm	setpoint_alt,4,4
+  31              		.comm	batt1_vol,4,4
+  32              		.comm	batt2_vol,4,4
+  33              		.comm	batt3_vol,4,4
+  34              		.comm	BATT_VOLT,4,4
+  35              		.comm	FatFs,560,4
+  36              		.comm	fil,548,4
+  37              		.comm	GYRO_XOUT_OFFSET,2,2
+  38              		.comm	GYRO_YOUT_OFFSET,2,2
+  39              		.comm	GYRO_ZOUT_OFFSET,2,2
+  40              		.comm	ACCEL_XOUT_OFFSET,2,2
+  41              		.comm	ACCEL_YOUT_OFFSET,2,2
+  42              		.comm	ACCEL_ZOUT_OFFSET,2,2
+  43              		.comm	GYRO_XANGLE,4,4
+  44              		.comm	GYRO_YANGLE,4,4
+  45              		.comm	GYRO_ZANGLE,4,4
+  46              		.comm	GYRO_XOUT,2,2
+  47              		.comm	GYRO_YOUT,2,2
+  48              		.comm	GYRO_ZOUT,2,2
+  49              		.comm	ACCEL_XOUT,2,2
+  50              		.comm	ACCEL_YOUT,2,2
+  51              		.comm	ACCEL_ZOUT,2,2
+  52              		.comm	ACCEL_Gx,4,4
+  53              		.comm	ACCEL_Gy,4,4
+  54              		.comm	ACCEL_Gz,4,4
+  55              		.comm	ACCEL,8,8
+  56              		.comm	GYRO_XRATE,4,4
+  57              		.comm	GYRO_YRATE,4,4
+  58              		.comm	GYRO_ZRATE,4,4
+  59              		.comm	ACCEL_XANGLE,4,4
+  60              		.comm	ACCEL_YANGLE,4,4
+  61              		.comm	gyro_xsensitivity,4,4
+  62              		.comm	gyro_ysensitivity,4,4
+  63              		.comm	gyro_zsensitivity,4,4
+  64              		.comm	a,4,4
+  65              		.comm	dt,4,4
+  66              		.comm	COMPLEMENTARY_XANGLE,4,4
+  67              		.comm	COMPLEMENTARY_YANGLE,4,4
+  68              		.comm	filter_xterm,12,4
+  69              		.comm	filter_yterm,12,4
+  70              		.comm	XANGLE_OFFSET,4,4
+  71              		.comm	YANGLE_OFFSET,4,4
+  72              		.comm	TEMP,4,4
+  73              		.comm	timeConstant,4,4
+  74              		.comm	MPU_6050_buffer,14,4
+  75              		.comm	AC1,2,2
+  76              		.comm	AC2,2,2
+  77              		.comm	AC3,2,2
+  78              		.comm	B1,2,2
+  79              		.comm	B2,2,2
+  80              		.comm	MB,2,2
+  81              		.comm	MC,2,2
+  82              		.comm	MD,2,2
+  83              		.comm	AC4,2,2
+  84              		.comm	AC5,2,2
+  85              		.comm	AC6,2,2
+  86              		.comm	T,4,4
+  87              		.comm	absolute_altittude,4,4
+  88              		.comm	start_altittude,4,4
+  89              		.comm	relative_altittude,4,4
+  90              		.comm	P,4,4
+  91              		.align	2
+  92              		.global	InitUARTs
+  93              		.thumb
+  94              		.thumb_func
+  96              	InitUARTs:
+  97              	.LFB0:
+  98              		.file 1 "../Sources/processor_specific_functions/K40/uart.c"
+   1:../Sources/processor_specific_functions/K40/uart.c **** /*
+   2:../Sources/processor_specific_functions/K40/uart.c ****  * File:        uart.c
+   3:../Sources/processor_specific_functions/K40/uart.c ****  * Purpose:     Provide common UART routines for serial IO
+   4:../Sources/processor_specific_functions/K40/uart.c ****  *
+   5:../Sources/processor_specific_functions/K40/uart.c ****  * Notes:       
+   6:../Sources/processor_specific_functions/K40/uart.c ****  *              
+   7:../Sources/processor_specific_functions/K40/uart.c ****  */
+   8:../Sources/processor_specific_functions/K40/uart.c **** 
+   9:../Sources/processor_specific_functions/K40/uart.c **** #include "init.h"
+  10:../Sources/processor_specific_functions/K40/uart.c **** 
+  11:../Sources/processor_specific_functions/K40/uart.c **** typedef unsigned short uint16;
+  12:../Sources/processor_specific_functions/K40/uart.c **** typedef unsigned char uint8;
+  13:../Sources/processor_specific_functions/K40/uart.c **** 
+  14:../Sources/processor_specific_functions/K40/uart.c **** 
+  15:../Sources/processor_specific_functions/K40/uart.c **** void InitUARTs(){
+  99              		.loc 1 15 0
+ 100              		.cfi_startproc
+ 101              		@ args = 0, pretend = 0, frame = 0
+ 102              		@ frame_needed = 1, uses_anonymous_args = 0
+ 103 0000 80B5     		push	{r7, lr}
+ 104              	.LCFI0:
+ 105              		.cfi_def_cfa_offset 8
+ 106              		.cfi_offset 7, -8
+ 107              		.cfi_offset 14, -4
+ 108 0002 00AF     		add	r7, sp, #0
+ 109              	.LCFI1:
+ 110              		.cfi_def_cfa_register 7
+  16:../Sources/processor_specific_functions/K40/uart.c **** 	uart_init (UART0_BASE_PTR, CORE_CLOCK/1000, 115200);
+ 111              		.loc 1 16 0
+ 112 0004 4FF42040 		mov	r0, #40960
+ 113 0008 C4F20600 		movt	r0, 16390
+ 114 000c 4FF4EE41 		mov	r1, #30464
+ 115 0010 C0F20101 		movt	r1, 1
+ 116 0014 4FF4E132 		mov	r2, #115200
+ 117 0018 FFF7FEFF 		bl	uart_init
+  17:../Sources/processor_specific_functions/K40/uart.c **** 
+  18:../Sources/processor_specific_functions/K40/uart.c **** }
+ 118              		.loc 1 18 0
+ 119 001c 80BD     		pop	{r7, pc}
+ 120              		.cfi_endproc
+ 121              	.LFE0:
+ 123 001e 00BF     		.align	2
+ 124              		.global	uart_init
+ 125              		.thumb
+ 126              		.thumb_func
+ 128              	uart_init:
+ 129              	.LFB1:
+  19:../Sources/processor_specific_functions/K40/uart.c **** 
+  20:../Sources/processor_specific_functions/K40/uart.c **** /********************************************************************/
+  21:../Sources/processor_specific_functions/K40/uart.c **** /*
+  22:../Sources/processor_specific_functions/K40/uart.c ****  * Initialize the UART for 8N1 operation, interrupts disabled, and
+  23:../Sources/processor_specific_functions/K40/uart.c ****  * no hardware flow-control
+  24:../Sources/processor_specific_functions/K40/uart.c ****  *
+  25:../Sources/processor_specific_functions/K40/uart.c ****  * NOTE: Since the UARTs are pinned out in multiple locations on most
+  26:../Sources/processor_specific_functions/K40/uart.c ****  *       Kinetis devices, this driver does not enable UART pin functions.
+  27:../Sources/processor_specific_functions/K40/uart.c ****  *       The desired pins should be enabled before calling this init function.
+  28:../Sources/processor_specific_functions/K40/uart.c ****  *
+  29:../Sources/processor_specific_functions/K40/uart.c ****  * Parameters:
+  30:../Sources/processor_specific_functions/K40/uart.c ****  *  uartch      UART channel to initialize
+  31:../Sources/processor_specific_functions/K40/uart.c ****  *  sysclk      UART module Clock in kHz(used to calculate baud)
+  32:../Sources/processor_specific_functions/K40/uart.c ****  *  baud        UART baud rate
+  33:../Sources/processor_specific_functions/K40/uart.c ****  */
+  34:../Sources/processor_specific_functions/K40/uart.c **** void uart_init (UART_MemMapPtr uartch, int sysclk, int baud)
+  35:../Sources/processor_specific_functions/K40/uart.c **** {
+ 130              		.loc 1 35 0
+ 131              		.cfi_startproc
+ 132              		@ args = 0, pretend = 0, frame = 24
+ 133              		@ frame_needed = 1, uses_anonymous_args = 0
+ 134              		@ link register save eliminated.
+ 135 0020 90B4     		push	{r4, r7}
+ 136              	.LCFI2:
+ 137              		.cfi_def_cfa_offset 8
+ 138              		.cfi_offset 4, -8
+ 139              		.cfi_offset 7, -4
+ 140 0022 86B0     		sub	sp, sp, #24
+ 141              	.LCFI3:
+ 142              		.cfi_def_cfa_offset 32
+ 143 0024 00AF     		add	r7, sp, #0
+ 144              	.LCFI4:
+ 145              		.cfi_def_cfa_register 7
+ 146 0026 F860     		str	r0, [r7, #12]
+ 147 0028 B960     		str	r1, [r7, #8]
+ 148 002a 7A60     		str	r2, [r7, #4]
+  36:../Sources/processor_specific_functions/K40/uart.c ****     register uint16 sbr, brfa;
+  37:../Sources/processor_specific_functions/K40/uart.c ****     uint8 temp;
+  38:../Sources/processor_specific_functions/K40/uart.c ****     
+  39:../Sources/processor_specific_functions/K40/uart.c ****     SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK;
+ 149              		.loc 1 39 0
+ 150 002c 4FF4E043 		mov	r3, #28672
+ 151 0030 C4F20403 		movt	r3, 16388
+ 152 0034 4FF4E042 		mov	r2, #28672
+ 153 0038 C4F20402 		movt	r2, 16388
+ 154 003c 02F58152 		add	r2, r2, #4128
+ 155 0040 02F11802 		add	r2, r2, #24
+ 156 0044 1268     		ldr	r2, [r2, #0]
+ 157 0046 42F40072 		orr	r2, r2, #512
+ 158 004a 03F58153 		add	r3, r3, #4128
+ 159 004e 03F11803 		add	r3, r3, #24
+ 160 0052 1A60     		str	r2, [r3, #0]
+  40:../Sources/processor_specific_functions/K40/uart.c ****     
+  41:../Sources/processor_specific_functions/K40/uart.c ****     PORTA_PCR14 = PORT_PCR_MUX(3);	//UART1_TX
+ 161              		.loc 1 41 0
+ 162 0054 4FF41043 		mov	r3, #36864
+ 163 0058 C4F20403 		movt	r3, 16388
+ 164 005c 4FF44072 		mov	r2, #768
+ 165 0060 9A63     		str	r2, [r3, #56]
+  42:../Sources/processor_specific_functions/K40/uart.c ****     PORTA_PCR15 = PORT_PCR_MUX(3);	//UART1_RX
+ 166              		.loc 1 42 0
+ 167 0062 4FF41043 		mov	r3, #36864
+ 168 0066 C4F20403 		movt	r3, 16388
+ 169 006a 4FF44072 		mov	r2, #768
+ 170 006e DA63     		str	r2, [r3, #60]
+  43:../Sources/processor_specific_functions/K40/uart.c **** 	/* Enable the clock to the selected UART */
+  44:../Sources/processor_specific_functions/K40/uart.c ****     
+  45:../Sources/processor_specific_functions/K40/uart.c ****     if(uartch == UART0_BASE_PTR)
+ 171              		.loc 1 45 0
+ 172 0070 FA68     		ldr	r2, [r7, #12]
+ 173 0072 4FF42043 		mov	r3, #40960
+ 174 0076 C4F20603 		movt	r3, 16390
+ 175 007a 9A42     		cmp	r2, r3
+ 176 007c 14D1     		bne	.L3
+  46:../Sources/processor_specific_functions/K40/uart.c **** 		SIM_SCGC4 |= SIM_SCGC4_UART0_MASK;
+ 177              		.loc 1 46 0
+ 178 007e 4FF4E043 		mov	r3, #28672
+ 179 0082 C4F20403 		movt	r3, 16388
+ 180 0086 4FF4E042 		mov	r2, #28672
+ 181 008a C4F20402 		movt	r2, 16388
+ 182 008e 02F58152 		add	r2, r2, #4128
+ 183 0092 02F11402 		add	r2, r2, #20
+ 184 0096 1268     		ldr	r2, [r2, #0]
+ 185 0098 42F48062 		orr	r2, r2, #1024
+ 186 009c 03F58153 		add	r3, r3, #4128
+ 187 00a0 03F11403 		add	r3, r3, #20
+ 188 00a4 1A60     		str	r2, [r3, #0]
+ 189 00a6 36E0     		b	.L4
+ 190              	.L3:
+  47:../Sources/processor_specific_functions/K40/uart.c ****     else    
+  48:../Sources/processor_specific_functions/K40/uart.c ****     	if (uartch == UART1_BASE_PTR)
+ 191              		.loc 1 48 0
+ 192 00a8 FA68     		ldr	r2, [r7, #12]
+ 193 00aa 4FF43043 		mov	r3, #45056
+ 194 00ae C4F20603 		movt	r3, 16390
+ 195 00b2 9A42     		cmp	r2, r3
+ 196 00b4 14D1     		bne	.L5
+  49:../Sources/processor_specific_functions/K40/uart.c **** 			SIM_SCGC4 |= SIM_SCGC4_UART1_MASK;
+ 197              		.loc 1 49 0
+ 198 00b6 4FF4E043 		mov	r3, #28672
+ 199 00ba C4F20403 		movt	r3, 16388
+ 200 00be 4FF4E042 		mov	r2, #28672
+ 201 00c2 C4F20402 		movt	r2, 16388
+ 202 00c6 02F58152 		add	r2, r2, #4128
+ 203 00ca 02F11402 		add	r2, r2, #20
+ 204 00ce 1268     		ldr	r2, [r2, #0]
+ 205 00d0 42F40062 		orr	r2, r2, #2048
+ 206 00d4 03F58153 		add	r3, r3, #4128
+ 207 00d8 03F11403 		add	r3, r3, #20
+ 208 00dc 1A60     		str	r2, [r3, #0]
+ 209 00de 1AE0     		b	.L4
+ 210              	.L5:
+  50:../Sources/processor_specific_functions/K40/uart.c ****     	else
+  51:../Sources/processor_specific_functions/K40/uart.c ****     		if (uartch == UART2_BASE_PTR)
+ 211              		.loc 1 51 0
+ 212 00e0 FA68     		ldr	r2, [r7, #12]
+ 213 00e2 4FF44043 		mov	r3, #49152
+ 214 00e6 C4F20603 		movt	r3, 16390
+ 215 00ea 9A42     		cmp	r2, r3
+ 216 00ec 13D1     		bne	.L4
+  52:../Sources/processor_specific_functions/K40/uart.c ****     			SIM_SCGC4 |= SIM_SCGC4_UART2_MASK;
+ 217              		.loc 1 52 0
+ 218 00ee 4FF4E043 		mov	r3, #28672
+ 219 00f2 C4F20403 		movt	r3, 16388
+ 220 00f6 4FF4E042 		mov	r2, #28672
+ 221 00fa C4F20402 		movt	r2, 16388
+ 222 00fe 02F58152 		add	r2, r2, #4128
+ 223 0102 02F11402 		add	r2, r2, #20
+ 224 0106 1268     		ldr	r2, [r2, #0]
+ 225 0108 42F48052 		orr	r2, r2, #4096
+ 226 010c 03F58153 		add	r3, r3, #4128
+ 227 0110 03F11403 		add	r3, r3, #20
+ 228 0114 1A60     		str	r2, [r3, #0]
+ 229              	.L4:
+  53:../Sources/processor_specific_functions/K40/uart.c ****                                 
+  54:../Sources/processor_specific_functions/K40/uart.c ****     /* Make sure that the transmitter and receiver are disabled while we 
+  55:../Sources/processor_specific_functions/K40/uart.c ****      * change settings.
+  56:../Sources/processor_specific_functions/K40/uart.c ****      */
+  57:../Sources/processor_specific_functions/K40/uart.c ****     UART_C2_REG(uartch) &= ~(UART_C2_TE_MASK
+ 230              		.loc 1 57 0
+ 231 0116 FB68     		ldr	r3, [r7, #12]
+ 232 0118 DB78     		ldrb	r3, [r3, #3]
+ 233 011a DBB2     		uxtb	r3, r3
+ 234 011c 23F00C03 		bic	r3, r3, #12
+ 235 0120 DAB2     		uxtb	r2, r3
+ 236 0122 FB68     		ldr	r3, [r7, #12]
+ 237 0124 DA70     		strb	r2, [r3, #3]
+  58:../Sources/processor_specific_functions/K40/uart.c **** 				| UART_C2_RE_MASK );
+  59:../Sources/processor_specific_functions/K40/uart.c **** 
+  60:../Sources/processor_specific_functions/K40/uart.c ****     /* Configure the UART for 8-bit mode, no parity */
+  61:../Sources/processor_specific_functions/K40/uart.c ****     UART_C1_REG(uartch) = 0;	/* We need all default settings, so entire register is cleared */
+ 238              		.loc 1 61 0
+ 239 0126 FB68     		ldr	r3, [r7, #12]
+ 240 0128 4FF00002 		mov	r2, #0
+ 241 012c 9A70     		strb	r2, [r3, #2]
+  62:../Sources/processor_specific_functions/K40/uart.c ****     
+  63:../Sources/processor_specific_functions/K40/uart.c ****     /* Calculate baud settings */
+  64:../Sources/processor_specific_functions/K40/uart.c ****     sbr = (uint16)((sysclk*1000)/(baud * 16));
+ 242              		.loc 1 64 0
+ 243 012e BB68     		ldr	r3, [r7, #8]
+ 244 0130 4FF47A72 		mov	r2, #1000
+ 245 0134 02FB03F2 		mul	r2, r2, r3
+ 246 0138 7B68     		ldr	r3, [r7, #4]
+ 247 013a 4FEA0313 		lsl	r3, r3, #4
+ 248 013e 92FBF3F3 		sdiv	r3, r2, r3
+ 249 0142 9CB2     		uxth	r4, r3
+  65:../Sources/processor_specific_functions/K40/uart.c ****         
+  66:../Sources/processor_specific_functions/K40/uart.c ****     /* Save off the current value of the UARTx_BDH except for the SBR field */
+  67:../Sources/processor_specific_functions/K40/uart.c ****     temp = UART_BDH_REG(uartch) & ~(UART_BDH_SBR(0x1F));
+ 250              		.loc 1 67 0
+ 251 0144 FB68     		ldr	r3, [r7, #12]
+ 252 0146 1B78     		ldrb	r3, [r3, #0]
+ 253 0148 DBB2     		uxtb	r3, r3
+ 254 014a 23F01F03 		bic	r3, r3, #31
+ 255 014e FB75     		strb	r3, [r7, #23]
+  68:../Sources/processor_specific_functions/K40/uart.c ****     
+  69:../Sources/processor_specific_functions/K40/uart.c ****     UART_BDH_REG(uartch) = temp |  UART_BDH_SBR(((sbr & 0x1F00) >> 8));
+ 256              		.loc 1 69 0
+ 257 0150 2346     		mov	r3, r4
+ 258 0152 03F4F853 		and	r3, r3, #7936
+ 259 0156 4FEA2323 		asr	r3, r3, #8
+ 260 015a DBB2     		uxtb	r3, r3
+ 261 015c 03F01F03 		and	r3, r3, #31
+ 262 0160 DAB2     		uxtb	r2, r3
+ 263 0162 FB7D     		ldrb	r3, [r7, #23]
+ 264 0164 1343     		orrs	r3, r3, r2
+ 265 0166 DAB2     		uxtb	r2, r3
+ 266 0168 FB68     		ldr	r3, [r7, #12]
+ 267 016a 1A70     		strb	r2, [r3, #0]
+  70:../Sources/processor_specific_functions/K40/uart.c ****     UART_BDL_REG(uartch) = (uint8)(sbr & UART_BDL_SBR_MASK);
+ 268              		.loc 1 70 0
+ 269 016c E2B2     		uxtb	r2, r4
+ 270 016e FB68     		ldr	r3, [r7, #12]
+ 271 0170 5A70     		strb	r2, [r3, #1]
+  71:../Sources/processor_specific_functions/K40/uart.c ****     
+  72:../Sources/processor_specific_functions/K40/uart.c ****     /* Determine if a fractional divider is needed to get closer to the baud rate */
+  73:../Sources/processor_specific_functions/K40/uart.c ****     brfa = (((sysclk*32000)/(baud * 16)) - (sbr * 32));
+ 272              		.loc 1 73 0
+ 273 0172 BB68     		ldr	r3, [r7, #8]
+ 274 0174 4FF4FA42 		mov	r2, #32000
+ 275 0178 02FB03F2 		mul	r2, r2, r3
+ 276 017c 7B68     		ldr	r3, [r7, #4]
+ 277 017e 4FEA0313 		lsl	r3, r3, #4
+ 278 0182 92FBF3F3 		sdiv	r3, r2, r3
+ 279 0186 9AB2     		uxth	r2, r3
+ 280 0188 2346     		mov	r3, r4	@ movhi
+ 281 018a 1946     		mov	r1, r3	@ movhi
+ 282 018c 4FEAC121 		lsl	r1, r1, #11
+ 283 0190 CB1A     		subs	r3, r1, r3
+ 284 0192 4FEA4313 		lsl	r3, r3, #5
+ 285 0196 9BB2     		uxth	r3, r3
+ 286 0198 D318     		adds	r3, r2, r3
+ 287 019a 9CB2     		uxth	r4, r3
+  74:../Sources/processor_specific_functions/K40/uart.c ****      
+  75:../Sources/processor_specific_functions/K40/uart.c ****     /* Save off the current value of the UARTx_C4 register except for the BRFA field */
+  76:../Sources/processor_specific_functions/K40/uart.c ****     temp = UART_C4_REG(uartch) & ~(UART_C4_BRFA(0x1F));
+ 288              		.loc 1 76 0
+ 289 019c FB68     		ldr	r3, [r7, #12]
+ 290 019e 9B7A     		ldrb	r3, [r3, #10]
+ 291 01a0 DBB2     		uxtb	r3, r3
+ 292 01a2 23F01F03 		bic	r3, r3, #31
+ 293 01a6 FB75     		strb	r3, [r7, #23]
+  77:../Sources/processor_specific_functions/K40/uart.c ****     
+  78:../Sources/processor_specific_functions/K40/uart.c ****     UART_C4_REG(uartch) = temp |  UART_C4_BRFA(brfa);    
+ 294              		.loc 1 78 0
+ 295 01a8 E3B2     		uxtb	r3, r4
+ 296 01aa 03F01F03 		and	r3, r3, #31
+ 297 01ae DAB2     		uxtb	r2, r3
+ 298 01b0 FB7D     		ldrb	r3, [r7, #23]
+ 299 01b2 1343     		orrs	r3, r3, r2
+ 300 01b4 DAB2     		uxtb	r2, r3
+ 301 01b6 FB68     		ldr	r3, [r7, #12]
+ 302 01b8 9A72     		strb	r2, [r3, #10]
+  79:../Sources/processor_specific_functions/K40/uart.c **** 
+  80:../Sources/processor_specific_functions/K40/uart.c ****     /* Enable receiver and transmitter */
+  81:../Sources/processor_specific_functions/K40/uart.c **** 	UART_C2_REG(uartch) |= (UART_C2_TE_MASK
+ 303              		.loc 1 81 0
+ 304 01ba FB68     		ldr	r3, [r7, #12]
+ 305 01bc DB78     		ldrb	r3, [r3, #3]
+ 306 01be DBB2     		uxtb	r3, r3
+ 307 01c0 43F00C03 		orr	r3, r3, #12
+ 308 01c4 DAB2     		uxtb	r2, r3
+ 309 01c6 FB68     		ldr	r3, [r7, #12]
+ 310 01c8 DA70     		strb	r2, [r3, #3]
+  82:../Sources/processor_specific_functions/K40/uart.c **** 				| UART_C2_RE_MASK );
+  83:../Sources/processor_specific_functions/K40/uart.c **** 	UART_C2_REG(uartch) |= UART_C2_RIE_MASK;	//Interrupt when receive character
+ 311              		.loc 1 83 0
+ 312 01ca FB68     		ldr	r3, [r7, #12]
+ 313 01cc DB78     		ldrb	r3, [r3, #3]
+ 314 01ce DBB2     		uxtb	r3, r3
+ 315 01d0 43F02003 		orr	r3, r3, #32
+ 316 01d4 DAB2     		uxtb	r2, r3
+ 317 01d6 FB68     		ldr	r3, [r7, #12]
+ 318 01d8 DA70     		strb	r2, [r3, #3]
+  84:../Sources/processor_specific_functions/K40/uart.c **** 
+  85:../Sources/processor_specific_functions/K40/uart.c **** }
+ 319              		.loc 1 85 0
+ 320 01da 07F11807 		add	r7, r7, #24
+ 321 01de BD46     		mov	sp, r7
+ 322 01e0 90BC     		pop	{r4, r7}
+ 323 01e2 7047     		bx	lr
+ 324              		.cfi_endproc
+ 325              	.LFE1:
+ 327              		.align	2
+ 328              		.global	uart_getchar
+ 329              		.thumb
+ 330              		.thumb_func
+ 332              	uart_getchar:
+ 333              	.LFB2:
+  86:../Sources/processor_specific_functions/K40/uart.c **** /********************************************************************/
+  87:../Sources/processor_specific_functions/K40/uart.c **** /*
+  88:../Sources/processor_specific_functions/K40/uart.c ****  * Wait for a character to be received on the specified UART
+  89:../Sources/processor_specific_functions/K40/uart.c ****  *
+  90:../Sources/processor_specific_functions/K40/uart.c ****  * Parameters:
+  91:../Sources/processor_specific_functions/K40/uart.c ****  *  channel      UART channel to read from
+  92:../Sources/processor_specific_functions/K40/uart.c ****  *
+  93:../Sources/processor_specific_functions/K40/uart.c ****  * Return Values:
+  94:../Sources/processor_specific_functions/K40/uart.c ****  *  the received character
+  95:../Sources/processor_specific_functions/K40/uart.c ****  */
+  96:../Sources/processor_specific_functions/K40/uart.c **** char uart_getchar (UART_MemMapPtr channel)
+  97:../Sources/processor_specific_functions/K40/uart.c **** {
+ 334              		.loc 1 97 0
+ 335              		.cfi_startproc
+ 336              		@ args = 0, pretend = 0, frame = 8
+ 337              		@ frame_needed = 1, uses_anonymous_args = 0
+ 338              		@ link register save eliminated.
+ 339 01e4 80B4     		push	{r7}
+ 340              	.LCFI5:
+ 341              		.cfi_def_cfa_offset 4
+ 342              		.cfi_offset 7, -4
+ 343 01e6 83B0     		sub	sp, sp, #12
+ 344              	.LCFI6:
+ 345              		.cfi_def_cfa_offset 16
+ 346 01e8 00AF     		add	r7, sp, #0
+ 347              	.LCFI7:
+ 348              		.cfi_def_cfa_register 7
+ 349 01ea 7860     		str	r0, [r7, #4]
+  98:../Sources/processor_specific_functions/K40/uart.c ****     /* Wait until character has been received */
+  99:../Sources/processor_specific_functions/K40/uart.c ****     while (!(UART_S1_REG(channel) & UART_S1_RDRF_MASK));
+ 350              		.loc 1 99 0
+ 351 01ec 00BF     		nop
+ 352              	.L7:
+ 353              		.loc 1 99 0 is_stmt 0 discriminator 1
+ 354 01ee 7B68     		ldr	r3, [r7, #4]
+ 355 01f0 1B79     		ldrb	r3, [r3, #4]
+ 356 01f2 DBB2     		uxtb	r3, r3
+ 357 01f4 03F02003 		and	r3, r3, #32
+ 358 01f8 002B     		cmp	r3, #0
+ 359 01fa F8D0     		beq	.L7
+ 100:../Sources/processor_specific_functions/K40/uart.c ****     
+ 101:../Sources/processor_specific_functions/K40/uart.c ****     /* Return the 8-bit data from the receiver */
+ 102:../Sources/processor_specific_functions/K40/uart.c ****     return UART_D_REG(channel);
+ 360              		.loc 1 102 0 is_stmt 1
+ 361 01fc 7B68     		ldr	r3, [r7, #4]
+ 362 01fe DB79     		ldrb	r3, [r3, #7]
+ 363 0200 DBB2     		uxtb	r3, r3
+ 103:../Sources/processor_specific_functions/K40/uart.c **** }
+ 364              		.loc 1 103 0
+ 365 0202 1846     		mov	r0, r3
+ 366 0204 07F10C07 		add	r7, r7, #12
+ 367 0208 BD46     		mov	sp, r7
+ 368 020a 80BC     		pop	{r7}
+ 369 020c 7047     		bx	lr
+ 370              		.cfi_endproc
+ 371              	.LFE2:
+ 373 020e 00BF     		.align	2
+ 374              		.global	uart_putchar
+ 375              		.thumb
+ 376              		.thumb_func
+ 378              	uart_putchar:
+ 379              	.LFB3:
+ 104:../Sources/processor_specific_functions/K40/uart.c **** /********************************************************************/
+ 105:../Sources/processor_specific_functions/K40/uart.c **** /*
+ 106:../Sources/processor_specific_functions/K40/uart.c ****  * Wait for space in the UART Tx FIFO and then send a character
+ 107:../Sources/processor_specific_functions/K40/uart.c ****  *
+ 108:../Sources/processor_specific_functions/K40/uart.c ****  * Parameters:
+ 109:../Sources/processor_specific_functions/K40/uart.c ****  *  channel      UART channel to send to
+ 110:../Sources/processor_specific_functions/K40/uart.c ****  *  ch			 character to send
+ 111:../Sources/processor_specific_functions/K40/uart.c ****  */ 
+ 112:../Sources/processor_specific_functions/K40/uart.c **** void uart_putchar (UART_MemMapPtr channel, char ch)
+ 113:../Sources/processor_specific_functions/K40/uart.c **** {
+ 380              		.loc 1 113 0
+ 381              		.cfi_startproc
+ 382              		@ args = 0, pretend = 0, frame = 8
+ 383              		@ frame_needed = 1, uses_anonymous_args = 0
+ 384              		@ link register save eliminated.
+ 385 0210 80B4     		push	{r7}
+ 386              	.LCFI8:
+ 387              		.cfi_def_cfa_offset 4
+ 388              		.cfi_offset 7, -4
+ 389 0212 83B0     		sub	sp, sp, #12
+ 390              	.LCFI9:
+ 391              		.cfi_def_cfa_offset 16
+ 392 0214 00AF     		add	r7, sp, #0
+ 393              	.LCFI10:
+ 394              		.cfi_def_cfa_register 7
+ 395 0216 7860     		str	r0, [r7, #4]
+ 396 0218 0B46     		mov	r3, r1
+ 397 021a FB70     		strb	r3, [r7, #3]
+ 114:../Sources/processor_specific_functions/K40/uart.c **** 	/* Wait until space is available in the FIFO */
+ 115:../Sources/processor_specific_functions/K40/uart.c ****     while(!(UART_S1_REG(channel) & UART_S1_TDRE_MASK));	//modositva 2015.01.28
+ 398              		.loc 1 115 0
+ 399 021c 00BF     		nop
+ 400              	.L10:
+ 401              		.loc 1 115 0 is_stmt 0 discriminator 1
+ 402 021e 7B68     		ldr	r3, [r7, #4]
+ 403 0220 1B79     		ldrb	r3, [r3, #4]
+ 404 0222 DBB2     		uxtb	r3, r3
+ 405 0224 DBB2     		uxtb	r3, r3
+ 406 0226 5BB2     		sxtb	r3, r3
+ 407 0228 002B     		cmp	r3, #0
+ 408 022a F8DA     		bge	.L10
+ 116:../Sources/processor_specific_functions/K40/uart.c ****     
+ 117:../Sources/processor_specific_functions/K40/uart.c ****     /* Send the character */
+ 118:../Sources/processor_specific_functions/K40/uart.c ****     UART_D_REG(channel) = (uint8)ch;
+ 409              		.loc 1 118 0 is_stmt 1
+ 410 022c 7B68     		ldr	r3, [r7, #4]
+ 411 022e FA78     		ldrb	r2, [r7, #3]
+ 412 0230 DA71     		strb	r2, [r3, #7]
+ 119:../Sources/processor_specific_functions/K40/uart.c ****  }
+ 413              		.loc 1 119 0
+ 414 0232 07F10C07 		add	r7, r7, #12
+ 415 0236 BD46     		mov	sp, r7
+ 416 0238 80BC     		pop	{r7}
+ 417 023a 7047     		bx	lr
+ 418              		.cfi_endproc
+ 419              	.LFE3:
+ 421              		.align	2
+ 422              		.global	uart_getchar_present
+ 423              		.thumb
+ 424              		.thumb_func
+ 426              	uart_getchar_present:
+ 427              	.LFB4:
+ 120:../Sources/processor_specific_functions/K40/uart.c **** /********************************************************************/
+ 121:../Sources/processor_specific_functions/K40/uart.c **** /*
+ 122:../Sources/processor_specific_functions/K40/uart.c ****  * Check to see if a character has been received
+ 123:../Sources/processor_specific_functions/K40/uart.c ****  *
+ 124:../Sources/processor_specific_functions/K40/uart.c ****  * Parameters:
+ 125:../Sources/processor_specific_functions/K40/uart.c ****  *  channel      UART channel to check for a character
+ 126:../Sources/processor_specific_functions/K40/uart.c ****  *
+ 127:../Sources/processor_specific_functions/K40/uart.c ****  * Return values:
+ 128:../Sources/processor_specific_functions/K40/uart.c ****  *  0       No character received
+ 129:../Sources/processor_specific_functions/K40/uart.c ****  *  1       Character has been received
+ 130:../Sources/processor_specific_functions/K40/uart.c ****  */
+ 131:../Sources/processor_specific_functions/K40/uart.c **** int uart_getchar_present (UART_MemMapPtr channel)
+ 132:../Sources/processor_specific_functions/K40/uart.c **** {
+ 428              		.loc 1 132 0
+ 429              		.cfi_startproc
+ 430              		@ args = 0, pretend = 0, frame = 8
+ 431              		@ frame_needed = 1, uses_anonymous_args = 0
+ 432              		@ link register save eliminated.
+ 433 023c 80B4     		push	{r7}
+ 434              	.LCFI11:
+ 435              		.cfi_def_cfa_offset 4
+ 436              		.cfi_offset 7, -4
+ 437 023e 83B0     		sub	sp, sp, #12
+ 438              	.LCFI12:
+ 439              		.cfi_def_cfa_offset 16
+ 440 0240 00AF     		add	r7, sp, #0
+ 441              	.LCFI13:
+ 442              		.cfi_def_cfa_register 7
+ 443 0242 7860     		str	r0, [r7, #4]
+ 133:../Sources/processor_specific_functions/K40/uart.c ****     return (UART_S1_REG(channel) & UART_S1_RDRF_MASK);
+ 444              		.loc 1 133 0
+ 445 0244 7B68     		ldr	r3, [r7, #4]
+ 446 0246 1B79     		ldrb	r3, [r3, #4]
+ 447 0248 DBB2     		uxtb	r3, r3
+ 448 024a 03F02003 		and	r3, r3, #32
+ 134:../Sources/processor_specific_functions/K40/uart.c **** }
+ 449              		.loc 1 134 0
+ 450 024e 1846     		mov	r0, r3
+ 451 0250 07F10C07 		add	r7, r7, #12
+ 452 0254 BD46     		mov	sp, r7
+ 453 0256 80BC     		pop	{r7}
+ 454 0258 7047     		bx	lr
+ 455              		.cfi_endproc
+ 456              	.LFE4:
+ 458 025a 00BF     		.align	2
+ 459              		.global	TransmitData
+ 460              		.thumb
+ 461              		.thumb_func
+ 463              	TransmitData:
+ 464              	.LFB5:
+ 135:../Sources/processor_specific_functions/K40/uart.c **** /********************************************************************/
+ 136:../Sources/processor_specific_functions/K40/uart.c ****     
+ 137:../Sources/processor_specific_functions/K40/uart.c **** void TransmitData(char TransData[]) 
+ 138:../Sources/processor_specific_functions/K40/uart.c **** {
+ 465              		.loc 1 138 0
+ 466              		.cfi_startproc
+ 467              		@ args = 0, pretend = 0, frame = 16
+ 468              		@ frame_needed = 1, uses_anonymous_args = 0
+ 469 025c 80B5     		push	{r7, lr}
+ 470              	.LCFI14:
+ 471              		.cfi_def_cfa_offset 8
+ 472              		.cfi_offset 7, -8
+ 473              		.cfi_offset 14, -4
+ 474 025e 84B0     		sub	sp, sp, #16
+ 475              	.LCFI15:
+ 476              		.cfi_def_cfa_offset 24
+ 477 0260 00AF     		add	r7, sp, #0
+ 478              	.LCFI16:
+ 479              		.cfi_def_cfa_register 7
+ 480 0262 7860     		str	r0, [r7, #4]
+ 139:../Sources/processor_specific_functions/K40/uart.c ****     uint8_t j;
+ 140:../Sources/processor_specific_functions/K40/uart.c ****     int k;                          // Dummy variable
+ 141:../Sources/processor_specific_functions/K40/uart.c ****      
+ 142:../Sources/processor_specific_functions/K40/uart.c ****     k = strlen (TransData);
+ 481              		.loc 1 142 0
+ 482 0264 7868     		ldr	r0, [r7, #4]
+ 483 0266 FFF7FEFF 		bl	strlen
+ 484 026a 0346     		mov	r3, r0
+ 485 026c BB60     		str	r3, [r7, #8]
+ 143:../Sources/processor_specific_functions/K40/uart.c ****     for (j=0; j< k; j++)                 // Loop for character string
+ 486              		.loc 1 143 0
+ 487 026e 4FF00003 		mov	r3, #0
+ 488 0272 FB73     		strb	r3, [r7, #15]
+ 489 0274 0EE0     		b	.L14
+ 490              	.L15:
+ 144:../Sources/processor_specific_functions/K40/uart.c ****     {
+ 145:../Sources/processor_specific_functions/K40/uart.c ****         uart_putchar(UART1_BASE_PTR, TransData[j]);     // Transmit a byte      
+ 491              		.loc 1 145 0 discriminator 2
+ 492 0276 FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 493 0278 7A68     		ldr	r2, [r7, #4]
+ 494 027a D318     		adds	r3, r2, r3
+ 495 027c 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 496 027e 4FF43040 		mov	r0, #45056
+ 497 0282 C4F20600 		movt	r0, 16390
+ 498 0286 1946     		mov	r1, r3
+ 499 0288 FFF7FEFF 		bl	uart_putchar
+ 143:../Sources/processor_specific_functions/K40/uart.c ****     for (j=0; j< k; j++)                 // Loop for character string
+ 500              		.loc 1 143 0 discriminator 2
+ 501 028c FB7B     		ldrb	r3, [r7, #15]
+ 502 028e 03F10103 		add	r3, r3, #1
+ 503 0292 FB73     		strb	r3, [r7, #15]
+ 504              	.L14:
+ 143:../Sources/processor_specific_functions/K40/uart.c ****     for (j=0; j< k; j++)                 // Loop for character string
+ 505              		.loc 1 143 0 is_stmt 0 discriminator 1
+ 506 0294 FA7B     		ldrb	r2, [r7, #15]	@ zero_extendqisi2
+ 507 0296 BB68     		ldr	r3, [r7, #8]
+ 508 0298 9A42     		cmp	r2, r3
+ 509 029a ECDB     		blt	.L15
+ 146:../Sources/processor_specific_functions/K40/uart.c ****     }
+ 147:../Sources/processor_specific_functions/K40/uart.c **** }
+ 510              		.loc 1 147 0 is_stmt 1
+ 511 029c 07F11007 		add	r7, r7, #16
+ 512 02a0 BD46     		mov	sp, r7
+ 513 02a2 80BD     		pop	{r7, pc}
+ 514              		.cfi_endproc
+ 515              	.LFE5:
+ 517              	.Letext0:
+ 518              		.file 2 "c:\\freescale\\cw mcu v10.6\\cross_tools\\arm-none-eabi-gcc-4_7_3\\bin\\../lib/gcc/arm-no
+ 519              		.file 3 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions\\K40\
+ 520              		.file 4 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/integer.h"
+ 521              		.file 5 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/ff.h"
+ 522              		.file 6 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/i
+ 523              		.file 7 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/d
+ 524              		.file 8 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/interrupts.h"
+ 525              		.file 9 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/SDcard.h"
+ 526              		.file 10 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/MPU6050.h"
+ 527              		.file 11 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/BMP180.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 uart.c
+                            *COM*:00000004 I2C_Variable
+                            *COM*:00000001 uart_data
+                            *COM*:0000003c adc_data
+                            *COM*:00000004 Kp
+                            *COM*:00000004 Kd
+                            *COM*:00000004 Ki
+                            *COM*:00000004 zKp
+                            *COM*:00000004 zKd
+                            *COM*:00000004 basepower
+                            *COM*:00000004 setpoint_x
+                            *COM*:00000004 setpoint_y
+                            *COM*:00000004 setpoint_z
+                            *COM*:00000004 setpoint_alt
+                            *COM*:00000004 batt1_vol
+                            *COM*:00000004 batt2_vol
+                            *COM*:00000004 batt3_vol
+                            *COM*:00000004 BATT_VOLT
+                            *COM*:00000230 FatFs
+                            *COM*:00000224 fil
+                            *COM*:00000002 GYRO_XOUT_OFFSET
+                            *COM*:00000002 GYRO_YOUT_OFFSET
+                            *COM*:00000002 GYRO_ZOUT_OFFSET
+                            *COM*:00000002 ACCEL_XOUT_OFFSET
+                            *COM*:00000002 ACCEL_YOUT_OFFSET
+                            *COM*:00000002 ACCEL_ZOUT_OFFSET
+                            *COM*:00000004 GYRO_XANGLE
+                            *COM*:00000004 GYRO_YANGLE
+                            *COM*:00000004 GYRO_ZANGLE
+                            *COM*:00000002 GYRO_XOUT
+                            *COM*:00000002 GYRO_YOUT
+                            *COM*:00000002 GYRO_ZOUT
+                            *COM*:00000002 ACCEL_XOUT
+                            *COM*:00000002 ACCEL_YOUT
+                            *COM*:00000002 ACCEL_ZOUT
+                            *COM*:00000004 ACCEL_Gx
+                            *COM*:00000004 ACCEL_Gy
+                            *COM*:00000004 ACCEL_Gz
+                            *COM*:00000008 ACCEL
+                            *COM*:00000004 GYRO_XRATE
+                            *COM*:00000004 GYRO_YRATE
+                            *COM*:00000004 GYRO_ZRATE
+                            *COM*:00000004 ACCEL_XANGLE
+                            *COM*:00000004 ACCEL_YANGLE
+                            *COM*:00000004 gyro_xsensitivity
+                            *COM*:00000004 gyro_ysensitivity
+                            *COM*:00000004 gyro_zsensitivity
+                            *COM*:00000004 a
+                            *COM*:00000004 dt
+                            *COM*:00000004 COMPLEMENTARY_XANGLE
+                            *COM*:00000004 COMPLEMENTARY_YANGLE
+                            *COM*:0000000c filter_xterm
+                            *COM*:0000000c filter_yterm
+                            *COM*:00000004 XANGLE_OFFSET
+                            *COM*:00000004 YANGLE_OFFSET
+                            *COM*:00000004 TEMP
+                            *COM*:00000004 timeConstant
+                            *COM*:0000000e MPU_6050_buffer
+                            *COM*:00000002 AC1
+                            *COM*:00000002 AC2
+                            *COM*:00000002 AC3
+                            *COM*:00000002 B1
+                            *COM*:00000002 B2
+                            *COM*:00000002 MB
+                            *COM*:00000002 MC
+                            *COM*:00000002 MD
+                            *COM*:00000002 AC4
+                            *COM*:00000002 AC5
+                            *COM*:00000002 AC6
+                            *COM*:00000004 T
+                            *COM*:00000004 absolute_altittude
+                            *COM*:00000004 start_altittude
+                            *COM*:00000004 relative_altittude
+                            *COM*:00000004 P
+C:\Users\Norbert\AppData\Local\Temp\cc5l0png.s:91     .text:00000000 $t
+C:\Users\Norbert\AppData\Local\Temp\cc5l0png.s:96     .text:00000000 InitUARTs
+C:\Users\Norbert\AppData\Local\Temp\cc5l0png.s:128    .text:00000020 uart_init
+C:\Users\Norbert\AppData\Local\Temp\cc5l0png.s:332    .text:000001e4 uart_getchar
+C:\Users\Norbert\AppData\Local\Temp\cc5l0png.s:378    .text:00000210 uart_putchar
+C:\Users\Norbert\AppData\Local\Temp\cc5l0png.s:426    .text:0000023c uart_getchar_present
+C:\Users\Norbert\AppData\Local\Temp\cc5l0png.s:463    .text:0000025c TransmitData
+                     .debug_frame:00000010 $d
+                           .group:00000000 wm4.1.6111752e1bd0a440bd5209819217ec83
+                           .group:00000000 wm4.init.h.9.6215b16d96e0eb787ba872245cf7290f
+                           .group:00000000 wm4.stdint.h.10.90b695f550ca6cc3fb08fa83baf01e05
+                           .group:00000000 wm4.newlib.h.8.a9901dc52d1357e3e94003403d43f8b5
+                           .group:00000000 wm4.config.h.193.5fb8ef056cdff92dec3dee9552839d8c
+                           .group:00000000 wm4._ansi.h.23.95dee4059009fe3ab635a191bb73dc66
+                           .group:00000000 wm4.stdio.h.31.f48311dde756a2aec27351b58a280fb9
+                           .group:00000000 wm4.stddef.h.187.9e651b6b8b16e149c1353259404973ea
+                           .group:00000000 wm4.stdarg.h.34.3a23a216c0c293b3d2ea2e89281481e6
+                           .group:00000000 wm4._default_types.h.6.1dbd2e581fd590860c7c17f21d147e91
+                           .group:00000000 wm4.lock.h.2.9bc98482741e5e2a9450b12934a684ea
+                           .group:00000000 wm4.stddef.h.349.31f4c5baff3fa2689010b32028da9c47
+                           .group:00000000 wm4.reent.h.16.9e42f0e588b85e70b2bf6572af57ce64
+                           .group:00000000 wm4.types.h.23.0d949686bbcadd1621462d4fa1f884f9
+                           .group:00000000 wm4.stddef.h.40.cf962ebbec441b3ac67502735f0765db
+                           .group:00000000 wm4.types.h.2.e9cec8c90ab35f77d9f499e06ae02400
+                           .group:00000000 wm4.types.h.80.1f2c84c0d57dd52dd9936095d9ac218e
+                           .group:00000000 wm4.stdio.h.2.4aa87247282eca6c8f36f9de33d8df1a
+                           .group:00000000 wm4.stdio.h.63.dfdea6580b080784d08faace69b6ed76
+                           .group:00000000 wm4.stdarg.h.31.fa591a4b1df9e413e9f5b8097f9ae89d
+                           .group:00000000 wm4.string.h.8.ef946ad0bc9ad5c970c365dcd1fc4b0a
+                           .group:00000000 wm4.stddef.h.161.e50ff8a9d5d1abbc15641da28ac571bf
+                           .group:00000000 wm4.string.h.86.d5c872ff52e2712c985b588a0ef39f3c
+                           .group:00000000 wm4.math.h.35.07c7797db9e98c6f49a07908290b45ed
+                           .group:00000000 wm4.arm_cm4.h.9.78faaf62d86eb97a647af1ebafb07a11
+                           .group:00000000 wm4.SysTick.h.3.6f4da7f8fb96288ed4bbb4cee119df1f
+                           .group:00000000 wm4.Clock.h.3.a53d5ed3b11823f56a6aca141130352b
+                           .group:00000000 wm4.MK40X256VMD100.h.96.72dc045102cc699ba440f8fa0b280550
+                           .group:00000000 wm4.i2c.h.1.3f1b2e4dcc6bdba977be59d8a51e893b
+                           .group:00000000 wm4.misc.h.9.baaf43d8702a540222c668d182f75475
+                           .group:00000000 wm4.PWM.h.9.e42d58c40ee648255e53f4e4738007a9
+                           .group:00000000 wm4.SPI.h.9.60f1cb4029034538da62861db028322d
+                           .group:00000000 wm4.ADC.h.9.e7a31df2daef26f2c286655e5d3c10dd
+                           .group:00000000 wm4.dma.h.9.96660ff1bef0aa806d84c8ba8408982d
+                           .group:00000000 wm4.main.h.9.81396d5b502c9a6873858dab1b488864
+                           .group:00000000 wm4.ffconf.h.6.276819a3a49a7ae37f54890eecb94e63
+                           .group:00000000 wm4.ff.h.45.a981520ef44c98f5ccd354741039de67
+                           .group:00000000 wm4.SDcard.h.13.e5067f919396cc348c323ee4b231e5ee
+                           .group:00000000 wm4.diskio.h.6.da50361b93ad53e5f0de9110dc9ad28d
+                           .group:00000000 wm4.MPU6050.h.9.b96a5ef9f24cf228b62beca78b916cfc
+                           .group:00000000 wm4.BMP180.h.9.1e786092deac7b246665fc1406fb0f7b
+
+UNDEFINED SYMBOLS
+strlen

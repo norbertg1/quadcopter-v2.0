@@ -1,0 +1,1960 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"SDcard.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	I2C_Variable,4,4
+  19              		.comm	uart_data,1,1
+  20              		.comm	adc_data,60,4
+  21              		.comm	Kp,4,4
+  22              		.comm	Kd,4,4
+  23              		.comm	Ki,4,4
+  24              		.comm	zKp,4,4
+  25              		.comm	zKd,4,4
+  26              		.comm	basepower,4,4
+  27              		.comm	setpoint_x,4,4
+  28              		.comm	setpoint_y,4,4
+  29              		.comm	setpoint_z,4,4
+  30              		.comm	setpoint_alt,4,4
+  31              		.comm	batt1_vol,4,4
+  32              		.comm	batt2_vol,4,4
+  33              		.comm	batt3_vol,4,4
+  34              		.comm	BATT_VOLT,4,4
+  35              		.comm	FatFs,560,4
+  36              		.comm	fil,548,4
+  37              		.comm	GYRO_XOUT_OFFSET,2,2
+  38              		.comm	GYRO_YOUT_OFFSET,2,2
+  39              		.comm	GYRO_ZOUT_OFFSET,2,2
+  40              		.comm	ACCEL_XOUT_OFFSET,2,2
+  41              		.comm	ACCEL_YOUT_OFFSET,2,2
+  42              		.comm	ACCEL_ZOUT_OFFSET,2,2
+  43              		.comm	GYRO_XANGLE,4,4
+  44              		.comm	GYRO_YANGLE,4,4
+  45              		.comm	GYRO_ZANGLE,4,4
+  46              		.comm	GYRO_XOUT,2,2
+  47              		.comm	GYRO_YOUT,2,2
+  48              		.comm	GYRO_ZOUT,2,2
+  49              		.comm	ACCEL_XOUT,2,2
+  50              		.comm	ACCEL_YOUT,2,2
+  51              		.comm	ACCEL_ZOUT,2,2
+  52              		.comm	ACCEL_Gx,4,4
+  53              		.comm	ACCEL_Gy,4,4
+  54              		.comm	ACCEL_Gz,4,4
+  55              		.comm	ACCEL,8,8
+  56              		.comm	GYRO_XRATE,4,4
+  57              		.comm	GYRO_YRATE,4,4
+  58              		.comm	GYRO_ZRATE,4,4
+  59              		.comm	ACCEL_XANGLE,4,4
+  60              		.comm	ACCEL_YANGLE,4,4
+  61              		.comm	gyro_xsensitivity,4,4
+  62              		.comm	gyro_ysensitivity,4,4
+  63              		.comm	gyro_zsensitivity,4,4
+  64              		.comm	a,4,4
+  65              		.comm	dt,4,4
+  66              		.comm	COMPLEMENTARY_XANGLE,4,4
+  67              		.comm	COMPLEMENTARY_YANGLE,4,4
+  68              		.comm	filter_xterm,12,4
+  69              		.comm	filter_yterm,12,4
+  70              		.comm	XANGLE_OFFSET,4,4
+  71              		.comm	YANGLE_OFFSET,4,4
+  72              		.comm	TEMP,4,4
+  73              		.comm	timeConstant,4,4
+  74              		.comm	MPU_6050_buffer,14,4
+  75              		.comm	AC1,2,2
+  76              		.comm	AC2,2,2
+  77              		.comm	AC3,2,2
+  78              		.comm	B1,2,2
+  79              		.comm	B2,2,2
+  80              		.comm	MB,2,2
+  81              		.comm	MC,2,2
+  82              		.comm	MD,2,2
+  83              		.comm	AC4,2,2
+  84              		.comm	AC5,2,2
+  85              		.comm	AC6,2,2
+  86              		.comm	T,4,4
+  87              		.comm	absolute_altittude,4,4
+  88              		.comm	start_altittude,4,4
+  89              		.comm	relative_altittude,4,4
+  90              		.comm	P,4,4
+  91              		.align	2
+  92              		.global	command
+  93              		.thumb
+  94              		.thumb_func
+  96              	command:
+  97              	.LFB0:
+  98              		.file 1 "../Sources/SDcard.c"
+   1:../Sources/SDcard.c **** /*
+   2:../Sources/SDcard.c ****  * SDcard.c
+   3:../Sources/SDcard.c ****  *
+   4:../Sources/SDcard.c ****  *  Created on: Aug 7, 2014
+   5:../Sources/SDcard.c ****  *      Author: Norbi
+   6:../Sources/SDcard.c ****  */
+   7:../Sources/SDcard.c **** 
+   8:../Sources/SDcard.c **** #include "init.h"
+   9:../Sources/SDcard.c **** #include "ff.h"
+  10:../Sources/SDcard.c **** 
+  11:../Sources/SDcard.c **** #define COMMAND_TIMEOUT	5000
+  12:../Sources/SDcard.c **** 
+  13:../Sources/SDcard.c **** #define SDCARD_FAIL	0
+  14:../Sources/SDcard.c **** #define SDCARD_V1	1
+  15:../Sources/SDcard.c **** #define SDCARD_V2	4
+  16:../Sources/SDcard.c **** 
+  17:../Sources/SDcard.c **** 	FATFS FatFs;
+  18:../Sources/SDcard.c **** 	FIL fil;       /* File object */
+  19:../Sources/SDcard.c **** 
+  20:../Sources/SDcard.c **** 
+  21:../Sources/SDcard.c **** /*
+  22:../Sources/SDcard.c ****  * SD card						KL25Z-FRDM
+  23:../Sources/SDcard.c ****  * 		pin 1(CS)-------------PORTC9
+  24:../Sources/SDcard.c ****  * 		pin 2(MOSI)-----------PORTE1
+  25:../Sources/SDcard.c ****  * 		pin 3(GND)------------GND
+  26:../Sources/SDcard.c ****  * 		pin 4(VCC)------------3.3V
+  27:../Sources/SDcard.c ****  * 		pin 5(SCK)------------PORTE2
+  28:../Sources/SDcard.c ****  * 		pin 6(GND)------------NOT CONNECTED
+  29:../Sources/SDcard.c ****  * 		pin 7(MISO)-----------PORTE3
+  30:../Sources/SDcard.c ****  * 		pin 8-----------------NOT CONNECTED
+  31:../Sources/SDcard.c ****  * 		pin 9-----------------NOT CONNECTED 
+  32:../Sources/SDcard.c **** */
+  33:../Sources/SDcard.c **** 
+  34:../Sources/SDcard.c **** 
+  35:../Sources/SDcard.c **** 
+  36:../Sources/SDcard.c **** char command(char cmd, int arg)
+  37:../Sources/SDcard.c **** {
+  99              		.loc 1 37 0
+ 100              		.cfi_startproc
+ 101              		@ args = 0, pretend = 0, frame = 16
+ 102              		@ frame_needed = 1, uses_anonymous_args = 0
+ 103 0000 80B5     		push	{r7, lr}
+ 104              	.LCFI0:
+ 105              		.cfi_def_cfa_offset 8
+ 106              		.cfi_offset 7, -8
+ 107              		.cfi_offset 14, -4
+ 108 0002 84B0     		sub	sp, sp, #16
+ 109              	.LCFI1:
+ 110              		.cfi_def_cfa_offset 24
+ 111 0004 00AF     		add	r7, sp, #0
+ 112              	.LCFI2:
+ 113              		.cfi_def_cfa_register 7
+ 114 0006 0346     		mov	r3, r0
+ 115 0008 3960     		str	r1, [r7, #0]
+ 116 000a FB71     		strb	r3, [r7, #7]
+  38:../Sources/SDcard.c **** 	CS_LOW
+ 117              		.loc 1 38 0
+ 118 000c 4FF28003 		movw	r3, #61568
+ 119 0010 C4F20F03 		movt	r3, 16399
+ 120 0014 4FF28002 		movw	r2, #61568
+ 121 0018 C4F20F02 		movt	r2, 16399
+ 122 001c 9268     		ldr	r2, [r2, #8]
+ 123 001e 42F48052 		orr	r2, r2, #4096
+ 124 0022 9A60     		str	r2, [r3, #8]
+  39:../Sources/SDcard.c **** 	int i;
+  40:../Sources/SDcard.c **** 	spi_send( cmd );		//
+ 125              		.loc 1 40 0
+ 126 0024 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 127 0026 1846     		mov	r0, r3
+ 128 0028 FFF7FEFF 		bl	spi_send
+  41:../Sources/SDcard.c **** 	spi_send(arg>>24);
+ 129              		.loc 1 41 0
+ 130 002c 3B68     		ldr	r3, [r7, #0]
+ 131 002e 4FEA2363 		asr	r3, r3, #24
+ 132 0032 DBB2     		uxtb	r3, r3
+ 133 0034 1846     		mov	r0, r3
+ 134 0036 FFF7FEFF 		bl	spi_send
+  42:../Sources/SDcard.c **** 	spi_send(arg>>16);
+ 135              		.loc 1 42 0
+ 136 003a 3B68     		ldr	r3, [r7, #0]
+ 137 003c 4FEA2343 		asr	r3, r3, #16
+ 138 0040 DBB2     		uxtb	r3, r3
+ 139 0042 1846     		mov	r0, r3
+ 140 0044 FFF7FEFF 		bl	spi_send
+  43:../Sources/SDcard.c **** 	spi_send(arg>>8);
+ 141              		.loc 1 43 0
+ 142 0048 3B68     		ldr	r3, [r7, #0]
+ 143 004a 4FEA2323 		asr	r3, r3, #8
+ 144 004e DBB2     		uxtb	r3, r3
+ 145 0050 1846     		mov	r0, r3
+ 146 0052 FFF7FEFF 		bl	spi_send
+  44:../Sources/SDcard.c **** 	spi_send(arg>>0);
+ 147              		.loc 1 44 0
+ 148 0056 3B68     		ldr	r3, [r7, #0]
+ 149 0058 DBB2     		uxtb	r3, r3
+ 150 005a 1846     		mov	r0, r3
+ 151 005c FFF7FEFF 		bl	spi_send
+  45:../Sources/SDcard.c **** 	spi_send(0x95);
+ 152              		.loc 1 45 0
+ 153 0060 4FF09500 		mov	r0, #149
+ 154 0064 FFF7FEFF 		bl	spi_send
+  46:../Sources/SDcard.c **** 	
+  47:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT;i++)
+ 155              		.loc 1 47 0
+ 156 0068 4FF00003 		mov	r3, #0
+ 157 006c FB60     		str	r3, [r7, #12]
+ 158 006e 1FE0     		b	.L2
+ 159              	.L5:
+ 160              	.LBB2:
+  48:../Sources/SDcard.c **** 	{
+  49:../Sources/SDcard.c **** 		char response=spi_send(0xFF);
+ 161              		.loc 1 49 0
+ 162 0070 4FF0FF00 		mov	r0, #255
+ 163 0074 FFF7FEFF 		bl	spi_send
+ 164 0078 0346     		mov	r3, r0
+ 165 007a FB72     		strb	r3, [r7, #11]
+  50:../Sources/SDcard.c **** 		if(!(response & 0x80))
+ 166              		.loc 1 50 0
+ 167 007c FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 168 007e 5BB2     		sxtb	r3, r3
+ 169 0080 002B     		cmp	r3, #0
+ 170 0082 11DB     		blt	.L3
+  51:../Sources/SDcard.c **** 		{
+  52:../Sources/SDcard.c **** 			CS_HIGH
+ 171              		.loc 1 52 0
+ 172 0084 4FF28003 		movw	r3, #61568
+ 173 0088 C4F20F03 		movt	r3, 16399
+ 174 008c 4FF28002 		movw	r2, #61568
+ 175 0090 C4F20F02 		movt	r2, 16399
+ 176 0094 5268     		ldr	r2, [r2, #4]
+ 177 0096 42F48052 		orr	r2, r2, #4096
+ 178 009a 5A60     		str	r2, [r3, #4]
+  53:../Sources/SDcard.c **** 			spi_send(0xFF);
+ 179              		.loc 1 53 0
+ 180 009c 4FF0FF00 		mov	r0, #255
+ 181 00a0 FFF7FEFF 		bl	spi_send
+  54:../Sources/SDcard.c **** 			return response;
+ 182              		.loc 1 54 0
+ 183 00a4 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 184 00a6 1AE0     		b	.L4
+ 185              	.L3:
+ 186              	.LBE2:
+  47:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT;i++)
+ 187              		.loc 1 47 0
+ 188 00a8 FB68     		ldr	r3, [r7, #12]
+ 189 00aa 03F10103 		add	r3, r3, #1
+ 190 00ae FB60     		str	r3, [r7, #12]
+ 191              	.L2:
+  47:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT;i++)
+ 192              		.loc 1 47 0 is_stmt 0 discriminator 1
+ 193 00b0 FA68     		ldr	r2, [r7, #12]
+ 194 00b2 41F28733 		movw	r3, #4999
+ 195 00b6 9A42     		cmp	r2, r3
+ 196 00b8 DADD     		ble	.L5
+  55:../Sources/SDcard.c **** 		}
+  56:../Sources/SDcard.c **** 	}
+  57:../Sources/SDcard.c **** 	CS_HIGH
+ 197              		.loc 1 57 0 is_stmt 1
+ 198 00ba 4FF28003 		movw	r3, #61568
+ 199 00be C4F20F03 		movt	r3, 16399
+ 200 00c2 4FF28002 		movw	r2, #61568
+ 201 00c6 C4F20F02 		movt	r2, 16399
+ 202 00ca 5268     		ldr	r2, [r2, #4]
+ 203 00cc 42F48052 		orr	r2, r2, #4096
+ 204 00d0 5A60     		str	r2, [r3, #4]
+  58:../Sources/SDcard.c **** 	spi_send(0xFF);
+ 205              		.loc 1 58 0
+ 206 00d2 4FF0FF00 		mov	r0, #255
+ 207 00d6 FFF7FEFF 		bl	spi_send
+  59:../Sources/SDcard.c **** 	return -1;	
+ 208              		.loc 1 59 0
+ 209 00da 4FF0FF03 		mov	r3, #255
+ 210              	.L4:
+  60:../Sources/SDcard.c **** }
+ 211              		.loc 1 60 0
+ 212 00de 1846     		mov	r0, r3
+ 213 00e0 07F11007 		add	r7, r7, #16
+ 214 00e4 BD46     		mov	sp, r7
+ 215 00e6 80BD     		pop	{r7, pc}
+ 216              		.cfi_endproc
+ 217              	.LFE0:
+ 219              		.align	2
+ 220              		.global	command58
+ 221              		.thumb
+ 222              		.thumb_func
+ 224              	command58:
+ 225              	.LFB1:
+  61:../Sources/SDcard.c **** int command58()						//return OCR value
+  62:../Sources/SDcard.c **** {
+ 226              		.loc 1 62 0
+ 227              		.cfi_startproc
+ 228              		@ args = 0, pretend = 0, frame = 8
+ 229              		@ frame_needed = 1, uses_anonymous_args = 0
+ 230 00e8 80B5     		push	{r7, lr}
+ 231              	.LCFI3:
+ 232              		.cfi_def_cfa_offset 8
+ 233              		.cfi_offset 7, -8
+ 234              		.cfi_offset 14, -4
+ 235 00ea 82B0     		sub	sp, sp, #8
+ 236              	.LCFI4:
+ 237              		.cfi_def_cfa_offset 16
+ 238 00ec 00AF     		add	r7, sp, #0
+ 239              	.LCFI5:
+ 240              		.cfi_def_cfa_register 7
+  63:../Sources/SDcard.c **** 	CS_LOW
+ 241              		.loc 1 63 0
+ 242 00ee 4FF28003 		movw	r3, #61568
+ 243 00f2 C4F20F03 		movt	r3, 16399
+ 244 00f6 4FF28002 		movw	r2, #61568
+ 245 00fa C4F20F02 		movt	r2, 16399
+ 246 00fe 9268     		ldr	r2, [r2, #8]
+ 247 0100 42F48052 		orr	r2, r2, #4096
+ 248 0104 9A60     		str	r2, [r3, #8]
+  64:../Sources/SDcard.c **** 	spi_send(SD1_CMD58);
+ 249              		.loc 1 64 0
+ 250 0106 4FF07A00 		mov	r0, #122
+ 251 010a FFF7FEFF 		bl	spi_send
+  65:../Sources/SDcard.c **** 	spi_send(0);
+ 252              		.loc 1 65 0
+ 253 010e 4FF00000 		mov	r0, #0
+ 254 0112 FFF7FEFF 		bl	spi_send
+  66:../Sources/SDcard.c **** 	spi_send(0);
+ 255              		.loc 1 66 0
+ 256 0116 4FF00000 		mov	r0, #0
+ 257 011a FFF7FEFF 		bl	spi_send
+  67:../Sources/SDcard.c **** 	spi_send(0);
+ 258              		.loc 1 67 0
+ 259 011e 4FF00000 		mov	r0, #0
+ 260 0122 FFF7FEFF 		bl	spi_send
+  68:../Sources/SDcard.c **** 	spi_send(0);
+ 261              		.loc 1 68 0
+ 262 0126 4FF00000 		mov	r0, #0
+ 263 012a FFF7FEFF 		bl	spi_send
+  69:../Sources/SDcard.c **** 	spi_send(0x95);
+ 264              		.loc 1 69 0
+ 265 012e 4FF09500 		mov	r0, #149
+ 266 0132 FFF7FEFF 		bl	spi_send
+  70:../Sources/SDcard.c **** 	int i,ocr;
+  71:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT;i++)
+ 267              		.loc 1 71 0
+ 268 0136 4FF00003 		mov	r3, #0
+ 269 013a 7B60     		str	r3, [r7, #4]
+ 270 013c 42E0     		b	.L7
+ 271              	.L10:
+  72:../Sources/SDcard.c **** 	{
+  73:../Sources/SDcard.c **** 		if(!(spi_send(0xFF) & 0x80))
+ 272              		.loc 1 73 0
+ 273 013e 4FF0FF00 		mov	r0, #255
+ 274 0142 FFF7FEFF 		bl	spi_send
+ 275 0146 0346     		mov	r3, r0
+ 276 0148 DBB2     		uxtb	r3, r3
+ 277 014a 5BB2     		sxtb	r3, r3
+ 278 014c 002B     		cmp	r3, #0
+ 279 014e 35DB     		blt	.L8
+  74:../Sources/SDcard.c **** 		{
+  75:../Sources/SDcard.c **** 			ocr = spi_send(0xFF)<<24;
+ 280              		.loc 1 75 0
+ 281 0150 4FF0FF00 		mov	r0, #255
+ 282 0154 FFF7FEFF 		bl	spi_send
+ 283 0158 0346     		mov	r3, r0
+ 284 015a 4FEA0363 		lsl	r3, r3, #24
+ 285 015e 3B60     		str	r3, [r7, #0]
+  76:../Sources/SDcard.c **** 			ocr |= spi_send(0xFF)<<16;
+ 286              		.loc 1 76 0
+ 287 0160 4FF0FF00 		mov	r0, #255
+ 288 0164 FFF7FEFF 		bl	spi_send
+ 289 0168 0346     		mov	r3, r0
+ 290 016a 4FEA0343 		lsl	r3, r3, #16
+ 291 016e 3A68     		ldr	r2, [r7, #0]
+ 292 0170 1343     		orrs	r3, r3, r2
+ 293 0172 3B60     		str	r3, [r7, #0]
+  77:../Sources/SDcard.c **** 			ocr |= spi_send(0xFF)<<8;
+ 294              		.loc 1 77 0
+ 295 0174 4FF0FF00 		mov	r0, #255
+ 296 0178 FFF7FEFF 		bl	spi_send
+ 297 017c 0346     		mov	r3, r0
+ 298 017e 4FEA0323 		lsl	r3, r3, #8
+ 299 0182 3A68     		ldr	r2, [r7, #0]
+ 300 0184 1343     		orrs	r3, r3, r2
+ 301 0186 3B60     		str	r3, [r7, #0]
+  78:../Sources/SDcard.c **** 			ocr |= spi_send(0xFF);
+ 302              		.loc 1 78 0
+ 303 0188 4FF0FF00 		mov	r0, #255
+ 304 018c FFF7FEFF 		bl	spi_send
+ 305 0190 0346     		mov	r3, r0
+ 306 0192 3A68     		ldr	r2, [r7, #0]
+ 307 0194 1343     		orrs	r3, r3, r2
+ 308 0196 3B60     		str	r3, [r7, #0]
+  79:../Sources/SDcard.c **** 			CS_HIGH
+ 309              		.loc 1 79 0
+ 310 0198 4FF28003 		movw	r3, #61568
+ 311 019c C4F20F03 		movt	r3, 16399
+ 312 01a0 4FF28002 		movw	r2, #61568
+ 313 01a4 C4F20F02 		movt	r2, 16399
+ 314 01a8 5268     		ldr	r2, [r2, #4]
+ 315 01aa 42F48052 		orr	r2, r2, #4096
+ 316 01ae 5A60     		str	r2, [r3, #4]
+  80:../Sources/SDcard.c **** 			spi_send(0xFF);
+ 317              		.loc 1 80 0
+ 318 01b0 4FF0FF00 		mov	r0, #255
+ 319 01b4 FFF7FEFF 		bl	spi_send
+  81:../Sources/SDcard.c **** 			return ocr;
+ 320              		.loc 1 81 0
+ 321 01b8 3B68     		ldr	r3, [r7, #0]
+ 322 01ba 1AE0     		b	.L9
+ 323              	.L8:
+  71:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT;i++)
+ 324              		.loc 1 71 0
+ 325 01bc 7B68     		ldr	r3, [r7, #4]
+ 326 01be 03F10103 		add	r3, r3, #1
+ 327 01c2 7B60     		str	r3, [r7, #4]
+ 328              	.L7:
+  71:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT;i++)
+ 329              		.loc 1 71 0 is_stmt 0 discriminator 1
+ 330 01c4 7A68     		ldr	r2, [r7, #4]
+ 331 01c6 41F28733 		movw	r3, #4999
+ 332 01ca 9A42     		cmp	r2, r3
+ 333 01cc B7DD     		ble	.L10
+  82:../Sources/SDcard.c **** 		}
+  83:../Sources/SDcard.c **** 	}
+  84:../Sources/SDcard.c **** 	CS_HIGH
+ 334              		.loc 1 84 0 is_stmt 1
+ 335 01ce 4FF28003 		movw	r3, #61568
+ 336 01d2 C4F20F03 		movt	r3, 16399
+ 337 01d6 4FF28002 		movw	r2, #61568
+ 338 01da C4F20F02 		movt	r2, 16399
+ 339 01de 5268     		ldr	r2, [r2, #4]
+ 340 01e0 42F48052 		orr	r2, r2, #4096
+ 341 01e4 5A60     		str	r2, [r3, #4]
+  85:../Sources/SDcard.c **** 	spi_send(0xFF);
+ 342              		.loc 1 85 0
+ 343 01e6 4FF0FF00 		mov	r0, #255
+ 344 01ea FFF7FEFF 		bl	spi_send
+  86:../Sources/SDcard.c **** 	return -1;
+ 345              		.loc 1 86 0
+ 346 01ee 4FF0FF33 		mov	r3, #-1
+ 347              	.L9:
+  87:../Sources/SDcard.c **** 	
+  88:../Sources/SDcard.c **** }
+ 348              		.loc 1 88 0
+ 349 01f2 1846     		mov	r0, r3
+ 350 01f4 07F10807 		add	r7, r7, #8
+ 351 01f8 BD46     		mov	sp, r7
+ 352 01fa 80BD     		pop	{r7, pc}
+ 353              		.cfi_endproc
+ 354              	.LFE1:
+ 356              		.align	2
+ 357              		.global	command8
+ 358              		.thumb
+ 359              		.thumb_func
+ 361              	command8:
+ 362              	.LFB2:
+  89:../Sources/SDcard.c **** char command8()
+  90:../Sources/SDcard.c **** {
+ 363              		.loc 1 90 0
+ 364              		.cfi_startproc
+ 365              		@ args = 0, pretend = 0, frame = 16
+ 366              		@ frame_needed = 1, uses_anonymous_args = 0
+ 367 01fc 80B5     		push	{r7, lr}
+ 368              	.LCFI6:
+ 369              		.cfi_def_cfa_offset 8
+ 370              		.cfi_offset 7, -8
+ 371              		.cfi_offset 14, -4
+ 372 01fe 84B0     		sub	sp, sp, #16
+ 373              	.LCFI7:
+ 374              		.cfi_def_cfa_offset 24
+ 375 0200 00AF     		add	r7, sp, #0
+ 376              	.LCFI8:
+ 377              		.cfi_def_cfa_register 7
+  91:../Sources/SDcard.c **** 	int i;
+  92:../Sources/SDcard.c **** 	char response[5];
+  93:../Sources/SDcard.c **** 	CS_LOW
+ 378              		.loc 1 93 0
+ 379 0202 4FF28003 		movw	r3, #61568
+ 380 0206 C4F20F03 		movt	r3, 16399
+ 381 020a 4FF28002 		movw	r2, #61568
+ 382 020e C4F20F02 		movt	r2, 16399
+ 383 0212 9268     		ldr	r2, [r2, #8]
+ 384 0214 42F48052 		orr	r2, r2, #4096
+ 385 0218 9A60     		str	r2, [r3, #8]
+  94:../Sources/SDcard.c **** 	spi_send(0x48);
+ 386              		.loc 1 94 0
+ 387 021a 4FF04800 		mov	r0, #72
+ 388 021e FFF7FEFF 		bl	spi_send
+  95:../Sources/SDcard.c **** 	spi_send(0);
+ 389              		.loc 1 95 0
+ 390 0222 4FF00000 		mov	r0, #0
+ 391 0226 FFF7FEFF 		bl	spi_send
+  96:../Sources/SDcard.c **** 	spi_send(0);
+ 392              		.loc 1 96 0
+ 393 022a 4FF00000 		mov	r0, #0
+ 394 022e FFF7FEFF 		bl	spi_send
+  97:../Sources/SDcard.c **** 	spi_send(0x01);
+ 395              		.loc 1 97 0
+ 396 0232 4FF00100 		mov	r0, #1
+ 397 0236 FFF7FEFF 		bl	spi_send
+  98:../Sources/SDcard.c **** 	spi_send(0xAA);
+ 398              		.loc 1 98 0
+ 399 023a 4FF0AA00 		mov	r0, #170
+ 400 023e FFF7FEFF 		bl	spi_send
+  99:../Sources/SDcard.c **** 	spi_send(0x87);
+ 401              		.loc 1 99 0
+ 402 0242 4FF08700 		mov	r0, #135
+ 403 0246 FFF7FEFF 		bl	spi_send
+ 100:../Sources/SDcard.c **** 	
+ 101:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT*1000;i++)
+ 404              		.loc 1 101 0
+ 405 024a 4FF00003 		mov	r3, #0
+ 406 024e FB60     		str	r3, [r7, #12]
+ 407 0250 34E0     		b	.L12
+ 408              	.L17:
+ 102:../Sources/SDcard.c **** 	{
+ 103:../Sources/SDcard.c **** 		response[0]=spi_send(0xFF);
+ 409              		.loc 1 103 0
+ 410 0252 4FF0FF00 		mov	r0, #255
+ 411 0256 FFF7FEFF 		bl	spi_send
+ 412 025a 0346     		mov	r3, r0
+ 413 025c 3B71     		strb	r3, [r7, #4]
+ 104:../Sources/SDcard.c **** 		if(!(response[0]==0x80))
+ 414              		.loc 1 104 0
+ 415 025e 3B79     		ldrb	r3, [r7, #4]	@ zero_extendqisi2
+ 416 0260 802B     		cmp	r3, #128
+ 417 0262 27D0     		beq	.L13
+ 105:../Sources/SDcard.c **** 		{
+ 106:../Sources/SDcard.c **** 			for(i=0;i<5;i++)	response[i]=spi_send(0xFF);
+ 418              		.loc 1 106 0
+ 419 0264 4FF00003 		mov	r3, #0
+ 420 0268 FB60     		str	r3, [r7, #12]
+ 421 026a 0EE0     		b	.L14
+ 422              	.L15:
+ 423              		.loc 1 106 0 is_stmt 0 discriminator 2
+ 424 026c 4FF0FF00 		mov	r0, #255
+ 425 0270 FFF7FEFF 		bl	spi_send
+ 426 0274 0346     		mov	r3, r0
+ 427 0276 1A46     		mov	r2, r3
+ 428 0278 07F10401 		add	r1, r7, #4
+ 429 027c FB68     		ldr	r3, [r7, #12]
+ 430 027e CB18     		adds	r3, r1, r3
+ 431 0280 1A70     		strb	r2, [r3, #0]
+ 432 0282 FB68     		ldr	r3, [r7, #12]
+ 433 0284 03F10103 		add	r3, r3, #1
+ 434 0288 FB60     		str	r3, [r7, #12]
+ 435              	.L14:
+ 436              		.loc 1 106 0 discriminator 1
+ 437 028a FB68     		ldr	r3, [r7, #12]
+ 438 028c 042B     		cmp	r3, #4
+ 439 028e EDDD     		ble	.L15
+ 107:../Sources/SDcard.c **** 			CS_HIGH
+ 440              		.loc 1 107 0 is_stmt 1
+ 441 0290 4FF28003 		movw	r3, #61568
+ 442 0294 C4F20F03 		movt	r3, 16399
+ 443 0298 4FF28002 		movw	r2, #61568
+ 444 029c C4F20F02 		movt	r2, 16399
+ 445 02a0 5268     		ldr	r2, [r2, #4]
+ 446 02a2 42F48052 		orr	r2, r2, #4096
+ 447 02a6 5A60     		str	r2, [r3, #4]
+ 108:../Sources/SDcard.c **** 			spi_send(0xFF);
+ 448              		.loc 1 108 0
+ 449 02a8 4FF0FF00 		mov	r0, #255
+ 450 02ac FFF7FEFF 		bl	spi_send
+ 109:../Sources/SDcard.c **** 			return response[0];
+ 451              		.loc 1 109 0
+ 452 02b0 3B79     		ldrb	r3, [r7, #4]	@ zero_extendqisi2
+ 453 02b2 1CE0     		b	.L18
+ 454              	.L13:
+ 101:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT*1000;i++)
+ 455              		.loc 1 101 0
+ 456 02b4 FB68     		ldr	r3, [r7, #12]
+ 457 02b6 03F10103 		add	r3, r3, #1
+ 458 02ba FB60     		str	r3, [r7, #12]
+ 459              	.L12:
+ 101:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT*1000;i++)
+ 460              		.loc 1 101 0 is_stmt 0 discriminator 1
+ 461 02bc FA68     		ldr	r2, [r7, #12]
+ 462 02be 44F63F33 		movw	r3, #19263
+ 463 02c2 C0F24C03 		movt	r3, 76
+ 464 02c6 9A42     		cmp	r2, r3
+ 465 02c8 C3DD     		ble	.L17
+ 110:../Sources/SDcard.c **** 		}
+ 111:../Sources/SDcard.c **** 	}
+ 112:../Sources/SDcard.c **** 	CS_HIGH
+ 466              		.loc 1 112 0 is_stmt 1
+ 467 02ca 4FF28003 		movw	r3, #61568
+ 468 02ce C4F20F03 		movt	r3, 16399
+ 469 02d2 4FF28002 		movw	r2, #61568
+ 470 02d6 C4F20F02 		movt	r2, 16399
+ 471 02da 5268     		ldr	r2, [r2, #4]
+ 472 02dc 42F48052 		orr	r2, r2, #4096
+ 473 02e0 5A60     		str	r2, [r3, #4]
+ 113:../Sources/SDcard.c **** 	spi_send(0xFF);
+ 474              		.loc 1 113 0
+ 475 02e2 4FF0FF00 		mov	r0, #255
+ 476 02e6 FFF7FEFF 		bl	spi_send
+ 114:../Sources/SDcard.c **** 	return -1;
+ 477              		.loc 1 114 0
+ 478 02ea 4FF0FF03 		mov	r3, #255
+ 479              	.L18:
+ 115:../Sources/SDcard.c **** }
+ 480              		.loc 1 115 0
+ 481 02ee 1846     		mov	r0, r3
+ 482 02f0 07F11007 		add	r7, r7, #16
+ 483 02f4 BD46     		mov	sp, r7
+ 484 02f6 80BD     		pop	{r7, pc}
+ 485              		.cfi_endproc
+ 486              	.LFE2:
+ 488              		.align	2
+ 489              		.global	init_SD_v1
+ 490              		.thumb
+ 491              		.thumb_func
+ 493              	init_SD_v1:
+ 494              	.LFB3:
+ 116:../Sources/SDcard.c **** 
+ 117:../Sources/SDcard.c **** char init_SD_v1()
+ 118:../Sources/SDcard.c **** {
+ 495              		.loc 1 118 0
+ 496              		.cfi_startproc
+ 497              		@ args = 0, pretend = 0, frame = 8
+ 498              		@ frame_needed = 1, uses_anonymous_args = 0
+ 499 02f8 80B5     		push	{r7, lr}
+ 500              	.LCFI9:
+ 501              		.cfi_def_cfa_offset 8
+ 502              		.cfi_offset 7, -8
+ 503              		.cfi_offset 14, -4
+ 504 02fa 82B0     		sub	sp, sp, #8
+ 505              	.LCFI10:
+ 506              		.cfi_def_cfa_offset 16
+ 507 02fc 00AF     		add	r7, sp, #0
+ 508              	.LCFI11:
+ 509              		.cfi_def_cfa_register 7
+ 119:../Sources/SDcard.c **** 	int i;
+ 120:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT;i++)
+ 510              		.loc 1 120 0
+ 511 02fe 4FF00003 		mov	r3, #0
+ 512 0302 7B60     		str	r3, [r7, #4]
+ 513 0304 15E0     		b	.L20
+ 514              	.L23:
+ 121:../Sources/SDcard.c **** 	{
+ 122:../Sources/SDcard.c **** 		command(55,0);
+ 515              		.loc 1 122 0
+ 516 0306 4FF03700 		mov	r0, #55
+ 517 030a 4FF00001 		mov	r1, #0
+ 518 030e FFF7FEFF 		bl	command
+ 123:../Sources/SDcard.c **** 		if(command(SD1_CMD1,0)==0) return SDCARD_V1;
+ 519              		.loc 1 123 0
+ 520 0312 4FF04100 		mov	r0, #65
+ 521 0316 4FF00001 		mov	r1, #0
+ 522 031a FFF7FEFF 		bl	command
+ 523 031e 0346     		mov	r3, r0
+ 524 0320 002B     		cmp	r3, #0
+ 525 0322 02D1     		bne	.L21
+ 526              		.loc 1 123 0 is_stmt 0 discriminator 1
+ 527 0324 4FF00103 		mov	r3, #1
+ 528 0328 0AE0     		b	.L22
+ 529              	.L21:
+ 120:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT;i++)
+ 530              		.loc 1 120 0 is_stmt 1
+ 531 032a 7B68     		ldr	r3, [r7, #4]
+ 532 032c 03F10103 		add	r3, r3, #1
+ 533 0330 7B60     		str	r3, [r7, #4]
+ 534              	.L20:
+ 120:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT;i++)
+ 535              		.loc 1 120 0 is_stmt 0 discriminator 1
+ 536 0332 7A68     		ldr	r2, [r7, #4]
+ 537 0334 41F28733 		movw	r3, #4999
+ 538 0338 9A42     		cmp	r2, r3
+ 539 033a E4DD     		ble	.L23
+ 124:../Sources/SDcard.c **** 	}
+ 125:../Sources/SDcard.c **** 	return SDCARD_FAIL;
+ 540              		.loc 1 125 0 is_stmt 1
+ 541 033c 4FF00003 		mov	r3, #0
+ 542              	.L22:
+ 126:../Sources/SDcard.c **** }
+ 543              		.loc 1 126 0
+ 544 0340 1846     		mov	r0, r3
+ 545 0342 07F10807 		add	r7, r7, #8
+ 546 0346 BD46     		mov	sp, r7
+ 547 0348 80BD     		pop	{r7, pc}
+ 548              		.cfi_endproc
+ 549              	.LFE3:
+ 551 034a 00BF     		.align	2
+ 552              		.global	init_SD_v2
+ 553              		.thumb
+ 554              		.thumb_func
+ 556              	init_SD_v2:
+ 557              	.LFB4:
+ 127:../Sources/SDcard.c **** char init_SD_v2()
+ 128:../Sources/SDcard.c **** {
+ 558              		.loc 1 128 0
+ 559              		.cfi_startproc
+ 560              		@ args = 0, pretend = 0, frame = 8
+ 561              		@ frame_needed = 1, uses_anonymous_args = 0
+ 562 034c 80B5     		push	{r7, lr}
+ 563              	.LCFI12:
+ 564              		.cfi_def_cfa_offset 8
+ 565              		.cfi_offset 7, -8
+ 566              		.cfi_offset 14, -4
+ 567 034e 82B0     		sub	sp, sp, #8
+ 568              	.LCFI13:
+ 569              		.cfi_def_cfa_offset 16
+ 570 0350 00AF     		add	r7, sp, #0
+ 571              	.LCFI14:
+ 572              		.cfi_def_cfa_register 7
+ 129:../Sources/SDcard.c **** 	int i,temp;
+ 130:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT/100;i++)
+ 573              		.loc 1 130 0
+ 574 0352 4FF00003 		mov	r3, #0
+ 575 0356 7B60     		str	r3, [r7, #4]
+ 576 0358 21E0     		b	.L25
+ 577              	.L28:
+ 131:../Sources/SDcard.c **** 	{
+ 132:../Sources/SDcard.c **** 		Delay_mS(50);
+ 578              		.loc 1 132 0
+ 579 035a 4FF03200 		mov	r0, #50
+ 580 035e FFF7FEFF 		bl	Delay_mS
+ 133:../Sources/SDcard.c **** 		command58();
+ 581              		.loc 1 133 0
+ 582 0362 FFF7FEFF 		bl	command58
+ 134:../Sources/SDcard.c **** 		temp=command(SD1_CMD55,0);
+ 583              		.loc 1 134 0
+ 584 0366 4FF07700 		mov	r0, #119
+ 585 036a 4FF00001 		mov	r1, #0
+ 586 036e FFF7FEFF 		bl	command
+ 587 0372 0346     		mov	r3, r0
+ 588 0374 3B60     		str	r3, [r7, #0]
+ 135:../Sources/SDcard.c **** 		temp=command(SD1_ACMD41,0x40000000);
+ 589              		.loc 1 135 0
+ 590 0376 4FF06900 		mov	r0, #105
+ 591 037a 4FF08041 		mov	r1, #1073741824
+ 592 037e FFF7FEFF 		bl	command
+ 593 0382 0346     		mov	r3, r0
+ 594 0384 3B60     		str	r3, [r7, #0]
+ 136:../Sources/SDcard.c **** 		if(temp==0)
+ 595              		.loc 1 136 0
+ 596 0386 3B68     		ldr	r3, [r7, #0]
+ 597 0388 002B     		cmp	r3, #0
+ 598 038a 04D1     		bne	.L26
+ 137:../Sources/SDcard.c **** 		{
+ 138:../Sources/SDcard.c **** 			command58();
+ 599              		.loc 1 138 0
+ 600 038c FFF7FEFF 		bl	command58
+ 139:../Sources/SDcard.c **** 			return SDCARD_V2;
+ 601              		.loc 1 139 0
+ 602 0390 4FF00403 		mov	r3, #4
+ 603 0394 08E0     		b	.L27
+ 604              	.L26:
+ 130:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT/100;i++)
+ 605              		.loc 1 130 0
+ 606 0396 7B68     		ldr	r3, [r7, #4]
+ 607 0398 03F10103 		add	r3, r3, #1
+ 608 039c 7B60     		str	r3, [r7, #4]
+ 609              	.L25:
+ 130:../Sources/SDcard.c **** 	for(i=0;i<COMMAND_TIMEOUT/100;i++)
+ 610              		.loc 1 130 0 is_stmt 0 discriminator 1
+ 611 039e 7B68     		ldr	r3, [r7, #4]
+ 612 03a0 312B     		cmp	r3, #49
+ 613 03a2 DADD     		ble	.L28
+ 140:../Sources/SDcard.c **** 		}
+ 141:../Sources/SDcard.c **** 	}
+ 142:../Sources/SDcard.c **** 	return SDCARD_FAIL;
+ 614              		.loc 1 142 0 is_stmt 1
+ 615 03a4 4FF00003 		mov	r3, #0
+ 616              	.L27:
+ 143:../Sources/SDcard.c **** }
+ 617              		.loc 1 143 0
+ 618 03a8 1846     		mov	r0, r3
+ 619 03aa 07F10807 		add	r7, r7, #8
+ 620 03ae BD46     		mov	sp, r7
+ 621 03b0 80BD     		pop	{r7, pc}
+ 622              		.cfi_endproc
+ 623              	.LFE4:
+ 625 03b2 00BF     		.align	2
+ 626              		.global	init_SDcard
+ 627              		.thumb
+ 628              		.thumb_func
+ 630              	init_SDcard:
+ 631              	.LFB5:
+ 144:../Sources/SDcard.c **** char init_SDcard()
+ 145:../Sources/SDcard.c **** {
+ 632              		.loc 1 145 0
+ 633              		.cfi_startproc
+ 634              		@ args = 0, pretend = 0, frame = 8
+ 635              		@ frame_needed = 1, uses_anonymous_args = 0
+ 636 03b4 80B5     		push	{r7, lr}
+ 637              	.LCFI15:
+ 638              		.cfi_def_cfa_offset 8
+ 639              		.cfi_offset 7, -8
+ 640              		.cfi_offset 14, -4
+ 641 03b6 82B0     		sub	sp, sp, #8
+ 642              	.LCFI16:
+ 643              		.cfi_def_cfa_offset 16
+ 644 03b8 00AF     		add	r7, sp, #0
+ 645              	.LCFI17:
+ 646              		.cfi_def_cfa_register 7
+ 146:../Sources/SDcard.c **** 	char i,r,j=0;
+ 647              		.loc 1 146 0
+ 648 03ba 4FF00003 		mov	r3, #0
+ 649 03be BB71     		strb	r3, [r7, #6]
+ 147:../Sources/SDcard.c **** 	while(j<3)
+ 650              		.loc 1 147 0
+ 651 03c0 4DE0     		b	.L30
+ 652              	.L36:
+ 148:../Sources/SDcard.c **** 	{
+ 149:../Sources/SDcard.c **** 		Delay_mS(100);
+ 653              		.loc 1 149 0
+ 654 03c2 4FF06400 		mov	r0, #100
+ 655 03c6 FFF7FEFF 		bl	Delay_mS
+ 150:../Sources/SDcard.c **** 		CS_HIGH
+ 656              		.loc 1 150 0
+ 657 03ca 4FF28003 		movw	r3, #61568
+ 658 03ce C4F20F03 		movt	r3, 16399
+ 659 03d2 4FF28002 		movw	r2, #61568
+ 660 03d6 C4F20F02 		movt	r2, 16399
+ 661 03da 5268     		ldr	r2, [r2, #4]
+ 662 03dc 42F48052 		orr	r2, r2, #4096
+ 663 03e0 5A60     		str	r2, [r3, #4]
+ 151:../Sources/SDcard.c **** 		Delay_mS(100);
+ 664              		.loc 1 151 0
+ 665 03e2 4FF06400 		mov	r0, #100
+ 666 03e6 FFF7FEFF 		bl	Delay_mS
+ 152:../Sources/SDcard.c **** 		for(i=0;i<11;i++)	//74 or more clock pulses to SCLK, when MOSI and CS is HIGH
+ 667              		.loc 1 152 0
+ 668 03ea 4FF00003 		mov	r3, #0
+ 669 03ee FB71     		strb	r3, [r7, #7]
+ 670 03f0 07E0     		b	.L31
+ 671              	.L32:
+ 153:../Sources/SDcard.c **** 			{
+ 154:../Sources/SDcard.c **** 			spi_send(255);
+ 672              		.loc 1 154 0 discriminator 2
+ 673 03f2 4FF0FF00 		mov	r0, #255
+ 674 03f6 FFF7FEFF 		bl	spi_send
+ 152:../Sources/SDcard.c **** 		for(i=0;i<11;i++)	//74 or more clock pulses to SCLK, when MOSI and CS is HIGH
+ 675              		.loc 1 152 0 discriminator 2
+ 676 03fa FB79     		ldrb	r3, [r7, #7]
+ 677 03fc 03F10103 		add	r3, r3, #1
+ 678 0400 FB71     		strb	r3, [r7, #7]
+ 679              	.L31:
+ 152:../Sources/SDcard.c **** 		for(i=0;i<11;i++)	//74 or more clock pulses to SCLK, when MOSI and CS is HIGH
+ 680              		.loc 1 152 0 is_stmt 0 discriminator 1
+ 681 0402 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 682 0404 0A2B     		cmp	r3, #10
+ 683 0406 F4D9     		bls	.L32
+ 155:../Sources/SDcard.c **** 			}
+ 156:../Sources/SDcard.c **** 		CS_LOW
+ 684              		.loc 1 156 0 is_stmt 1
+ 685 0408 4FF28003 		movw	r3, #61568
+ 686 040c C4F20F03 		movt	r3, 16399
+ 687 0410 4FF28002 		movw	r2, #61568
+ 688 0414 C4F20F02 		movt	r2, 16399
+ 689 0418 9268     		ldr	r2, [r2, #8]
+ 690 041a 42F48052 		orr	r2, r2, #4096
+ 691 041e 9A60     		str	r2, [r3, #8]
+ 157:../Sources/SDcard.c **** 		Delay_mS(100);
+ 692              		.loc 1 157 0
+ 693 0420 4FF06400 		mov	r0, #100
+ 694 0424 FFF7FEFF 		bl	Delay_mS
+ 158:../Sources/SDcard.c **** 		r=command(SD1_CMD0,0);
+ 695              		.loc 1 158 0
+ 696 0428 4FF04000 		mov	r0, #64
+ 697 042c 4FF00001 		mov	r1, #0
+ 698 0430 FFF7FEFF 		bl	command
+ 699 0434 0346     		mov	r3, r0
+ 700 0436 7B71     		strb	r3, [r7, #5]
+ 159:../Sources/SDcard.c **** 		if(r!=0x00000001) goto ide;//return SDCARD_FAIL;
+ 701              		.loc 1 159 0
+ 702 0438 7B79     		ldrb	r3, [r7, #5]	@ zero_extendqisi2
+ 703 043a 012B     		cmp	r3, #1
+ 704 043c 0AD1     		bne	.L37
+ 705              	.L33:
+ 160:../Sources/SDcard.c **** 		r=command8();
+ 706              		.loc 1 160 0
+ 707 043e FFF7FEFF 		bl	command8
+ 708 0442 0346     		mov	r3, r0
+ 709 0444 7B71     		strb	r3, [r7, #5]
+ 161:../Sources/SDcard.c **** 		if(r==0x00000001) return init_SD_v2();
+ 710              		.loc 1 161 0
+ 711 0446 7B79     		ldrb	r3, [r7, #5]	@ zero_extendqisi2
+ 712 0448 012B     		cmp	r3, #1
+ 713 044a 04D1     		bne	.L34
+ 714              		.loc 1 161 0 is_stmt 0 discriminator 1
+ 715 044c FFF7FEFF 		bl	init_SD_v2
+ 716 0450 0346     		mov	r3, r0
+ 717 0452 09E0     		b	.L35
+ 718              	.L37:
+ 159:../Sources/SDcard.c **** 		if(r!=0x00000001) goto ide;//return SDCARD_FAIL;
+ 719              		.loc 1 159 0 is_stmt 1
+ 720 0454 00BF     		nop
+ 721              	.L34:
+ 162:../Sources/SDcard.c **** 		if(r==0x00000101) return init_SD_v1();
+ 163:../Sources/SDcard.c **** 	ide:j++;
+ 722              		.loc 1 163 0
+ 723 0456 BB79     		ldrb	r3, [r7, #6]
+ 724 0458 03F10103 		add	r3, r3, #1
+ 725 045c BB71     		strb	r3, [r7, #6]
+ 726              	.L30:
+ 147:../Sources/SDcard.c **** 	while(j<3)
+ 727              		.loc 1 147 0 discriminator 1
+ 728 045e BB79     		ldrb	r3, [r7, #6]	@ zero_extendqisi2
+ 729 0460 022B     		cmp	r3, #2
+ 730 0462 AED9     		bls	.L36
+ 164:../Sources/SDcard.c **** 	}
+ 165:../Sources/SDcard.c **** 	return SDCARD_FAIL;
+ 731              		.loc 1 165 0
+ 732 0464 4FF00003 		mov	r3, #0
+ 733              	.L35:
+ 166:../Sources/SDcard.c **** }
+ 734              		.loc 1 166 0
+ 735 0468 1846     		mov	r0, r3
+ 736 046a 07F10807 		add	r7, r7, #8
+ 737 046e BD46     		mov	sp, r7
+ 738 0470 80BD     		pop	{r7, pc}
+ 739              		.cfi_endproc
+ 740              	.LFE5:
+ 742 0472 00BF     		.align	2
+ 743              		.global	init_SD
+ 744              		.thumb
+ 745              		.thumb_func
+ 747              	init_SD:
+ 748              	.LFB6:
+ 167:../Sources/SDcard.c **** char init_SD()		//piros villogsas jelzi a hibat!!!
+ 168:../Sources/SDcard.c **** {
+ 749              		.loc 1 168 0
+ 750              		.cfi_startproc
+ 751              		@ args = 0, pretend = 0, frame = 8
+ 752              		@ frame_needed = 1, uses_anonymous_args = 0
+ 753 0474 80B5     		push	{r7, lr}
+ 754              	.LCFI18:
+ 755              		.cfi_def_cfa_offset 8
+ 756              		.cfi_offset 7, -8
+ 757              		.cfi_offset 14, -4
+ 758 0476 82B0     		sub	sp, sp, #8
+ 759              	.LCFI19:
+ 760              		.cfi_def_cfa_offset 16
+ 761 0478 00AF     		add	r7, sp, #0
+ 762              	.LCFI20:
+ 763              		.cfi_def_cfa_register 7
+ 169:../Sources/SDcard.c **** 	char r=init_SDcard();
+ 764              		.loc 1 169 0
+ 765 047a FFF7FEFF 		bl	init_SDcard
+ 766 047e 0346     		mov	r3, r0
+ 767 0480 FB71     		strb	r3, [r7, #7]
+ 170:../Sources/SDcard.c **** 	if(!r) init_SD_FAIL();
+ 768              		.loc 1 170 0
+ 769 0482 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 770 0484 002B     		cmp	r3, #0
+ 771 0486 01D1     		bne	.L39
+ 772              		.loc 1 170 0 is_stmt 0 discriminator 1
+ 773 0488 FFF7FEFF 		bl	init_SD_FAIL
+ 774              	.L39:
+ 171:../Sources/SDcard.c **** 	if(command(SD1_CMD16,0x200)) init_SD_block512Fail();
+ 775              		.loc 1 171 0 is_stmt 1
+ 776 048c 4FF05000 		mov	r0, #80
+ 777 0490 4FF40071 		mov	r1, #512
+ 778 0494 FFF7FEFF 		bl	command
+ 779 0498 0346     		mov	r3, r0
+ 780 049a 002B     		cmp	r3, #0
+ 781 049c 01D0     		beq	.L40
+ 782              		.loc 1 171 0 is_stmt 0 discriminator 1
+ 783 049e FFF7FEFF 		bl	init_SD_block512Fail
+ 784              	.L40:
+ 172:../Sources/SDcard.c **** 	//------------------------------------------------------------------------------------------------
+ 173:../Sources/SDcard.c **** 		//Define SPI clock speed:
+ 174:../Sources/SDcard.c **** 		#define BAUD_DIV 0 /* 24MHz SPI */
+ 175:../Sources/SDcard.c **** 		//#define BAUD_DIV 1 /* 12MHz SPI */
+ 176:../Sources/SDcard.c **** 		//#define BAUD_DIV 2 /* 8MHz SPI */
+ 177:../Sources/SDcard.c **** 		//#define BAUD_DIV 3 /* 6MHz SPI */
+ 178:../Sources/SDcard.c **** 		//#define BAUD_DIV 4 /* 3MHz SPI */
+ 179:../Sources/SDcard.c **** //		SPI0_CTAR0 = SPI_CTAR_FMSZ(7) | SPI_CTAR_PBR(0) | SPI_CTAR_BR(BAUD_DIV) | SPI_CTAR_CSSCK(BAUD_D
+ 180:../Sources/SDcard.c **** //		SPI0_CTAR1 = SPI_CTAR_FMSZ(15) | SPI_CTAR_PBR(0) | SPI_CTAR_BR(BAUD_DIV) | SPI_CTAR_CSSCK(BAUD_
+ 181:../Sources/SDcard.c **** 	//------------------------------------------------------------------------------------------------
+ 182:../Sources/SDcard.c **** //	SPI0_BR = (SPI_BR_SPPR(0x00) | SPI_BR_SPR(0x01));		//baud rate prescale divisor to 0 & set baud 
+ 183:../Sources/SDcard.c **** 	return r;
+ 785              		.loc 1 183 0 is_stmt 1
+ 786 04a2 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 184:../Sources/SDcard.c **** }
+ 787              		.loc 1 184 0
+ 788 04a4 1846     		mov	r0, r3
+ 789 04a6 07F10807 		add	r7, r7, #8
+ 790 04aa BD46     		mov	sp, r7
+ 791 04ac 80BD     		pop	{r7, pc}
+ 792              		.cfi_endproc
+ 793              	.LFE6:
+ 795 04ae 00BF     		.align	2
+ 796              		.global	init_SD_FAIL
+ 797              		.thumb
+ 798              		.thumb_func
+ 800              	init_SD_FAIL:
+ 801              	.LFB7:
+ 185:../Sources/SDcard.c **** void init_SD_FAIL()
+ 186:../Sources/SDcard.c **** {
+ 802              		.loc 1 186 0
+ 803              		.cfi_startproc
+ 804              		@ args = 0, pretend = 0, frame = 8
+ 805              		@ frame_needed = 1, uses_anonymous_args = 0
+ 806 04b0 80B5     		push	{r7, lr}
+ 807              	.LCFI21:
+ 808              		.cfi_def_cfa_offset 8
+ 809              		.cfi_offset 7, -8
+ 810              		.cfi_offset 14, -4
+ 811 04b2 82B0     		sub	sp, sp, #8
+ 812              	.LCFI22:
+ 813              		.cfi_def_cfa_offset 16
+ 814 04b4 00AF     		add	r7, sp, #0
+ 815              	.LCFI23:
+ 816              		.cfi_def_cfa_register 7
+ 187:../Sources/SDcard.c **** 	int i;
+ 188:../Sources/SDcard.c **** 	for(i=0;i<10;i++)
+ 817              		.loc 1 188 0
+ 818 04b6 4FF00003 		mov	r3, #0
+ 819 04ba 7B60     		str	r3, [r7, #4]
+ 820 04bc 0EE0     		b	.L43
+ 821              	.L44:
+ 189:../Sources/SDcard.c **** 	{
+ 190:../Sources/SDcard.c **** 		LED_Toggle_RED;
+ 822              		.loc 1 190 0 discriminator 2
+ 823 04be 4FF24003 		movw	r3, #61504
+ 824 04c2 C4F20F03 		movt	r3, 16399
+ 825 04c6 4FF48022 		mov	r2, #262144
+ 826 04ca DA60     		str	r2, [r3, #12]
+ 191:../Sources/SDcard.c **** 		Delay_mS(200);		
+ 827              		.loc 1 191 0 discriminator 2
+ 828 04cc 4FF0C800 		mov	r0, #200
+ 829 04d0 FFF7FEFF 		bl	Delay_mS
+ 188:../Sources/SDcard.c **** 	for(i=0;i<10;i++)
+ 830              		.loc 1 188 0 discriminator 2
+ 831 04d4 7B68     		ldr	r3, [r7, #4]
+ 832 04d6 03F10103 		add	r3, r3, #1
+ 833 04da 7B60     		str	r3, [r7, #4]
+ 834              	.L43:
+ 188:../Sources/SDcard.c **** 	for(i=0;i<10;i++)
+ 835              		.loc 1 188 0 is_stmt 0 discriminator 1
+ 836 04dc 7B68     		ldr	r3, [r7, #4]
+ 837 04de 092B     		cmp	r3, #9
+ 838 04e0 EDDD     		ble	.L44
+ 192:../Sources/SDcard.c **** 	}
+ 193:../Sources/SDcard.c **** }
+ 839              		.loc 1 193 0 is_stmt 1
+ 840 04e2 07F10807 		add	r7, r7, #8
+ 841 04e6 BD46     		mov	sp, r7
+ 842 04e8 80BD     		pop	{r7, pc}
+ 843              		.cfi_endproc
+ 844              	.LFE7:
+ 846 04ea 00BF     		.align	2
+ 847              		.global	init_SD_block512Fail
+ 848              		.thumb
+ 849              		.thumb_func
+ 851              	init_SD_block512Fail:
+ 852              	.LFB8:
+ 194:../Sources/SDcard.c **** void init_SD_block512Fail()
+ 195:../Sources/SDcard.c **** {
+ 853              		.loc 1 195 0
+ 854              		.cfi_startproc
+ 855              		@ args = 0, pretend = 0, frame = 8
+ 856              		@ frame_needed = 1, uses_anonymous_args = 0
+ 857 04ec 80B5     		push	{r7, lr}
+ 858              	.LCFI24:
+ 859              		.cfi_def_cfa_offset 8
+ 860              		.cfi_offset 7, -8
+ 861              		.cfi_offset 14, -4
+ 862 04ee 82B0     		sub	sp, sp, #8
+ 863              	.LCFI25:
+ 864              		.cfi_def_cfa_offset 16
+ 865 04f0 00AF     		add	r7, sp, #0
+ 866              	.LCFI26:
+ 867              		.cfi_def_cfa_register 7
+ 196:../Sources/SDcard.c **** 	int i;
+ 197:../Sources/SDcard.c **** 	for(i=0;i<5;i++)
+ 868              		.loc 1 197 0
+ 869 04f2 4FF00003 		mov	r3, #0
+ 870 04f6 7B60     		str	r3, [r7, #4]
+ 871 04f8 19E0     		b	.L46
+ 872              	.L47:
+ 198:../Sources/SDcard.c **** 	{
+ 199:../Sources/SDcard.c **** 		LED_Toggle_RED;
+ 873              		.loc 1 199 0 discriminator 2
+ 874 04fa 4FF24003 		movw	r3, #61504
+ 875 04fe C4F20F03 		movt	r3, 16399
+ 876 0502 4FF48022 		mov	r2, #262144
+ 877 0506 DA60     		str	r2, [r3, #12]
+ 200:../Sources/SDcard.c **** 		Delay_mS(100);
+ 878              		.loc 1 200 0 discriminator 2
+ 879 0508 4FF06400 		mov	r0, #100
+ 880 050c FFF7FEFF 		bl	Delay_mS
+ 201:../Sources/SDcard.c **** 		LED_Toggle_RED;
+ 881              		.loc 1 201 0 discriminator 2
+ 882 0510 4FF24003 		movw	r3, #61504
+ 883 0514 C4F20F03 		movt	r3, 16399
+ 884 0518 4FF48022 		mov	r2, #262144
+ 885 051c DA60     		str	r2, [r3, #12]
+ 202:../Sources/SDcard.c **** 		Delay_mS(300);
+ 886              		.loc 1 202 0 discriminator 2
+ 887 051e 4FF49670 		mov	r0, #300
+ 888 0522 FFF7FEFF 		bl	Delay_mS
+ 197:../Sources/SDcard.c **** 	for(i=0;i<5;i++)
+ 889              		.loc 1 197 0 discriminator 2
+ 890 0526 7B68     		ldr	r3, [r7, #4]
+ 891 0528 03F10103 		add	r3, r3, #1
+ 892 052c 7B60     		str	r3, [r7, #4]
+ 893              	.L46:
+ 197:../Sources/SDcard.c **** 	for(i=0;i<5;i++)
+ 894              		.loc 1 197 0 is_stmt 0 discriminator 1
+ 895 052e 7B68     		ldr	r3, [r7, #4]
+ 896 0530 042B     		cmp	r3, #4
+ 897 0532 E2DD     		ble	.L47
+ 203:../Sources/SDcard.c **** 	}
+ 204:../Sources/SDcard.c **** }
+ 898              		.loc 1 204 0 is_stmt 1
+ 899 0534 07F10807 		add	r7, r7, #8
+ 900 0538 BD46     		mov	sp, r7
+ 901 053a 80BD     		pop	{r7, pc}
+ 902              		.cfi_endproc
+ 903              	.LFE8:
+ 905              		.align	2
+ 906              		.global	write
+ 907              		.thumb
+ 908              		.thumb_func
+ 910              	write:
+ 911              	.LFB9:
+ 205:../Sources/SDcard.c **** 
+ 206:../Sources/SDcard.c **** //if start=0xFE - single data block, 0xFC - next data block in multiple data block mode
+ 207:../Sources/SDcard.c **** // 0xFD - stop data transfer in multiple data block mode
+ 208:../Sources/SDcard.c **** // return 0 - error; return 1 - succesful
+ 209:../Sources/SDcard.c **** char write(const uint8_t*buffer, char start) 
+ 210:../Sources/SDcard.c **** {											
+ 912              		.loc 1 210 0
+ 913              		.cfi_startproc
+ 914              		@ args = 0, pretend = 0, frame = 16
+ 915              		@ frame_needed = 1, uses_anonymous_args = 0
+ 916 053c 80B5     		push	{r7, lr}
+ 917              	.LCFI27:
+ 918              		.cfi_def_cfa_offset 8
+ 919              		.cfi_offset 7, -8
+ 920              		.cfi_offset 14, -4
+ 921 053e 84B0     		sub	sp, sp, #16
+ 922              	.LCFI28:
+ 923              		.cfi_def_cfa_offset 24
+ 924 0540 00AF     		add	r7, sp, #0
+ 925              	.LCFI29:
+ 926              		.cfi_def_cfa_register 7
+ 927 0542 7860     		str	r0, [r7, #4]
+ 928 0544 0B46     		mov	r3, r1
+ 929 0546 FB70     		strb	r3, [r7, #3]
+ 211:../Sources/SDcard.c **** 	int i;									
+ 212:../Sources/SDcard.c **** 	CS_LOW
+ 930              		.loc 1 212 0
+ 931 0548 4FF28003 		movw	r3, #61568
+ 932 054c C4F20F03 		movt	r3, 16399
+ 933 0550 4FF28002 		movw	r2, #61568
+ 934 0554 C4F20F02 		movt	r2, 16399
+ 935 0558 9268     		ldr	r2, [r2, #8]
+ 936 055a 42F48052 		orr	r2, r2, #4096
+ 937 055e 9A60     		str	r2, [r3, #8]
+ 213:../Sources/SDcard.c ****     // indicate start of block
+ 214:../Sources/SDcard.c ****     spi_send(start);
+ 938              		.loc 1 214 0
+ 939 0560 FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 940 0562 1846     		mov	r0, r3
+ 941 0564 FFF7FEFF 		bl	spi_send
+ 215:../Sources/SDcard.c ****     
+ 216:../Sources/SDcard.c ****     if(start==0xFD) return 1;
+ 942              		.loc 1 216 0
+ 943 0568 FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 944 056a FD2B     		cmp	r3, #253
+ 945 056c 02D1     		bne	.L49
+ 946              		.loc 1 216 0 is_stmt 0 discriminator 1
+ 947 056e 4FF00103 		mov	r3, #1
+ 948 0572 51E0     		b	.L50
+ 949              	.L49:
+ 217:../Sources/SDcard.c **** 	
+ 218:../Sources/SDcard.c **** 	// write the data
+ 219:../Sources/SDcard.c ****     for (i = 0; i < 512; i++) {
+ 950              		.loc 1 219 0 is_stmt 1
+ 951 0574 4FF00003 		mov	r3, #0
+ 952 0578 FB60     		str	r3, [r7, #12]
+ 953 057a 0AE0     		b	.L51
+ 954              	.L52:
+ 220:../Sources/SDcard.c ****         spi_send(buffer[i]);
+ 955              		.loc 1 220 0 discriminator 2
+ 956 057c FB68     		ldr	r3, [r7, #12]
+ 957 057e 7A68     		ldr	r2, [r7, #4]
+ 958 0580 D318     		adds	r3, r2, r3
+ 959 0582 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 960 0584 1846     		mov	r0, r3
+ 961 0586 FFF7FEFF 		bl	spi_send
+ 219:../Sources/SDcard.c ****     for (i = 0; i < 512; i++) {
+ 962              		.loc 1 219 0 discriminator 2
+ 963 058a FB68     		ldr	r3, [r7, #12]
+ 964 058c 03F10103 		add	r3, r3, #1
+ 965 0590 FB60     		str	r3, [r7, #12]
+ 966              	.L51:
+ 219:../Sources/SDcard.c ****     for (i = 0; i < 512; i++) {
+ 967              		.loc 1 219 0 is_stmt 0 discriminator 1
+ 968 0592 FA68     		ldr	r2, [r7, #12]
+ 969 0594 40F2FF13 		movw	r3, #511
+ 970 0598 9A42     		cmp	r2, r3
+ 971 059a EFDD     		ble	.L52
+ 221:../Sources/SDcard.c ****     }
+ 222:../Sources/SDcard.c ****     
+ 223:../Sources/SDcard.c ****     // write the checksum
+ 224:../Sources/SDcard.c ****     spi_send(0xFF);
+ 972              		.loc 1 224 0 is_stmt 1
+ 973 059c 4FF0FF00 		mov	r0, #255
+ 974 05a0 FFF7FEFF 		bl	spi_send
+ 225:../Sources/SDcard.c ****     spi_send(0xFF);
+ 975              		.loc 1 225 0
+ 976 05a4 4FF0FF00 		mov	r0, #255
+ 977 05a8 FFF7FEFF 		bl	spi_send
+ 226:../Sources/SDcard.c ****     
+ 227:../Sources/SDcard.c ****     // check the response token
+ 228:../Sources/SDcard.c ****     if ((spi_send(0xFF) & 0x1F) != 0x05) 
+ 978              		.loc 1 228 0
+ 979 05ac 4FF0FF00 		mov	r0, #255
+ 980 05b0 FFF7FEFF 		bl	spi_send
+ 981 05b4 0346     		mov	r3, r0
+ 982 05b6 03F01F03 		and	r3, r3, #31
+ 983 05ba 052B     		cmp	r3, #5
+ 984 05bc 12D0     		beq	.L55
+ 229:../Sources/SDcard.c ****     {
+ 230:../Sources/SDcard.c ****     	CS_HIGH
+ 985              		.loc 1 230 0
+ 986 05be 4FF28003 		movw	r3, #61568
+ 987 05c2 C4F20F03 		movt	r3, 16399
+ 988 05c6 4FF28002 		movw	r2, #61568
+ 989 05ca C4F20F02 		movt	r2, 16399
+ 990 05ce 5268     		ldr	r2, [r2, #4]
+ 991 05d0 42F48052 		orr	r2, r2, #4096
+ 992 05d4 5A60     		str	r2, [r3, #4]
+ 231:../Sources/SDcard.c ****         spi_send(0xFF);
+ 993              		.loc 1 231 0
+ 994 05d6 4FF0FF00 		mov	r0, #255
+ 995 05da FFF7FEFF 		bl	spi_send
+ 232:../Sources/SDcard.c ****         return 0;
+ 996              		.loc 1 232 0
+ 997 05de 4FF00003 		mov	r3, #0
+ 998 05e2 19E0     		b	.L50
+ 999              	.L55:
+ 233:../Sources/SDcard.c ****     }
+ 234:../Sources/SDcard.c ****     
+ 235:../Sources/SDcard.c ****     // wait for write to finish
+ 236:../Sources/SDcard.c ****     while (spi_send(0xFF) == 0);
+ 1000              		.loc 1 236 0
+ 1001 05e4 00BF     		nop
+ 1002              	.L54:
+ 1003              		.loc 1 236 0 is_stmt 0 discriminator 1
+ 1004 05e6 4FF0FF00 		mov	r0, #255
+ 1005 05ea FFF7FEFF 		bl	spi_send
+ 1006 05ee 0346     		mov	r3, r0
+ 1007 05f0 002B     		cmp	r3, #0
+ 1008 05f2 F8D0     		beq	.L54
+ 237:../Sources/SDcard.c ****     
+ 238:../Sources/SDcard.c ****     CS_HIGH
+ 1009              		.loc 1 238 0 is_stmt 1
+ 1010 05f4 4FF28003 		movw	r3, #61568
+ 1011 05f8 C4F20F03 		movt	r3, 16399
+ 1012 05fc 4FF28002 		movw	r2, #61568
+ 1013 0600 C4F20F02 		movt	r2, 16399
+ 1014 0604 5268     		ldr	r2, [r2, #4]
+ 1015 0606 42F48052 		orr	r2, r2, #4096
+ 1016 060a 5A60     		str	r2, [r3, #4]
+ 239:../Sources/SDcard.c ****     spi_send(0xFF);
+ 1017              		.loc 1 239 0
+ 1018 060c 4FF0FF00 		mov	r0, #255
+ 1019 0610 FFF7FEFF 		bl	spi_send
+ 240:../Sources/SDcard.c ****     return 1;
+ 1020              		.loc 1 240 0
+ 1021 0614 4FF00103 		mov	r3, #1
+ 1022              	.L50:
+ 241:../Sources/SDcard.c **** }
+ 1023              		.loc 1 241 0
+ 1024 0618 1846     		mov	r0, r3
+ 1025 061a 07F11007 		add	r7, r7, #16
+ 1026 061e BD46     		mov	sp, r7
+ 1027 0620 80BD     		pop	{r7, pc}
+ 1028              		.cfi_endproc
+ 1029              	.LFE9:
+ 1031 0622 00BF     		.align	2
+ 1032              		.global	write_disk
+ 1033              		.thumb
+ 1034              		.thumb_func
+ 1036              	write_disk:
+ 1037              	.LFB10:
+ 242:../Sources/SDcard.c **** char write_disk(const uint8_t *buffer, uint64_t block_number)		//SDv1 nel lehet nem mukodik!!!!
+ 243:../Sources/SDcard.c **** 	{	
+ 1038              		.loc 1 243 0
+ 1039              		.cfi_startproc
+ 1040              		@ args = 0, pretend = 0, frame = 16
+ 1041              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1042 0624 80B5     		push	{r7, lr}
+ 1043              	.LCFI30:
+ 1044              		.cfi_def_cfa_offset 8
+ 1045              		.cfi_offset 7, -8
+ 1046              		.cfi_offset 14, -4
+ 1047 0626 84B0     		sub	sp, sp, #16
+ 1048              	.LCFI31:
+ 1049              		.cfi_def_cfa_offset 24
+ 1050 0628 00AF     		add	r7, sp, #0
+ 1051              	.LCFI32:
+ 1052              		.cfi_def_cfa_register 7
+ 1053 062a F860     		str	r0, [r7, #12]
+ 1054 062c C7E90023 		strd	r2, [r7]
+ 244:../Sources/SDcard.c **** // set write address for single block (CMD24)
+ 245:../Sources/SDcard.c ****     if (command(SD1_CMD24, block_number * 512) != 0) {
+ 1055              		.loc 1 245 0
+ 1056 0630 3B68     		ldr	r3, [r7, #0]
+ 1057 0632 4FEA4323 		lsl	r3, r3, #9
+ 1058 0636 4FF05800 		mov	r0, #88
+ 1059 063a 1946     		mov	r1, r3
+ 1060 063c FFF7FEFF 		bl	command
+ 1061 0640 0346     		mov	r3, r0
+ 1062 0642 002B     		cmp	r3, #0
+ 1063 0644 02D0     		beq	.L57
+ 246:../Sources/SDcard.c ****         return 1;
+ 1064              		.loc 1 246 0
+ 1065 0646 4FF00103 		mov	r3, #1
+ 1066 064a 06E0     		b	.L58
+ 1067              	.L57:
+ 247:../Sources/SDcard.c ****     }
+ 248:../Sources/SDcard.c ****     
+ 249:../Sources/SDcard.c ****     // send the data block
+ 250:../Sources/SDcard.c ****     write(buffer, 0xFE);
+ 1068              		.loc 1 250 0
+ 1069 064c F868     		ldr	r0, [r7, #12]
+ 1070 064e 4FF0FE01 		mov	r1, #254
+ 1071 0652 FFF7FEFF 		bl	write
+ 251:../Sources/SDcard.c ****     return 0;
+ 1072              		.loc 1 251 0
+ 1073 0656 4FF00003 		mov	r3, #0
+ 1074              	.L58:
+ 252:../Sources/SDcard.c **** 	}
+ 1075              		.loc 1 252 0
+ 1076 065a 1846     		mov	r0, r3
+ 1077 065c 07F11007 		add	r7, r7, #16
+ 1078 0660 BD46     		mov	sp, r7
+ 1079 0662 80BD     		pop	{r7, pc}
+ 1080              		.cfi_endproc
+ 1081              	.LFE10:
+ 1083              		.align	2
+ 1084              		.global	read
+ 1085              		.thumb
+ 1086              		.thumb_func
+ 1088              	read:
+ 1089              	.LFB11:
+ 253:../Sources/SDcard.c **** char read(BYTE *buffer,DWORD lenght)
+ 254:../Sources/SDcard.c **** {
+ 1090              		.loc 1 254 0
+ 1091              		.cfi_startproc
+ 1092              		@ args = 0, pretend = 0, frame = 16
+ 1093              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1094 0664 90B5     		push	{r4, r7, lr}
+ 1095              	.LCFI33:
+ 1096              		.cfi_def_cfa_offset 12
+ 1097              		.cfi_offset 4, -12
+ 1098              		.cfi_offset 7, -8
+ 1099              		.cfi_offset 14, -4
+ 1100 0666 85B0     		sub	sp, sp, #20
+ 1101              	.LCFI34:
+ 1102              		.cfi_def_cfa_offset 32
+ 1103 0668 00AF     		add	r7, sp, #0
+ 1104              	.LCFI35:
+ 1105              		.cfi_def_cfa_register 7
+ 1106 066a 7860     		str	r0, [r7, #4]
+ 1107 066c 3960     		str	r1, [r7, #0]
+ 255:../Sources/SDcard.c **** 	int i;
+ 256:../Sources/SDcard.c **** 	CS_LOW
+ 1108              		.loc 1 256 0
+ 1109 066e 4FF28003 		movw	r3, #61568
+ 1110 0672 C4F20F03 		movt	r3, 16399
+ 1111 0676 4FF28002 		movw	r2, #61568
+ 1112 067a C4F20F02 		movt	r2, 16399
+ 1113 067e 9268     		ldr	r2, [r2, #8]
+ 1114 0680 42F48052 		orr	r2, r2, #4096
+ 1115 0684 9A60     		str	r2, [r3, #8]
+ 257:../Sources/SDcard.c **** 	while (spi_send(0xFF) != 0xFE);
+ 1116              		.loc 1 257 0
+ 1117 0686 00BF     		nop
+ 1118              	.L60:
+ 1119              		.loc 1 257 0 is_stmt 0 discriminator 1
+ 1120 0688 4FF0FF00 		mov	r0, #255
+ 1121 068c FFF7FEFF 		bl	spi_send
+ 1122 0690 0346     		mov	r3, r0
+ 1123 0692 FE2B     		cmp	r3, #254
+ 1124 0694 F8D1     		bne	.L60
+ 258:../Sources/SDcard.c **** 	    
+ 259:../Sources/SDcard.c **** 	    // read data
+ 260:../Sources/SDcard.c **** 		for (i = 0; i < lenght; i++) buffer[i] = spi_send(0xFF);
+ 1125              		.loc 1 260 0 is_stmt 1
+ 1126 0696 4FF00003 		mov	r3, #0
+ 1127 069a FB60     		str	r3, [r7, #12]
+ 1128 069c 0CE0     		b	.L61
+ 1129              	.L62:
+ 1130              		.loc 1 260 0 is_stmt 0 discriminator 2
+ 1131 069e FB68     		ldr	r3, [r7, #12]
+ 1132 06a0 7A68     		ldr	r2, [r7, #4]
+ 1133 06a2 D418     		adds	r4, r2, r3
+ 1134 06a4 4FF0FF00 		mov	r0, #255
+ 1135 06a8 FFF7FEFF 		bl	spi_send
+ 1136 06ac 0346     		mov	r3, r0
+ 1137 06ae 2370     		strb	r3, [r4, #0]
+ 1138 06b0 FB68     		ldr	r3, [r7, #12]
+ 1139 06b2 03F10103 		add	r3, r3, #1
+ 1140 06b6 FB60     		str	r3, [r7, #12]
+ 1141              	.L61:
+ 1142              		.loc 1 260 0 discriminator 1
+ 1143 06b8 FA68     		ldr	r2, [r7, #12]
+ 1144 06ba 3B68     		ldr	r3, [r7, #0]
+ 1145 06bc 9A42     		cmp	r2, r3
+ 1146 06be EED3     		bcc	.L62
+ 261:../Sources/SDcard.c **** 	    spi_send(0xFF); // checksum
+ 1147              		.loc 1 261 0 is_stmt 1
+ 1148 06c0 4FF0FF00 		mov	r0, #255
+ 1149 06c4 FFF7FEFF 		bl	spi_send
+ 262:../Sources/SDcard.c **** 	    spi_send(0xFF);
+ 1150              		.loc 1 262 0
+ 1151 06c8 4FF0FF00 		mov	r0, #255
+ 1152 06cc FFF7FEFF 		bl	spi_send
+ 263:../Sources/SDcard.c **** 	    
+ 264:../Sources/SDcard.c **** 	    CS_HIGH
+ 1153              		.loc 1 264 0
+ 1154 06d0 4FF28003 		movw	r3, #61568
+ 1155 06d4 C4F20F03 		movt	r3, 16399
+ 1156 06d8 4FF28002 		movw	r2, #61568
+ 1157 06dc C4F20F02 		movt	r2, 16399
+ 1158 06e0 5268     		ldr	r2, [r2, #4]
+ 1159 06e2 42F48052 		orr	r2, r2, #4096
+ 1160 06e6 5A60     		str	r2, [r3, #4]
+ 265:../Sources/SDcard.c **** 	    spi_send(0xFF);
+ 1161              		.loc 1 265 0
+ 1162 06e8 4FF0FF00 		mov	r0, #255
+ 1163 06ec FFF7FEFF 		bl	spi_send
+ 266:../Sources/SDcard.c **** 	    return 1;
+ 1164              		.loc 1 266 0
+ 1165 06f0 4FF00103 		mov	r3, #1
+ 267:../Sources/SDcard.c **** }
+ 1166              		.loc 1 267 0
+ 1167 06f4 1846     		mov	r0, r3
+ 1168 06f6 07F11407 		add	r7, r7, #20
+ 1169 06fa BD46     		mov	sp, r7
+ 1170 06fc 90BD     		pop	{r4, r7, pc}
+ 1171              		.cfi_endproc
+ 1172              	.LFE11:
+ 1174 06fe 00BF     		.align	2
+ 1175              		.global	read_disk
+ 1176              		.thumb
+ 1177              		.thumb_func
+ 1179              	read_disk:
+ 1180              	.LFB12:
+ 268:../Sources/SDcard.c **** 
+ 269:../Sources/SDcard.c **** char read_disk(BYTE *buffer, DWORD block_number, UINT offset, UINT count)
+ 270:../Sources/SDcard.c **** {
+ 1181              		.loc 1 270 0
+ 1182              		.cfi_startproc
+ 1183              		@ args = 0, pretend = 0, frame = 16
+ 1184              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1185 0700 80B5     		push	{r7, lr}
+ 1186              	.LCFI36:
+ 1187              		.cfi_def_cfa_offset 8
+ 1188              		.cfi_offset 7, -8
+ 1189              		.cfi_offset 14, -4
+ 1190 0702 84B0     		sub	sp, sp, #16
+ 1191              	.LCFI37:
+ 1192              		.cfi_def_cfa_offset 24
+ 1193 0704 00AF     		add	r7, sp, #0
+ 1194              	.LCFI38:
+ 1195              		.cfi_def_cfa_register 7
+ 1196 0706 F860     		str	r0, [r7, #12]
+ 1197 0708 B960     		str	r1, [r7, #8]
+ 1198 070a 7A60     		str	r2, [r7, #4]
+ 1199 070c 3B60     		str	r3, [r7, #0]
+ 271:../Sources/SDcard.c **** 	if (command(SD1_CMD17, block_number * 512) != 0) 
+ 1200              		.loc 1 271 0
+ 1201 070e BB68     		ldr	r3, [r7, #8]
+ 1202 0710 4FEA4323 		lsl	r3, r3, #9
+ 1203 0714 4FF05100 		mov	r0, #81
+ 1204 0718 1946     		mov	r1, r3
+ 1205 071a FFF7FEFF 		bl	command
+ 1206 071e 0346     		mov	r3, r0
+ 1207 0720 002B     		cmp	r3, #0
+ 1208 0722 02D0     		beq	.L65
+ 272:../Sources/SDcard.c **** 	{
+ 273:../Sources/SDcard.c **** 		return 1;
+ 1209              		.loc 1 273 0
+ 1210 0724 4FF00103 		mov	r3, #1
+ 1211 0728 06E0     		b	.L66
+ 1212              	.L65:
+ 274:../Sources/SDcard.c **** 	}
+ 275:../Sources/SDcard.c **** 	    
+ 276:../Sources/SDcard.c **** 	// receive the data
+ 277:../Sources/SDcard.c **** 	read(buffer, 512);
+ 1213              		.loc 1 277 0
+ 1214 072a F868     		ldr	r0, [r7, #12]
+ 1215 072c 4FF40071 		mov	r1, #512
+ 1216 0730 FFF7FEFF 		bl	read
+ 278:../Sources/SDcard.c **** 	return 0;
+ 1217              		.loc 1 278 0
+ 1218 0734 4FF00003 		mov	r3, #0
+ 1219              	.L66:
+ 279:../Sources/SDcard.c **** }
+ 1220              		.loc 1 279 0
+ 1221 0738 1846     		mov	r0, r3
+ 1222 073a 07F11007 		add	r7, r7, #16
+ 1223 073e BD46     		mov	sp, r7
+ 1224 0740 80BD     		pop	{r7, pc}
+ 1225              		.cfi_endproc
+ 1226              	.LFE12:
+ 1228 0742 00BF     		.align	2
+ 1229              		.global	set_block_512
+ 1230              		.thumb
+ 1231              		.thumb_func
+ 1233              	set_block_512:
+ 1234              	.LFB13:
+ 280:../Sources/SDcard.c **** char set_block_512()
+ 281:../Sources/SDcard.c **** {
+ 1235              		.loc 1 281 0
+ 1236              		.cfi_startproc
+ 1237              		@ args = 0, pretend = 0, frame = 0
+ 1238              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1239 0744 80B5     		push	{r7, lr}
+ 1240              	.LCFI39:
+ 1241              		.cfi_def_cfa_offset 8
+ 1242              		.cfi_offset 7, -8
+ 1243              		.cfi_offset 14, -4
+ 1244 0746 00AF     		add	r7, sp, #0
+ 1245              	.LCFI40:
+ 1246              		.cfi_def_cfa_register 7
+ 282:../Sources/SDcard.c **** 	return command(SD1_CMD16,0x200);
+ 1247              		.loc 1 282 0
+ 1248 0748 4FF05000 		mov	r0, #80
+ 1249 074c 4FF40071 		mov	r1, #512
+ 1250 0750 FFF7FEFF 		bl	command
+ 1251 0754 0346     		mov	r3, r0
+ 283:../Sources/SDcard.c **** }
+ 1252              		.loc 1 283 0
+ 1253 0756 1846     		mov	r0, r3
+ 1254 0758 80BD     		pop	{r7, pc}
+ 1255              		.cfi_endproc
+ 1256              	.LFE13:
+ 1258              		.section	.rodata
+ 1259              		.align	2
+ 1260              	.LC0:
+ 1261 0000 00       		.ascii	"\000"
+ 1262 0001 000000   		.align	2
+ 1263              	.LC1:
+ 1264 0004 256400   		.ascii	"%d\000"
+ 1265 0007 00       		.align	2
+ 1266              	.LC2:
+ 1267 0008 25732E74 		.ascii	"%s.txt\000"
+ 1267      787400
+ 1268              		.text
+ 1269 075a 00BF     		.align	2
+ 1270              		.global	create_log
+ 1271              		.thumb
+ 1272              		.thumb_func
+ 1274              	create_log:
+ 1275              	.LFB14:
+ 284:../Sources/SDcard.c **** /*
+ 285:../Sources/SDcard.c **** void Create_logfile(FILE *fil)
+ 286:../Sources/SDcard.c **** {
+ 287:../Sources/SDcard.c **** 	
+ 288:../Sources/SDcard.c **** 	
+ 289:../Sources/SDcard.c **** }*/
+ 290:../Sources/SDcard.c **** 
+ 291:../Sources/SDcard.c **** 
+ 292:../Sources/SDcard.c **** FRESULT create_log(FIL* file)
+ 293:../Sources/SDcard.c **** {
+ 1276              		.loc 1 293 0
+ 1277              		.cfi_startproc
+ 1278              		@ args = 0, pretend = 0, frame = 24
+ 1279              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1280 075c 80B5     		push	{r7, lr}
+ 1281              	.LCFI41:
+ 1282              		.cfi_def_cfa_offset 8
+ 1283              		.cfi_offset 7, -8
+ 1284              		.cfi_offset 14, -4
+ 1285 075e 86B0     		sub	sp, sp, #24
+ 1286              	.LCFI42:
+ 1287              		.cfi_def_cfa_offset 32
+ 1288 0760 00AF     		add	r7, sp, #0
+ 1289              	.LCFI43:
+ 1290              		.cfi_def_cfa_register 7
+ 1291 0762 7860     		str	r0, [r7, #4]
+ 294:../Sources/SDcard.c **** 	UINT sequence=1;
+ 1292              		.loc 1 294 0
+ 1293 0764 4FF00103 		mov	r3, #1
+ 1294 0768 7B61     		str	r3, [r7, #20]
+ 295:../Sources/SDcard.c **** 	char str[2],filename[7];
+ 296:../Sources/SDcard.c **** 	FRESULT fr;
+ 297:../Sources/SDcard.c **** 	fr=f_mount(&FatFs, "", 0);
+ 1295              		.loc 1 297 0
+ 1296 076a 40F20000 		movw	r0, #:lower16:FatFs
+ 1297 076e C0F20000 		movt	r0, #:upper16:FatFs
+ 1298 0772 40F20001 		movw	r1, #:lower16:.LC0
+ 1299 0776 C0F20001 		movt	r1, #:upper16:.LC0
+ 1300 077a 4FF00002 		mov	r2, #0
+ 1301 077e FFF7FEFF 		bl	f_mount
+ 1302 0782 0346     		mov	r3, r0
+ 1303 0784 FB74     		strb	r3, [r7, #19]
+ 298:../Sources/SDcard.c **** 	if(fr)	return fr;
+ 1304              		.loc 1 298 0
+ 1305 0786 FB7C     		ldrb	r3, [r7, #19]	@ zero_extendqisi2
+ 1306 0788 002B     		cmp	r3, #0
+ 1307 078a 01D0     		beq	.L70
+ 1308              		.loc 1 298 0 is_stmt 0 discriminator 1
+ 1309 078c FB7C     		ldrb	r3, [r7, #19]	@ zero_extendqisi2
+ 1310 078e 3CE0     		b	.L75
+ 1311              	.L70:
+ 299:../Sources/SDcard.c **** 	fr=1;
+ 1312              		.loc 1 299 0 is_stmt 1
+ 1313 0790 4FF00103 		mov	r3, #1
+ 1314 0794 FB74     		strb	r3, [r7, #19]
+ 300:../Sources/SDcard.c **** 	while(fr!=0 && !(sequence>99) && fr!=FR_NOT_READY)			//ha létezik n.txt nevu fajl letrehozza (n+1)
+ 1315              		.loc 1 300 0
+ 1316 0796 24E0     		b	.L72
+ 1317              	.L74:
+ 301:../Sources/SDcard.c **** 	{
+ 302:../Sources/SDcard.c **** 		sprintf(str,"%d",sequence);	//sequencebol str nevu string lesz
+ 1318              		.loc 1 302 0
+ 1319 0798 07F11003 		add	r3, r7, #16
+ 1320 079c 1846     		mov	r0, r3
+ 1321 079e 40F20001 		movw	r1, #:lower16:.LC1
+ 1322 07a2 C0F20001 		movt	r1, #:upper16:.LC1
+ 1323 07a6 7A69     		ldr	r2, [r7, #20]
+ 1324 07a8 FFF7FEFF 		bl	sprintf
+ 303:../Sources/SDcard.c **** 		snprintf(filename, sizeof(filename), "%s.txt", str); //a filename valami olyasmi lesz hogy 1.txt,
+ 1325              		.loc 1 303 0
+ 1326 07ac 07F10802 		add	r2, r7, #8
+ 1327 07b0 07F11003 		add	r3, r7, #16
+ 1328 07b4 1046     		mov	r0, r2
+ 1329 07b6 4FF00701 		mov	r1, #7
+ 1330 07ba 40F20002 		movw	r2, #:lower16:.LC2
+ 1331 07be C0F20002 		movt	r2, #:upper16:.LC2
+ 1332 07c2 FFF7FEFF 		bl	snprintf
+ 304:../Sources/SDcard.c **** 		fr=f_open(file,filename,FA_CREATE_NEW);
+ 1333              		.loc 1 304 0
+ 1334 07c6 07F10803 		add	r3, r7, #8
+ 1335 07ca 7868     		ldr	r0, [r7, #4]
+ 1336 07cc 1946     		mov	r1, r3
+ 1337 07ce 4FF00402 		mov	r2, #4
+ 1338 07d2 FFF7FEFF 		bl	f_open
+ 1339 07d6 0346     		mov	r3, r0
+ 1340 07d8 FB74     		strb	r3, [r7, #19]
+ 305:../Sources/SDcard.c **** 		sequence++;
+ 1341              		.loc 1 305 0
+ 1342 07da 7B69     		ldr	r3, [r7, #20]
+ 1343 07dc 03F10103 		add	r3, r3, #1
+ 1344 07e0 7B61     		str	r3, [r7, #20]
+ 1345              	.L72:
+ 300:../Sources/SDcard.c **** 	while(fr!=0 && !(sequence>99) && fr!=FR_NOT_READY)			//ha létezik n.txt nevu fajl letrehozza (n+1)
+ 1346              		.loc 1 300 0 discriminator 1
+ 1347 07e2 FB7C     		ldrb	r3, [r7, #19]	@ zero_extendqisi2
+ 1348 07e4 002B     		cmp	r3, #0
+ 1349 07e6 05D0     		beq	.L73
+ 300:../Sources/SDcard.c **** 	while(fr!=0 && !(sequence>99) && fr!=FR_NOT_READY)			//ha létezik n.txt nevu fajl letrehozza (n+1)
+ 1350              		.loc 1 300 0 is_stmt 0 discriminator 2
+ 1351 07e8 7B69     		ldr	r3, [r7, #20]
+ 1352 07ea 632B     		cmp	r3, #99
+ 1353 07ec 02D8     		bhi	.L73
+ 300:../Sources/SDcard.c **** 	while(fr!=0 && !(sequence>99) && fr!=FR_NOT_READY)			//ha létezik n.txt nevu fajl letrehozza (n+1)
+ 1354              		.loc 1 300 0 discriminator 1
+ 1355 07ee FB7C     		ldrb	r3, [r7, #19]	@ zero_extendqisi2
+ 1356 07f0 032B     		cmp	r3, #3
+ 1357 07f2 D1D1     		bne	.L74
+ 1358              	.L73:
+ 306:../Sources/SDcard.c **** 	}
+ 307:../Sources/SDcard.c **** 	fr=f_open(file,filename,FA_WRITE);
+ 1359              		.loc 1 307 0 is_stmt 1
+ 1360 07f4 07F10803 		add	r3, r7, #8
+ 1361 07f8 7868     		ldr	r0, [r7, #4]
+ 1362 07fa 1946     		mov	r1, r3
+ 1363 07fc 4FF00202 		mov	r2, #2
+ 1364 0800 FFF7FEFF 		bl	f_open
+ 1365 0804 0346     		mov	r3, r0
+ 1366 0806 FB74     		strb	r3, [r7, #19]
+ 308:../Sources/SDcard.c **** 	return fr;
+ 1367              		.loc 1 308 0
+ 1368 0808 FB7C     		ldrb	r3, [r7, #19]	@ zero_extendqisi2
+ 1369              	.L75:
+ 309:../Sources/SDcard.c **** }
+ 1370              		.loc 1 309 0
+ 1371 080a 1846     		mov	r0, r3
+ 1372 080c 07F11807 		add	r7, r7, #24
+ 1373 0810 BD46     		mov	sp, r7
+ 1374 0812 80BD     		pop	{r7, pc}
+ 1375              		.cfi_endproc
+ 1376              	.LFE14:
+ 1378              		.section	.rodata
+ 1379 000f 00       		.align	2
+ 1380              	.LC3:
+ 1381 0010 25303564 		.ascii	"%05d \000"
+ 1381      2000
+ 1382 0016 0000     		.text
+ 1383              		.align	2
+ 1384              		.global	write_dT
+ 1385              		.thumb
+ 1386              		.thumb_func
+ 1388              	write_dT:
+ 1389              	.LFB15:
+ 310:../Sources/SDcard.c **** void write_dT(char *data,int n,...)
+ 311:../Sources/SDcard.c **** {
+ 1390              		.loc 1 311 0
+ 1391              		.cfi_startproc
+ 1392              		@ args = 4, pretend = 12, frame = 24
+ 1393              		@ frame_needed = 1, uses_anonymous_args = 1
+ 1394 0814 0EB4     		push	{r1, r2, r3}
+ 1395              	.LCFI44:
+ 1396              		.cfi_def_cfa_offset 12
+ 1397              		.cfi_offset 1, -12
+ 1398              		.cfi_offset 2, -8
+ 1399              		.cfi_offset 3, -4
+ 1400 0816 80B5     		push	{r7, lr}
+ 1401              	.LCFI45:
+ 1402              		.cfi_def_cfa_offset 20
+ 1403              		.cfi_offset 7, -20
+ 1404              		.cfi_offset 14, -16
+ 1405 0818 87B0     		sub	sp, sp, #28
+ 1406              	.LCFI46:
+ 1407              		.cfi_def_cfa_offset 48
+ 1408 081a 00AF     		add	r7, sp, #0
+ 1409              	.LCFI47:
+ 1410              		.cfi_def_cfa_register 7
+ 1411 081c 7860     		str	r0, [r7, #4]
+ 312:../Sources/SDcard.c **** 	int i, adat;
+ 313:../Sources/SDcard.c **** 	va_list lista;
+ 314:../Sources/SDcard.c **** 	data[0]=0;
+ 1412              		.loc 1 314 0
+ 1413 081e 7B68     		ldr	r3, [r7, #4]
+ 1414 0820 4FF00002 		mov	r2, #0
+ 1415 0824 1A70     		strb	r2, [r3, #0]
+ 315:../Sources/SDcard.c **** 	va_start(lista, n);
+ 1416              		.loc 1 315 0
+ 1417 0826 07F12803 		add	r3, r7, #40
+ 1418 082a FB60     		str	r3, [r7, #12]
+ 316:../Sources/SDcard.c **** 	for(i=0;i<n;i++)
+ 1419              		.loc 1 316 0
+ 1420 082c 4FF00003 		mov	r3, #0
+ 1421 0830 7B61     		str	r3, [r7, #20]
+ 1422 0832 30E0     		b	.L77
+ 1423              	.L80:
+ 317:../Sources/SDcard.c **** 	{
+ 318:../Sources/SDcard.c **** 		adat=va_arg(lista, int);
+ 1424              		.loc 1 318 0
+ 1425 0834 FB68     		ldr	r3, [r7, #12]
+ 1426 0836 03F10402 		add	r2, r3, #4
+ 1427 083a FA60     		str	r2, [r7, #12]
+ 1428 083c 1B68     		ldr	r3, [r3, #0]
+ 1429 083e 3B61     		str	r3, [r7, #16]
+ 319:../Sources/SDcard.c **** 		if(adat>99999) adat=99999;
+ 1430              		.loc 1 319 0
+ 1431 0840 3A69     		ldr	r2, [r7, #16]
+ 1432 0842 48F29F63 		movw	r3, #34463
+ 1433 0846 C0F20103 		movt	r3, 1
+ 1434 084a 9A42     		cmp	r2, r3
+ 1435 084c 05DD     		ble	.L78
+ 1436              		.loc 1 319 0 is_stmt 0 discriminator 1
+ 1437 084e 48F29F63 		movw	r3, #34463
+ 1438 0852 C0F20103 		movt	r3, 1
+ 1439 0856 3B61     		str	r3, [r7, #16]
+ 1440 0858 0BE0     		b	.L79
+ 1441              	.L78:
+ 320:../Sources/SDcard.c **** 		else if(adat<-9999) adat=-9999;
+ 1442              		.loc 1 320 0 is_stmt 1
+ 1443 085a 3A69     		ldr	r2, [r7, #16]
+ 1444 085c 4DF6F103 		movw	r3, #55537
+ 1445 0860 CFF6FF73 		movt	r3, 65535
+ 1446 0864 9A42     		cmp	r2, r3
+ 1447 0866 04DA     		bge	.L79
+ 1448              		.loc 1 320 0 is_stmt 0 discriminator 1
+ 1449 0868 4DF6F103 		movw	r3, #55537
+ 1450 086c CFF6FF73 		movt	r3, 65535
+ 1451 0870 3B61     		str	r3, [r7, #16]
+ 1452              	.L79:
+ 321:../Sources/SDcard.c **** 		sprintf(data + strlen(data), "%05d ", adat);
+ 1453              		.loc 1 321 0 is_stmt 1
+ 1454 0872 7868     		ldr	r0, [r7, #4]
+ 1455 0874 FFF7FEFF 		bl	strlen
+ 1456 0878 0346     		mov	r3, r0
+ 1457 087a 7A68     		ldr	r2, [r7, #4]
+ 1458 087c D318     		adds	r3, r2, r3
+ 1459 087e 1846     		mov	r0, r3
+ 1460 0880 40F20001 		movw	r1, #:lower16:.LC3
+ 1461 0884 C0F20001 		movt	r1, #:upper16:.LC3
+ 1462 0888 3A69     		ldr	r2, [r7, #16]
+ 1463 088a FFF7FEFF 		bl	sprintf
+ 316:../Sources/SDcard.c **** 	for(i=0;i<n;i++)
+ 1464              		.loc 1 316 0
+ 1465 088e 7B69     		ldr	r3, [r7, #20]
+ 1466 0890 03F10103 		add	r3, r3, #1
+ 1467 0894 7B61     		str	r3, [r7, #20]
+ 1468              	.L77:
+ 316:../Sources/SDcard.c **** 	for(i=0;i<n;i++)
+ 1469              		.loc 1 316 0 is_stmt 0 discriminator 1
+ 1470 0896 7A69     		ldr	r2, [r7, #20]
+ 1471 0898 7B6A     		ldr	r3, [r7, #36]
+ 1472 089a 9A42     		cmp	r2, r3
+ 1473 089c CADB     		blt	.L80
+ 322:../Sources/SDcard.c **** 	}
+ 323:../Sources/SDcard.c **** }
+ 1474              		.loc 1 323 0 is_stmt 1
+ 1475 089e 07F11C07 		add	r7, r7, #28
+ 1476 08a2 BD46     		mov	sp, r7
+ 1477 08a4 BDE88040 		pop	{r7, lr}
+ 1478 08a8 03B0     		add	sp, sp, #12
+ 1479 08aa 7047     		bx	lr
+ 1480              		.cfi_endproc
+ 1481              	.LFE15:
+ 1483              	.Letext0:
+ 1484              		.file 2 "c:\\freescale\\cw mcu v10.6\\cross_tools\\arm-none-eabi-gcc-4_7_3\\bin\\../lib/gcc/arm-no
+ 1485              		.file 3 "c:\\freescale\\cw mcu v10.6\\cross_tools\\arm-none-eabi-gcc-4_7_3\\bin\\../lib/gcc/arm-no
+ 1486              		.file 4 "<built-in>"
+ 1487              		.file 5 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions\\K40\
+ 1488              		.file 6 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/integer.h"
+ 1489              		.file 7 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/ff.h"
+ 1490              		.file 8 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/i
+ 1491              		.file 9 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/d
+ 1492              		.file 10 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/interrupts.h"
+ 1493              		.file 11 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/MPU6050.h"
+ 1494              		.file 12 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/BMP180.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 SDcard.c
+                            *COM*:00000004 I2C_Variable
+                            *COM*:00000001 uart_data
+                            *COM*:0000003c adc_data
+                            *COM*:00000004 Kp
+                            *COM*:00000004 Kd
+                            *COM*:00000004 Ki
+                            *COM*:00000004 zKp
+                            *COM*:00000004 zKd
+                            *COM*:00000004 basepower
+                            *COM*:00000004 setpoint_x
+                            *COM*:00000004 setpoint_y
+                            *COM*:00000004 setpoint_z
+                            *COM*:00000004 setpoint_alt
+                            *COM*:00000004 batt1_vol
+                            *COM*:00000004 batt2_vol
+                            *COM*:00000004 batt3_vol
+                            *COM*:00000004 BATT_VOLT
+                            *COM*:00000230 FatFs
+                            *COM*:00000224 fil
+                            *COM*:00000002 GYRO_XOUT_OFFSET
+                            *COM*:00000002 GYRO_YOUT_OFFSET
+                            *COM*:00000002 GYRO_ZOUT_OFFSET
+                            *COM*:00000002 ACCEL_XOUT_OFFSET
+                            *COM*:00000002 ACCEL_YOUT_OFFSET
+                            *COM*:00000002 ACCEL_ZOUT_OFFSET
+                            *COM*:00000004 GYRO_XANGLE
+                            *COM*:00000004 GYRO_YANGLE
+                            *COM*:00000004 GYRO_ZANGLE
+                            *COM*:00000002 GYRO_XOUT
+                            *COM*:00000002 GYRO_YOUT
+                            *COM*:00000002 GYRO_ZOUT
+                            *COM*:00000002 ACCEL_XOUT
+                            *COM*:00000002 ACCEL_YOUT
+                            *COM*:00000002 ACCEL_ZOUT
+                            *COM*:00000004 ACCEL_Gx
+                            *COM*:00000004 ACCEL_Gy
+                            *COM*:00000004 ACCEL_Gz
+                            *COM*:00000008 ACCEL
+                            *COM*:00000004 GYRO_XRATE
+                            *COM*:00000004 GYRO_YRATE
+                            *COM*:00000004 GYRO_ZRATE
+                            *COM*:00000004 ACCEL_XANGLE
+                            *COM*:00000004 ACCEL_YANGLE
+                            *COM*:00000004 gyro_xsensitivity
+                            *COM*:00000004 gyro_ysensitivity
+                            *COM*:00000004 gyro_zsensitivity
+                            *COM*:00000004 a
+                            *COM*:00000004 dt
+                            *COM*:00000004 COMPLEMENTARY_XANGLE
+                            *COM*:00000004 COMPLEMENTARY_YANGLE
+                            *COM*:0000000c filter_xterm
+                            *COM*:0000000c filter_yterm
+                            *COM*:00000004 XANGLE_OFFSET
+                            *COM*:00000004 YANGLE_OFFSET
+                            *COM*:00000004 TEMP
+                            *COM*:00000004 timeConstant
+                            *COM*:0000000e MPU_6050_buffer
+                            *COM*:00000002 AC1
+                            *COM*:00000002 AC2
+                            *COM*:00000002 AC3
+                            *COM*:00000002 B1
+                            *COM*:00000002 B2
+                            *COM*:00000002 MB
+                            *COM*:00000002 MC
+                            *COM*:00000002 MD
+                            *COM*:00000002 AC4
+                            *COM*:00000002 AC5
+                            *COM*:00000002 AC6
+                            *COM*:00000004 T
+                            *COM*:00000004 absolute_altittude
+                            *COM*:00000004 start_altittude
+                            *COM*:00000004 relative_altittude
+                            *COM*:00000004 P
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:91     .text:00000000 $t
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:96     .text:00000000 command
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:224    .text:000000e8 command58
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:361    .text:000001fc command8
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:493    .text:000002f8 init_SD_v1
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:556    .text:0000034c init_SD_v2
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:630    .text:000003b4 init_SDcard
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:747    .text:00000474 init_SD
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:800    .text:000004b0 init_SD_FAIL
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:851    .text:000004ec init_SD_block512Fail
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:910    .text:0000053c write
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:1036   .text:00000624 write_disk
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:1088   .text:00000664 read
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:1179   .text:00000700 read_disk
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:1233   .text:00000744 set_block_512
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:1259   .rodata:00000000 $d
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:1260   .rodata:00000000 .LC0
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:1263   .rodata:00000004 .LC1
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:1266   .rodata:00000008 .LC2
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:1274   .text:0000075c create_log
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:1380   .rodata:00000010 .LC3
+C:\Users\Norbert\AppData\Local\Temp\cctRmT7P.s:1388   .text:00000814 write_dT
+                     .debug_frame:00000010 $d
+                           .group:00000000 wm4.1.6111752e1bd0a440bd5209819217ec83
+                           .group:00000000 wm4.init.h.9.6215b16d96e0eb787ba872245cf7290f
+                           .group:00000000 wm4.stdint.h.10.90b695f550ca6cc3fb08fa83baf01e05
+                           .group:00000000 wm4.newlib.h.8.a9901dc52d1357e3e94003403d43f8b5
+                           .group:00000000 wm4.config.h.193.5fb8ef056cdff92dec3dee9552839d8c
+                           .group:00000000 wm4._ansi.h.23.95dee4059009fe3ab635a191bb73dc66
+                           .group:00000000 wm4.stdio.h.31.f48311dde756a2aec27351b58a280fb9
+                           .group:00000000 wm4.stddef.h.187.9e651b6b8b16e149c1353259404973ea
+                           .group:00000000 wm4.stdarg.h.34.3a23a216c0c293b3d2ea2e89281481e6
+                           .group:00000000 wm4._default_types.h.6.1dbd2e581fd590860c7c17f21d147e91
+                           .group:00000000 wm4.lock.h.2.9bc98482741e5e2a9450b12934a684ea
+                           .group:00000000 wm4.stddef.h.349.31f4c5baff3fa2689010b32028da9c47
+                           .group:00000000 wm4.reent.h.16.9e42f0e588b85e70b2bf6572af57ce64
+                           .group:00000000 wm4.types.h.23.0d949686bbcadd1621462d4fa1f884f9
+                           .group:00000000 wm4.stddef.h.40.cf962ebbec441b3ac67502735f0765db
+                           .group:00000000 wm4.types.h.2.e9cec8c90ab35f77d9f499e06ae02400
+                           .group:00000000 wm4.types.h.80.1f2c84c0d57dd52dd9936095d9ac218e
+                           .group:00000000 wm4.stdio.h.2.4aa87247282eca6c8f36f9de33d8df1a
+                           .group:00000000 wm4.stdio.h.63.dfdea6580b080784d08faace69b6ed76
+                           .group:00000000 wm4.stdarg.h.31.fa591a4b1df9e413e9f5b8097f9ae89d
+                           .group:00000000 wm4.string.h.8.ef946ad0bc9ad5c970c365dcd1fc4b0a
+                           .group:00000000 wm4.stddef.h.161.e50ff8a9d5d1abbc15641da28ac571bf
+                           .group:00000000 wm4.string.h.86.d5c872ff52e2712c985b588a0ef39f3c
+                           .group:00000000 wm4.math.h.35.07c7797db9e98c6f49a07908290b45ed
+                           .group:00000000 wm4.arm_cm4.h.9.78faaf62d86eb97a647af1ebafb07a11
+                           .group:00000000 wm4.SysTick.h.3.6f4da7f8fb96288ed4bbb4cee119df1f
+                           .group:00000000 wm4.Clock.h.3.a53d5ed3b11823f56a6aca141130352b
+                           .group:00000000 wm4.MK40X256VMD100.h.96.72dc045102cc699ba440f8fa0b280550
+                           .group:00000000 wm4.i2c.h.1.3f1b2e4dcc6bdba977be59d8a51e893b
+                           .group:00000000 wm4.misc.h.9.baaf43d8702a540222c668d182f75475
+                           .group:00000000 wm4.PWM.h.9.e42d58c40ee648255e53f4e4738007a9
+                           .group:00000000 wm4.SPI.h.9.60f1cb4029034538da62861db028322d
+                           .group:00000000 wm4.ADC.h.9.e7a31df2daef26f2c286655e5d3c10dd
+                           .group:00000000 wm4.dma.h.9.96660ff1bef0aa806d84c8ba8408982d
+                           .group:00000000 wm4.main.h.9.81396d5b502c9a6873858dab1b488864
+                           .group:00000000 wm4.ffconf.h.6.276819a3a49a7ae37f54890eecb94e63
+                           .group:00000000 wm4.ff.h.45.a981520ef44c98f5ccd354741039de67
+                           .group:00000000 wm4.SDcard.h.13.e5067f919396cc348c323ee4b231e5ee
+                           .group:00000000 wm4.diskio.h.6.da50361b93ad53e5f0de9110dc9ad28d
+                           .group:00000000 wm4.MPU6050.h.9.b96a5ef9f24cf228b62beca78b916cfc
+                           .group:00000000 wm4.BMP180.h.9.1e786092deac7b246665fc1406fb0f7b
+
+UNDEFINED SYMBOLS
+spi_send
+Delay_mS
+f_mount
+sprintf
+snprintf
+f_open
+strlen

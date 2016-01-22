@@ -1,0 +1,2068 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"BMP180.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	I2C_Variable,4,4
+  19              		.comm	uart_data,1,1
+  20              		.comm	adc_data,60,4
+  21              		.comm	Kp,4,4
+  22              		.comm	Kd,4,4
+  23              		.comm	Ki,4,4
+  24              		.comm	zKp,4,4
+  25              		.comm	zKd,4,4
+  26              		.comm	basepower,4,4
+  27              		.comm	setpoint_x,4,4
+  28              		.comm	setpoint_y,4,4
+  29              		.comm	setpoint_z,4,4
+  30              		.comm	setpoint_alt,4,4
+  31              		.comm	batt1_vol,4,4
+  32              		.comm	batt2_vol,4,4
+  33              		.comm	batt3_vol,4,4
+  34              		.comm	BATT_VOLT,4,4
+  35              		.comm	FatFs,560,4
+  36              		.comm	fil,548,4
+  37              		.comm	GYRO_XOUT_OFFSET,2,2
+  38              		.comm	GYRO_YOUT_OFFSET,2,2
+  39              		.comm	GYRO_ZOUT_OFFSET,2,2
+  40              		.comm	ACCEL_XOUT_OFFSET,2,2
+  41              		.comm	ACCEL_YOUT_OFFSET,2,2
+  42              		.comm	ACCEL_ZOUT_OFFSET,2,2
+  43              		.comm	GYRO_XANGLE,4,4
+  44              		.comm	GYRO_YANGLE,4,4
+  45              		.comm	GYRO_ZANGLE,4,4
+  46              		.comm	GYRO_XOUT,2,2
+  47              		.comm	GYRO_YOUT,2,2
+  48              		.comm	GYRO_ZOUT,2,2
+  49              		.comm	ACCEL_XOUT,2,2
+  50              		.comm	ACCEL_YOUT,2,2
+  51              		.comm	ACCEL_ZOUT,2,2
+  52              		.comm	ACCEL_Gx,4,4
+  53              		.comm	ACCEL_Gy,4,4
+  54              		.comm	ACCEL_Gz,4,4
+  55              		.comm	ACCEL,8,8
+  56              		.comm	GYRO_XRATE,4,4
+  57              		.comm	GYRO_YRATE,4,4
+  58              		.comm	GYRO_ZRATE,4,4
+  59              		.comm	ACCEL_XANGLE,4,4
+  60              		.comm	ACCEL_YANGLE,4,4
+  61              		.comm	gyro_xsensitivity,4,4
+  62              		.comm	gyro_ysensitivity,4,4
+  63              		.comm	gyro_zsensitivity,4,4
+  64              		.comm	a,4,4
+  65              		.comm	dt,4,4
+  66              		.comm	COMPLEMENTARY_XANGLE,4,4
+  67              		.comm	COMPLEMENTARY_YANGLE,4,4
+  68              		.comm	filter_xterm,12,4
+  69              		.comm	filter_yterm,12,4
+  70              		.comm	XANGLE_OFFSET,4,4
+  71              		.comm	YANGLE_OFFSET,4,4
+  72              		.comm	TEMP,4,4
+  73              		.comm	timeConstant,4,4
+  74              		.comm	MPU_6050_buffer,14,4
+  75              		.comm	AC1,2,2
+  76              		.comm	AC2,2,2
+  77              		.comm	AC3,2,2
+  78              		.comm	B1,2,2
+  79              		.comm	B2,2,2
+  80              		.comm	MB,2,2
+  81              		.comm	MC,2,2
+  82              		.comm	MD,2,2
+  83              		.comm	AC4,2,2
+  84              		.comm	AC5,2,2
+  85              		.comm	AC6,2,2
+  86              		.comm	T,4,4
+  87              		.comm	absolute_altittude,4,4
+  88              		.comm	start_altittude,4,4
+  89              		.comm	relative_altittude,4,4
+  90              		.comm	P,4,4
+  91              		.comm	B5,2,2
+  92              		.comm	p,4,4
+  93              		.comm	P_stat,800,8
+  94              		.global	h
+  95              		.bss
+  96              		.align	2
+  99              	h:
+ 100 0000 00000000 		.space	4
+ 101              		.global	k_alt
+ 102              		.data
+ 103              		.align	2
+ 106              	k_alt:
+ 107 0000 8FC2753F 		.word	1064682127
+ 108              		.global	__aeabi_i2f
+ 109              		.global	__aeabi_fdiv
+ 110              		.global	__aeabi_f2iz
+ 111              		.text
+ 112              		.align	2
+ 113              		.global	BMP180_read_temp_interrupt
+ 114              		.thumb
+ 115              		.thumb_func
+ 117              	BMP180_read_temp_interrupt:
+ 118              	.LFB0:
+ 119              		.file 1 "../Sources/BMP180.c"
+   1:../Sources/BMP180.c **** /*
+   2:../Sources/BMP180.c ****  * BMP180.c
+   3:../Sources/BMP180.c ****  *
+   4:../Sources/BMP180.c ****  *  Created on: Oct 25, 2014
+   5:../Sources/BMP180.c ****  *      Author: Norbi
+   6:../Sources/BMP180.c ****  */
+   7:../Sources/BMP180.c **** 
+   8:../Sources/BMP180.c **** #include "init.h"
+   9:../Sources/BMP180.c **** //#include "processor_specific_functions\KL25Z\sys\derivative.h"
+  10:../Sources/BMP180.c **** 
+  11:../Sources/BMP180.c **** 
+  12:../Sources/BMP180.c **** short AC1,AC2,AC3,B1,B2,B5,MB,MC,MD;
+  13:../Sources/BMP180.c **** unsigned short AC4,AC5,AC6;
+  14:../Sources/BMP180.c **** long T;
+  15:../Sources/BMP180.c **** float absolute_altittude,start_altittude,relative_altittude;
+  16:../Sources/BMP180.c **** float p,P;
+  17:../Sources/BMP180.c **** double P_stat[100];
+  18:../Sources/BMP180.c **** int h=0;
+  19:../Sources/BMP180.c **** float k_alt=0.96;
+  20:../Sources/BMP180.c **** 
+  21:../Sources/BMP180.c **** 
+  22:../Sources/BMP180.c **** void BMP180_read_temp_interrupt()
+  23:../Sources/BMP180.c **** {
+ 120              		.loc 1 23 0
+ 121              		.cfi_startproc
+ 122              		@ args = 0, pretend = 0, frame = 16
+ 123              		@ frame_needed = 1, uses_anonymous_args = 0
+ 124 0000 90B5     		push	{r4, r7, lr}
+ 125              	.LCFI0:
+ 126              		.cfi_def_cfa_offset 12
+ 127              		.cfi_offset 4, -12
+ 128              		.cfi_offset 7, -8
+ 129              		.cfi_offset 14, -4
+ 130 0002 85B0     		sub	sp, sp, #20
+ 131              	.LCFI1:
+ 132              		.cfi_def_cfa_offset 32
+ 133 0004 00AF     		add	r7, sp, #0
+ 134              	.LCFI2:
+ 135              		.cfi_def_cfa_register 7
+  24:../Sources/BMP180.c **** 	char temp[2];
+  25:../Sources/BMP180.c **** 	long X1,X2,UT;
+  26:../Sources/BMP180.c **** //	I2CWriteRegister(BMP180_ADDR,BMP180_REG_CONTROL,BMP180_CMD_READ_TEMP);	//mert interruptban van
+  27:../Sources/BMP180.c **** //	Delay_mS(5);															//ez is
+  28:../Sources/BMP180.c **** 	I2CReadMultiRegisters(BMP180_ADDR,BMP180_REG_RESULT,temp,2);
+ 136              		.loc 1 28 0
+ 137 0006 3B46     		mov	r3, r7
+ 138 0008 4FF07700 		mov	r0, #119
+ 139 000c 4FF0F601 		mov	r1, #246
+ 140 0010 1A46     		mov	r2, r3
+ 141 0012 4FF00203 		mov	r3, #2
+ 142 0016 FFF7FEFF 		bl	I2CReadMultiRegisters
+  29:../Sources/BMP180.c **** 	UT=temp[0]<<8 | temp[1];
+ 143              		.loc 1 29 0
+ 144 001a 3B78     		ldrb	r3, [r7, #0]	@ zero_extendqisi2
+ 145 001c 4FEA0322 		lsl	r2, r3, #8
+ 146 0020 7B78     		ldrb	r3, [r7, #1]	@ zero_extendqisi2
+ 147 0022 1343     		orrs	r3, r3, r2
+ 148 0024 FB60     		str	r3, [r7, #12]
+  30:../Sources/BMP180.c **** 	X1=(float)((UT-AC6)*AC5)/32768;
+ 149              		.loc 1 30 0
+ 150 0026 40F20003 		movw	r3, #:lower16:AC6
+ 151 002a C0F20003 		movt	r3, #:upper16:AC6
+ 152 002e 1B88     		ldrh	r3, [r3, #0]
+ 153 0030 FA68     		ldr	r2, [r7, #12]
+ 154 0032 D21A     		subs	r2, r2, r3
+ 155 0034 40F20003 		movw	r3, #:lower16:AC5
+ 156 0038 C0F20003 		movt	r3, #:upper16:AC5
+ 157 003c 1B88     		ldrh	r3, [r3, #0]
+ 158 003e 03FB02F3 		mul	r3, r3, r2
+ 159 0042 1846     		mov	r0, r3
+ 160 0044 FFF7FEFF 		bl	__aeabi_i2f
+ 161 0048 0346     		mov	r3, r0
+ 162 004a 1846     		mov	r0, r3
+ 163 004c 4FF08E41 		mov	r1, #1191182336
+ 164 0050 FFF7FEFF 		bl	__aeabi_fdiv
+ 165 0054 0346     		mov	r3, r0
+ 166 0056 1846     		mov	r0, r3
+ 167 0058 FFF7FEFF 		bl	__aeabi_f2iz
+ 168 005c 0346     		mov	r3, r0
+ 169 005e BB60     		str	r3, [r7, #8]
+  31:../Sources/BMP180.c **** 	X2=(float)(MC*2048)/(X1+MD);
+ 170              		.loc 1 31 0
+ 171 0060 40F20003 		movw	r3, #:lower16:MC
+ 172 0064 C0F20003 		movt	r3, #:upper16:MC
+ 173 0068 1B88     		ldrh	r3, [r3, #0]
+ 174 006a 1BB2     		sxth	r3, r3
+ 175 006c 4FEAC323 		lsl	r3, r3, #11
+ 176 0070 1846     		mov	r0, r3
+ 177 0072 FFF7FEFF 		bl	__aeabi_i2f
+ 178 0076 0446     		mov	r4, r0
+ 179 0078 40F20003 		movw	r3, #:lower16:MD
+ 180 007c C0F20003 		movt	r3, #:upper16:MD
+ 181 0080 1B88     		ldrh	r3, [r3, #0]
+ 182 0082 1AB2     		sxth	r2, r3
+ 183 0084 BB68     		ldr	r3, [r7, #8]
+ 184 0086 D318     		adds	r3, r2, r3
+ 185 0088 1846     		mov	r0, r3
+ 186 008a FFF7FEFF 		bl	__aeabi_i2f
+ 187 008e 0346     		mov	r3, r0
+ 188 0090 2046     		mov	r0, r4
+ 189 0092 1946     		mov	r1, r3
+ 190 0094 FFF7FEFF 		bl	__aeabi_fdiv
+ 191 0098 0346     		mov	r3, r0
+ 192 009a 1846     		mov	r0, r3
+ 193 009c FFF7FEFF 		bl	__aeabi_f2iz
+ 194 00a0 0346     		mov	r3, r0
+ 195 00a2 7B60     		str	r3, [r7, #4]
+  32:../Sources/BMP180.c **** 	B5=X1+X2;
+ 196              		.loc 1 32 0
+ 197 00a4 BB68     		ldr	r3, [r7, #8]
+ 198 00a6 9AB2     		uxth	r2, r3
+ 199 00a8 7B68     		ldr	r3, [r7, #4]
+ 200 00aa 9BB2     		uxth	r3, r3
+ 201 00ac D318     		adds	r3, r2, r3
+ 202 00ae 9BB2     		uxth	r3, r3
+ 203 00b0 9AB2     		uxth	r2, r3
+ 204 00b2 40F20003 		movw	r3, #:lower16:B5
+ 205 00b6 C0F20003 		movt	r3, #:upper16:B5
+ 206 00ba 1A80     		strh	r2, [r3, #0]	@ movhi
+  33:../Sources/BMP180.c **** 	T=(B5+8)/16;
+ 207              		.loc 1 33 0
+ 208 00bc 40F20003 		movw	r3, #:lower16:B5
+ 209 00c0 C0F20003 		movt	r3, #:upper16:B5
+ 210 00c4 1B88     		ldrh	r3, [r3, #0]
+ 211 00c6 1BB2     		sxth	r3, r3
+ 212 00c8 03F10803 		add	r3, r3, #8
+ 213 00cc 002B     		cmp	r3, #0
+ 214 00ce 01DA     		bge	.L2
+ 215 00d0 03F10F03 		add	r3, r3, #15
+ 216              	.L2:
+ 217 00d4 4FEA2313 		asr	r3, r3, #4
+ 218 00d8 1A46     		mov	r2, r3
+ 219 00da 40F20003 		movw	r3, #:lower16:T
+ 220 00de C0F20003 		movt	r3, #:upper16:T
+ 221 00e2 1A60     		str	r2, [r3, #0]
+  34:../Sources/BMP180.c **** }
+ 222              		.loc 1 34 0
+ 223 00e4 07F11407 		add	r7, r7, #20
+ 224 00e8 BD46     		mov	sp, r7
+ 225 00ea 90BD     		pop	{r4, r7, pc}
+ 226              		.cfi_endproc
+ 227              	.LFE0:
+ 229              		.align	2
+ 230              		.global	BMP180_read_temp
+ 231              		.thumb
+ 232              		.thumb_func
+ 234              	BMP180_read_temp:
+ 235              	.LFB1:
+  35:../Sources/BMP180.c **** void BMP180_read_temp()
+  36:../Sources/BMP180.c **** {
+ 236              		.loc 1 36 0
+ 237              		.cfi_startproc
+ 238              		@ args = 0, pretend = 0, frame = 16
+ 239              		@ frame_needed = 1, uses_anonymous_args = 0
+ 240 00ec 90B5     		push	{r4, r7, lr}
+ 241              	.LCFI3:
+ 242              		.cfi_def_cfa_offset 12
+ 243              		.cfi_offset 4, -12
+ 244              		.cfi_offset 7, -8
+ 245              		.cfi_offset 14, -4
+ 246 00ee 85B0     		sub	sp, sp, #20
+ 247              	.LCFI4:
+ 248              		.cfi_def_cfa_offset 32
+ 249 00f0 00AF     		add	r7, sp, #0
+ 250              	.LCFI5:
+ 251              		.cfi_def_cfa_register 7
+  37:../Sources/BMP180.c **** 	char temp[2];
+  38:../Sources/BMP180.c **** 	long X1,X2,UT;
+  39:../Sources/BMP180.c **** 	I2CWriteRegister(BMP180_ADDR,BMP180_REG_CONTROL,BMP180_CMD_READ_TEMP);
+ 252              		.loc 1 39 0
+ 253 00f2 4FF07700 		mov	r0, #119
+ 254 00f6 4FF0F401 		mov	r1, #244
+ 255 00fa 4FF02E02 		mov	r2, #46
+ 256 00fe FFF7FEFF 		bl	I2CWriteRegister
+  40:../Sources/BMP180.c **** 	Delay_mS(5);
+ 257              		.loc 1 40 0
+ 258 0102 4FF00500 		mov	r0, #5
+ 259 0106 FFF7FEFF 		bl	Delay_mS
+  41:../Sources/BMP180.c **** 	I2CReadMultiRegisters(BMP180_ADDR,BMP180_REG_RESULT,temp,2);
+ 260              		.loc 1 41 0
+ 261 010a 3B46     		mov	r3, r7
+ 262 010c 4FF07700 		mov	r0, #119
+ 263 0110 4FF0F601 		mov	r1, #246
+ 264 0114 1A46     		mov	r2, r3
+ 265 0116 4FF00203 		mov	r3, #2
+ 266 011a FFF7FEFF 		bl	I2CReadMultiRegisters
+  42:../Sources/BMP180.c **** 	UT=temp[0]<<8 | temp[1];
+ 267              		.loc 1 42 0
+ 268 011e 3B78     		ldrb	r3, [r7, #0]	@ zero_extendqisi2
+ 269 0120 4FEA0322 		lsl	r2, r3, #8
+ 270 0124 7B78     		ldrb	r3, [r7, #1]	@ zero_extendqisi2
+ 271 0126 1343     		orrs	r3, r3, r2
+ 272 0128 FB60     		str	r3, [r7, #12]
+  43:../Sources/BMP180.c **** 	X1=(float)((UT-AC6)*AC5)/32768;
+ 273              		.loc 1 43 0
+ 274 012a 40F20003 		movw	r3, #:lower16:AC6
+ 275 012e C0F20003 		movt	r3, #:upper16:AC6
+ 276 0132 1B88     		ldrh	r3, [r3, #0]
+ 277 0134 FA68     		ldr	r2, [r7, #12]
+ 278 0136 D21A     		subs	r2, r2, r3
+ 279 0138 40F20003 		movw	r3, #:lower16:AC5
+ 280 013c C0F20003 		movt	r3, #:upper16:AC5
+ 281 0140 1B88     		ldrh	r3, [r3, #0]
+ 282 0142 03FB02F3 		mul	r3, r3, r2
+ 283 0146 1846     		mov	r0, r3
+ 284 0148 FFF7FEFF 		bl	__aeabi_i2f
+ 285 014c 0346     		mov	r3, r0
+ 286 014e 1846     		mov	r0, r3
+ 287 0150 4FF08E41 		mov	r1, #1191182336
+ 288 0154 FFF7FEFF 		bl	__aeabi_fdiv
+ 289 0158 0346     		mov	r3, r0
+ 290 015a 1846     		mov	r0, r3
+ 291 015c FFF7FEFF 		bl	__aeabi_f2iz
+ 292 0160 0346     		mov	r3, r0
+ 293 0162 BB60     		str	r3, [r7, #8]
+  44:../Sources/BMP180.c **** 	X2=(float)(MC*2048)/(X1+MD);
+ 294              		.loc 1 44 0
+ 295 0164 40F20003 		movw	r3, #:lower16:MC
+ 296 0168 C0F20003 		movt	r3, #:upper16:MC
+ 297 016c 1B88     		ldrh	r3, [r3, #0]
+ 298 016e 1BB2     		sxth	r3, r3
+ 299 0170 4FEAC323 		lsl	r3, r3, #11
+ 300 0174 1846     		mov	r0, r3
+ 301 0176 FFF7FEFF 		bl	__aeabi_i2f
+ 302 017a 0446     		mov	r4, r0
+ 303 017c 40F20003 		movw	r3, #:lower16:MD
+ 304 0180 C0F20003 		movt	r3, #:upper16:MD
+ 305 0184 1B88     		ldrh	r3, [r3, #0]
+ 306 0186 1AB2     		sxth	r2, r3
+ 307 0188 BB68     		ldr	r3, [r7, #8]
+ 308 018a D318     		adds	r3, r2, r3
+ 309 018c 1846     		mov	r0, r3
+ 310 018e FFF7FEFF 		bl	__aeabi_i2f
+ 311 0192 0346     		mov	r3, r0
+ 312 0194 2046     		mov	r0, r4
+ 313 0196 1946     		mov	r1, r3
+ 314 0198 FFF7FEFF 		bl	__aeabi_fdiv
+ 315 019c 0346     		mov	r3, r0
+ 316 019e 1846     		mov	r0, r3
+ 317 01a0 FFF7FEFF 		bl	__aeabi_f2iz
+ 318 01a4 0346     		mov	r3, r0
+ 319 01a6 7B60     		str	r3, [r7, #4]
+  45:../Sources/BMP180.c **** 	B5=X1+X2;
+ 320              		.loc 1 45 0
+ 321 01a8 BB68     		ldr	r3, [r7, #8]
+ 322 01aa 9AB2     		uxth	r2, r3
+ 323 01ac 7B68     		ldr	r3, [r7, #4]
+ 324 01ae 9BB2     		uxth	r3, r3
+ 325 01b0 D318     		adds	r3, r2, r3
+ 326 01b2 9BB2     		uxth	r3, r3
+ 327 01b4 9AB2     		uxth	r2, r3
+ 328 01b6 40F20003 		movw	r3, #:lower16:B5
+ 329 01ba C0F20003 		movt	r3, #:upper16:B5
+ 330 01be 1A80     		strh	r2, [r3, #0]	@ movhi
+  46:../Sources/BMP180.c **** 	T=(B5+8)/16;
+ 331              		.loc 1 46 0
+ 332 01c0 40F20003 		movw	r3, #:lower16:B5
+ 333 01c4 C0F20003 		movt	r3, #:upper16:B5
+ 334 01c8 1B88     		ldrh	r3, [r3, #0]
+ 335 01ca 1BB2     		sxth	r3, r3
+ 336 01cc 03F10803 		add	r3, r3, #8
+ 337 01d0 002B     		cmp	r3, #0
+ 338 01d2 01DA     		bge	.L4
+ 339 01d4 03F10F03 		add	r3, r3, #15
+ 340              	.L4:
+ 341 01d8 4FEA2313 		asr	r3, r3, #4
+ 342 01dc 1A46     		mov	r2, r3
+ 343 01de 40F20003 		movw	r3, #:lower16:T
+ 344 01e2 C0F20003 		movt	r3, #:upper16:T
+ 345 01e6 1A60     		str	r2, [r3, #0]
+  47:../Sources/BMP180.c **** }
+ 346              		.loc 1 47 0
+ 347 01e8 07F11407 		add	r7, r7, #20
+ 348 01ec BD46     		mov	sp, r7
+ 349 01ee 90BD     		pop	{r4, r7, pc}
+ 350              		.cfi_endproc
+ 351              	.LFE1:
+ 353              		.global	__aeabi_fmul
+ 354              		.global	__aeabi_fadd
+ 355              		.global	__aeabi_l2f
+ 356              		.align	2
+ 357              		.global	BMP180_read_pressure_interrupt
+ 358              		.thumb
+ 359              		.thumb_func
+ 361              	BMP180_read_pressure_interrupt:
+ 362              	.LFB2:
+  48:../Sources/BMP180.c **** float BMP180_read_pressure_interrupt()
+  49:../Sources/BMP180.c **** {
+ 363              		.loc 1 49 0
+ 364              		.cfi_startproc
+ 365              		@ args = 0, pretend = 0, frame = 48
+ 366              		@ frame_needed = 1, uses_anonymous_args = 0
+ 367 01f0 90B5     		push	{r4, r7, lr}
+ 368              	.LCFI6:
+ 369              		.cfi_def_cfa_offset 12
+ 370              		.cfi_offset 4, -12
+ 371              		.cfi_offset 7, -8
+ 372              		.cfi_offset 14, -4
+ 373 01f2 8DB0     		sub	sp, sp, #52
+ 374              	.LCFI7:
+ 375              		.cfi_def_cfa_offset 64
+ 376 01f4 00AF     		add	r7, sp, #0
+ 377              	.LCFI8:
+ 378              		.cfi_def_cfa_register 7
+  50:../Sources/BMP180.c **** 	char temp[3];
+  51:../Sources/BMP180.c **** 	long B3,B6,UP;
+  52:../Sources/BMP180.c **** 	long long B7;
+  53:../Sources/BMP180.c **** 	float X1,X2,X3,B4;
+  54:../Sources/BMP180.c **** //	I2CWriteRegister(BMP180_ADDR,BMP180_REG_CONTROL,BMP180_CMD_READ_PRESS + (BMP180_OSS<<6));	//mert
+  55:../Sources/BMP180.c **** //	Delay_mS(26);																				//ez is
+  56:../Sources/BMP180.c **** 	
+  57:../Sources/BMP180.c **** 	I2CReadMultiRegisters(BMP180_ADDR,BMP180_REG_RESULT,temp,3);
+ 379              		.loc 1 57 0
+ 380 01f6 07F10403 		add	r3, r7, #4
+ 381 01fa 4FF07700 		mov	r0, #119
+ 382 01fe 4FF0F601 		mov	r1, #246
+ 383 0202 1A46     		mov	r2, r3
+ 384 0204 4FF00303 		mov	r3, #3
+ 385 0208 FFF7FEFF 		bl	I2CReadMultiRegisters
+  58:../Sources/BMP180.c **** 	UP=(((temp[0]<<16) | (temp[1]<<8) | (temp[2]))>>(8-BMP180_OSS));
+ 386              		.loc 1 58 0
+ 387 020c 3B79     		ldrb	r3, [r7, #4]	@ zero_extendqisi2
+ 388 020e 4FEA0342 		lsl	r2, r3, #16
+ 389 0212 7B79     		ldrb	r3, [r7, #5]	@ zero_extendqisi2
+ 390 0214 4FEA0323 		lsl	r3, r3, #8
+ 391 0218 1A43     		orrs	r2, r2, r3
+ 392 021a BB79     		ldrb	r3, [r7, #6]	@ zero_extendqisi2
+ 393 021c 1343     		orrs	r3, r3, r2
+ 394 021e 4FEA6313 		asr	r3, r3, #5
+ 395 0222 FB62     		str	r3, [r7, #44]
+  59:../Sources/BMP180.c **** 	B6=B5-4000;
+ 396              		.loc 1 59 0
+ 397 0224 40F20003 		movw	r3, #:lower16:B5
+ 398 0228 C0F20003 		movt	r3, #:upper16:B5
+ 399 022c 1B88     		ldrh	r3, [r3, #0]
+ 400 022e 1BB2     		sxth	r3, r3
+ 401 0230 A3F57A63 		sub	r3, r3, #4000
+ 402 0234 BB62     		str	r3, [r7, #40]
+  60:../Sources/BMP180.c **** 	X1=((float)B2*(B6*B6/4096))/2048;
+ 403              		.loc 1 60 0
+ 404 0236 40F20003 		movw	r3, #:lower16:B2
+ 405 023a C0F20003 		movt	r3, #:upper16:B2
+ 406 023e 1B88     		ldrh	r3, [r3, #0]
+ 407 0240 1BB2     		sxth	r3, r3
+ 408 0242 1846     		mov	r0, r3
+ 409 0244 FFF7FEFF 		bl	__aeabi_i2f
+ 410 0248 0446     		mov	r4, r0
+ 411 024a BB6A     		ldr	r3, [r7, #40]
+ 412 024c BA6A     		ldr	r2, [r7, #40]
+ 413 024e 02FB03F3 		mul	r3, r2, r3
+ 414 0252 002B     		cmp	r3, #0
+ 415 0254 01DA     		bge	.L6
+ 416 0256 03F6FF73 		addw	r3, r3, #4095
+ 417              	.L6:
+ 418 025a 4FEA2333 		asr	r3, r3, #12
+ 419 025e 1846     		mov	r0, r3
+ 420 0260 FFF7FEFF 		bl	__aeabi_i2f
+ 421 0264 0346     		mov	r3, r0
+ 422 0266 2046     		mov	r0, r4
+ 423 0268 1946     		mov	r1, r3
+ 424 026a FFF7FEFF 		bl	__aeabi_fmul
+ 425 026e 0346     		mov	r3, r0
+ 426 0270 1846     		mov	r0, r3
+ 427 0272 4FF08A41 		mov	r1, #1157627904
+ 428 0276 FFF7FEFF 		bl	__aeabi_fdiv
+ 429 027a 0346     		mov	r3, r0
+ 430 027c 7B62     		str	r3, [r7, #36]	@ float
+  61:../Sources/BMP180.c **** 	X2=((float)(AC2*B6)/2048);
+ 431              		.loc 1 61 0
+ 432 027e 40F20003 		movw	r3, #:lower16:AC2
+ 433 0282 C0F20003 		movt	r3, #:upper16:AC2
+ 434 0286 1B88     		ldrh	r3, [r3, #0]
+ 435 0288 1BB2     		sxth	r3, r3
+ 436 028a BA6A     		ldr	r2, [r7, #40]
+ 437 028c 02FB03F3 		mul	r3, r2, r3
+ 438 0290 1846     		mov	r0, r3
+ 439 0292 FFF7FEFF 		bl	__aeabi_i2f
+ 440 0296 0346     		mov	r3, r0
+ 441 0298 1846     		mov	r0, r3
+ 442 029a 4FF08A41 		mov	r1, #1157627904
+ 443 029e FFF7FEFF 		bl	__aeabi_fdiv
+ 444 02a2 0346     		mov	r3, r0
+ 445 02a4 3B62     		str	r3, [r7, #32]	@ float
+  62:../Sources/BMP180.c **** 	X3=X1+X2;
+ 446              		.loc 1 62 0
+ 447 02a6 786A     		ldr	r0, [r7, #36]	@ float
+ 448 02a8 396A     		ldr	r1, [r7, #32]	@ float
+ 449 02aa FFF7FEFF 		bl	__aeabi_fadd
+ 450 02ae 0346     		mov	r3, r0
+ 451 02b0 FB61     		str	r3, [r7, #28]	@ float
+  63:../Sources/BMP180.c **** 	B3=(((AC1*4+(int)X3)<<BMP180_OSS)+2)/4;
+ 452              		.loc 1 63 0
+ 453 02b2 40F20003 		movw	r3, #:lower16:AC1
+ 454 02b6 C0F20003 		movt	r3, #:upper16:AC1
+ 455 02ba 1B88     		ldrh	r3, [r3, #0]
+ 456 02bc 1BB2     		sxth	r3, r3
+ 457 02be 4FEA8304 		lsl	r4, r3, #2
+ 458 02c2 F869     		ldr	r0, [r7, #28]	@ float
+ 459 02c4 FFF7FEFF 		bl	__aeabi_f2iz
+ 460 02c8 0346     		mov	r3, r0
+ 461 02ca E318     		adds	r3, r4, r3
+ 462 02cc 4FEAC303 		lsl	r3, r3, #3
+ 463 02d0 03F10203 		add	r3, r3, #2
+ 464 02d4 002B     		cmp	r3, #0
+ 465 02d6 01DA     		bge	.L7
+ 466 02d8 03F10303 		add	r3, r3, #3
+ 467              	.L7:
+ 468 02dc 4FEAA303 		asr	r3, r3, #2
+ 469 02e0 BB61     		str	r3, [r7, #24]
+  64:../Sources/BMP180.c **** 	X1=(float)(AC3*B6)/8192;
+ 470              		.loc 1 64 0
+ 471 02e2 40F20003 		movw	r3, #:lower16:AC3
+ 472 02e6 C0F20003 		movt	r3, #:upper16:AC3
+ 473 02ea 1B88     		ldrh	r3, [r3, #0]
+ 474 02ec 1BB2     		sxth	r3, r3
+ 475 02ee BA6A     		ldr	r2, [r7, #40]
+ 476 02f0 02FB03F3 		mul	r3, r2, r3
+ 477 02f4 1846     		mov	r0, r3
+ 478 02f6 FFF7FEFF 		bl	__aeabi_i2f
+ 479 02fa 0346     		mov	r3, r0
+ 480 02fc 1846     		mov	r0, r3
+ 481 02fe 4FF08C41 		mov	r1, #1174405120
+ 482 0302 FFF7FEFF 		bl	__aeabi_fdiv
+ 483 0306 0346     		mov	r3, r0
+ 484 0308 7B62     		str	r3, [r7, #36]	@ float
+  65:../Sources/BMP180.c **** 	X2=(float)(B1*(B6*B6/4096))/65536;
+ 485              		.loc 1 65 0
+ 486 030a 40F20003 		movw	r3, #:lower16:B1
+ 487 030e C0F20003 		movt	r3, #:upper16:B1
+ 488 0312 1B88     		ldrh	r3, [r3, #0]
+ 489 0314 1AB2     		sxth	r2, r3
+ 490 0316 BB6A     		ldr	r3, [r7, #40]
+ 491 0318 B96A     		ldr	r1, [r7, #40]
+ 492 031a 01FB03F3 		mul	r3, r1, r3
+ 493 031e 002B     		cmp	r3, #0
+ 494 0320 01DA     		bge	.L8
+ 495 0322 03F6FF73 		addw	r3, r3, #4095
+ 496              	.L8:
+ 497 0326 4FEA2333 		asr	r3, r3, #12
+ 498 032a 03FB02F3 		mul	r3, r3, r2
+ 499 032e 1846     		mov	r0, r3
+ 500 0330 FFF7FEFF 		bl	__aeabi_i2f
+ 501 0334 0346     		mov	r3, r0
+ 502 0336 1846     		mov	r0, r3
+ 503 0338 4FF08F41 		mov	r1, #1199570944
+ 504 033c FFF7FEFF 		bl	__aeabi_fdiv
+ 505 0340 0346     		mov	r3, r0
+ 506 0342 3B62     		str	r3, [r7, #32]	@ float
+  66:../Sources/BMP180.c **** 	X3=((X1+X2)+2)/4;
+ 507              		.loc 1 66 0
+ 508 0344 786A     		ldr	r0, [r7, #36]	@ float
+ 509 0346 396A     		ldr	r1, [r7, #32]	@ float
+ 510 0348 FFF7FEFF 		bl	__aeabi_fadd
+ 511 034c 0346     		mov	r3, r0
+ 512 034e 1846     		mov	r0, r3
+ 513 0350 4FF08041 		mov	r1, #1073741824
+ 514 0354 FFF7FEFF 		bl	__aeabi_fadd
+ 515 0358 0346     		mov	r3, r0
+ 516 035a 1846     		mov	r0, r3
+ 517 035c 4FF08141 		mov	r1, #1082130432
+ 518 0360 FFF7FEFF 		bl	__aeabi_fdiv
+ 519 0364 0346     		mov	r3, r0
+ 520 0366 FB61     		str	r3, [r7, #28]	@ float
+  67:../Sources/BMP180.c **** 	B4=(float)(AC4*(X3+32768))/32768;
+ 521              		.loc 1 67 0
+ 522 0368 40F20003 		movw	r3, #:lower16:AC4
+ 523 036c C0F20003 		movt	r3, #:upper16:AC4
+ 524 0370 1B88     		ldrh	r3, [r3, #0]
+ 525 0372 1846     		mov	r0, r3
+ 526 0374 FFF7FEFF 		bl	__aeabi_i2f
+ 527 0378 0446     		mov	r4, r0
+ 528 037a F869     		ldr	r0, [r7, #28]	@ float
+ 529 037c 4FF08E41 		mov	r1, #1191182336
+ 530 0380 FFF7FEFF 		bl	__aeabi_fadd
+ 531 0384 0346     		mov	r3, r0
+ 532 0386 2046     		mov	r0, r4
+ 533 0388 1946     		mov	r1, r3
+ 534 038a FFF7FEFF 		bl	__aeabi_fmul
+ 535 038e 0346     		mov	r3, r0
+ 536 0390 1846     		mov	r0, r3
+ 537 0392 4FF08E41 		mov	r1, #1191182336
+ 538 0396 FFF7FEFF 		bl	__aeabi_fdiv
+ 539 039a 0346     		mov	r3, r0
+ 540 039c 7B61     		str	r3, [r7, #20]	@ float
+  68:../Sources/BMP180.c **** 	B7=(UP-B3)*(50000>>BMP180_OSS);
+ 541              		.loc 1 68 0
+ 542 039e FA6A     		ldr	r2, [r7, #44]
+ 543 03a0 BB69     		ldr	r3, [r7, #24]
+ 544 03a2 D31A     		subs	r3, r2, r3
+ 545 03a4 41F66A02 		movw	r2, #6250
+ 546 03a8 02FB03F1 		mul	r1, r2, r3
+ 547 03ac 0A46     		mov	r2, r1
+ 548 03ae 4FEAE273 		asr	r3, r2, #31
+ 549 03b2 C7E90223 		strd	r2, [r7, #8]
+  69:../Sources/BMP180.c **** 	if(B7<0x80000000) p=(float)(B7*2)/B4;
+ 550              		.loc 1 69 0
+ 551 03b6 D7E90223 		ldrd	r2, [r7, #8]
+ 552 03ba 6FF00040 		mvn	r0, #-2147483648
+ 553 03be 4FF00001 		mov	r1, #0
+ 554 03c2 9042     		cmp	r0, r2
+ 555 03c4 71EB030C 		sbcs	ip, r1, r3
+ 556 03c8 15DB     		blt	.L9
+ 557              		.loc 1 69 0 is_stmt 0 discriminator 1
+ 558 03ca D7E90223 		ldrd	r2, [r7, #8]
+ 559 03ce 9218     		adds	r2, r2, r2
+ 560 03d0 43EB0303 		adc	r3, r3, r3
+ 561 03d4 1046     		mov	r0, r2
+ 562 03d6 1946     		mov	r1, r3
+ 563 03d8 FFF7FEFF 		bl	__aeabi_l2f
+ 564 03dc 0346     		mov	r3, r0
+ 565 03de 1846     		mov	r0, r3
+ 566 03e0 7969     		ldr	r1, [r7, #20]	@ float
+ 567 03e2 FFF7FEFF 		bl	__aeabi_fdiv
+ 568 03e6 0346     		mov	r3, r0
+ 569 03e8 1A46     		mov	r2, r3
+ 570 03ea 40F20003 		movw	r3, #:lower16:p
+ 571 03ee C0F20003 		movt	r3, #:upper16:p
+ 572 03f2 1A60     		str	r2, [r3, #0]	@ float
+ 573 03f4 14E0     		b	.L10
+ 574              	.L9:
+  70:../Sources/BMP180.c **** 	else p=(double)((float)B7/B4)*2.0;
+ 575              		.loc 1 70 0 is_stmt 1
+ 576 03f6 D7E90201 		ldrd	r0, [r7, #8]
+ 577 03fa FFF7FEFF 		bl	__aeabi_l2f
+ 578 03fe 0346     		mov	r3, r0
+ 579 0400 1846     		mov	r0, r3
+ 580 0402 7969     		ldr	r1, [r7, #20]	@ float
+ 581 0404 FFF7FEFF 		bl	__aeabi_fdiv
+ 582 0408 0346     		mov	r3, r0
+ 583 040a 1846     		mov	r0, r3
+ 584 040c 1946     		mov	r1, r3
+ 585 040e FFF7FEFF 		bl	__aeabi_fadd
+ 586 0412 0346     		mov	r3, r0
+ 587 0414 1A46     		mov	r2, r3
+ 588 0416 40F20003 		movw	r3, #:lower16:p
+ 589 041a C0F20003 		movt	r3, #:upper16:p
+ 590 041e 1A60     		str	r2, [r3, #0]	@ float
+ 591              	.L10:
+  71:../Sources/BMP180.c **** 	X1=(p/256)*(p/256);
+ 592              		.loc 1 71 0
+ 593 0420 40F20003 		movw	r3, #:lower16:p
+ 594 0424 C0F20003 		movt	r3, #:upper16:p
+ 595 0428 1B68     		ldr	r3, [r3, #0]	@ float
+ 596 042a 1846     		mov	r0, r3
+ 597 042c 4FF08741 		mov	r1, #1132462080
+ 598 0430 FFF7FEFF 		bl	__aeabi_fdiv
+ 599 0434 0346     		mov	r3, r0
+ 600 0436 1C46     		mov	r4, r3
+ 601 0438 40F20003 		movw	r3, #:lower16:p
+ 602 043c C0F20003 		movt	r3, #:upper16:p
+ 603 0440 1B68     		ldr	r3, [r3, #0]	@ float
+ 604 0442 1846     		mov	r0, r3
+ 605 0444 4FF08741 		mov	r1, #1132462080
+ 606 0448 FFF7FEFF 		bl	__aeabi_fdiv
+ 607 044c 0346     		mov	r3, r0
+ 608 044e 2046     		mov	r0, r4
+ 609 0450 1946     		mov	r1, r3
+ 610 0452 FFF7FEFF 		bl	__aeabi_fmul
+ 611 0456 0346     		mov	r3, r0
+ 612 0458 7B62     		str	r3, [r7, #36]	@ float
+  72:../Sources/BMP180.c **** 	X1=(X1*3038)/65536;
+ 613              		.loc 1 72 0
+ 614 045a 786A     		ldr	r0, [r7, #36]	@ float
+ 615 045c 4FF46041 		mov	r1, #57344
+ 616 0460 C4F23D51 		movt	r1, 17725
+ 617 0464 FFF7FEFF 		bl	__aeabi_fmul
+ 618 0468 0346     		mov	r3, r0
+ 619 046a 1846     		mov	r0, r3
+ 620 046c 4FF08F41 		mov	r1, #1199570944
+ 621 0470 FFF7FEFF 		bl	__aeabi_fdiv
+ 622 0474 0346     		mov	r3, r0
+ 623 0476 7B62     		str	r3, [r7, #36]	@ float
+  73:../Sources/BMP180.c **** 	X2=(-7357*p)/65536;
+ 624              		.loc 1 73 0
+ 625 0478 40F20003 		movw	r3, #:lower16:p
+ 626 047c C0F20003 		movt	r3, #:upper16:p
+ 627 0480 1B68     		ldr	r3, [r3, #0]	@ float
+ 628 0482 1846     		mov	r0, r3
+ 629 0484 4FF46841 		mov	r1, #59392
+ 630 0488 CCF2E551 		movt	r1, 50661
+ 631 048c FFF7FEFF 		bl	__aeabi_fmul
+ 632 0490 0346     		mov	r3, r0
+ 633 0492 1846     		mov	r0, r3
+ 634 0494 4FF08F41 		mov	r1, #1199570944
+ 635 0498 FFF7FEFF 		bl	__aeabi_fdiv
+ 636 049c 0346     		mov	r3, r0
+ 637 049e 3B62     		str	r3, [r7, #32]	@ float
+  74:../Sources/BMP180.c **** 	p=p+(float)(X1+X2+3791)/16;
+ 638              		.loc 1 74 0
+ 639 04a0 786A     		ldr	r0, [r7, #36]	@ float
+ 640 04a2 396A     		ldr	r1, [r7, #32]	@ float
+ 641 04a4 FFF7FEFF 		bl	__aeabi_fadd
+ 642 04a8 0346     		mov	r3, r0
+ 643 04aa 1846     		mov	r0, r3
+ 644 04ac 4FF47041 		mov	r1, #61440
+ 645 04b0 C4F26C51 		movt	r1, 17772
+ 646 04b4 FFF7FEFF 		bl	__aeabi_fadd
+ 647 04b8 0346     		mov	r3, r0
+ 648 04ba 1846     		mov	r0, r3
+ 649 04bc 4FF08341 		mov	r1, #1098907648
+ 650 04c0 FFF7FEFF 		bl	__aeabi_fdiv
+ 651 04c4 0346     		mov	r3, r0
+ 652 04c6 1A46     		mov	r2, r3
+ 653 04c8 40F20003 		movw	r3, #:lower16:p
+ 654 04cc C0F20003 		movt	r3, #:upper16:p
+ 655 04d0 1B68     		ldr	r3, [r3, #0]	@ float
+ 656 04d2 1046     		mov	r0, r2
+ 657 04d4 1946     		mov	r1, r3
+ 658 04d6 FFF7FEFF 		bl	__aeabi_fadd
+ 659 04da 0346     		mov	r3, r0
+ 660 04dc 1A46     		mov	r2, r3
+ 661 04de 40F20003 		movw	r3, #:lower16:p
+ 662 04e2 C0F20003 		movt	r3, #:upper16:p
+ 663 04e6 1A60     		str	r2, [r3, #0]	@ float
+  75:../Sources/BMP180.c **** 	return p;
+ 664              		.loc 1 75 0
+ 665 04e8 40F20003 		movw	r3, #:lower16:p
+ 666 04ec C0F20003 		movt	r3, #:upper16:p
+ 667 04f0 1B68     		ldr	r3, [r3, #0]	@ float
+  76:../Sources/BMP180.c **** }
+ 668              		.loc 1 76 0
+ 669 04f2 1846     		mov	r0, r3
+ 670 04f4 07F13407 		add	r7, r7, #52
+ 671 04f8 BD46     		mov	sp, r7
+ 672 04fa 90BD     		pop	{r4, r7, pc}
+ 673              		.cfi_endproc
+ 674              	.LFE2:
+ 676              		.align	2
+ 677              		.global	BMP180_read_pressure
+ 678              		.thumb
+ 679              		.thumb_func
+ 681              	BMP180_read_pressure:
+ 682              	.LFB3:
+  77:../Sources/BMP180.c **** float BMP180_read_pressure()
+  78:../Sources/BMP180.c **** {
+ 683              		.loc 1 78 0
+ 684              		.cfi_startproc
+ 685              		@ args = 0, pretend = 0, frame = 48
+ 686              		@ frame_needed = 1, uses_anonymous_args = 0
+ 687 04fc 90B5     		push	{r4, r7, lr}
+ 688              	.LCFI9:
+ 689              		.cfi_def_cfa_offset 12
+ 690              		.cfi_offset 4, -12
+ 691              		.cfi_offset 7, -8
+ 692              		.cfi_offset 14, -4
+ 693 04fe 8DB0     		sub	sp, sp, #52
+ 694              	.LCFI10:
+ 695              		.cfi_def_cfa_offset 64
+ 696 0500 00AF     		add	r7, sp, #0
+ 697              	.LCFI11:
+ 698              		.cfi_def_cfa_register 7
+  79:../Sources/BMP180.c **** 	char temp[3];
+  80:../Sources/BMP180.c **** 	long B3,B6,UP;
+  81:../Sources/BMP180.c **** 	long long B7;
+  82:../Sources/BMP180.c **** 	float X1,X2,X3,B4;
+  83:../Sources/BMP180.c **** 	I2CWriteRegister(BMP180_ADDR,BMP180_REG_CONTROL,BMP180_CMD_READ_PRESS + (BMP180_OSS<<6));
+ 699              		.loc 1 83 0
+ 700 0502 4FF07700 		mov	r0, #119
+ 701 0506 4FF0F401 		mov	r1, #244
+ 702 050a 4FF0F402 		mov	r2, #244
+ 703 050e FFF7FEFF 		bl	I2CWriteRegister
+  84:../Sources/BMP180.c **** 	Delay_mS(26);
+ 704              		.loc 1 84 0
+ 705 0512 4FF01A00 		mov	r0, #26
+ 706 0516 FFF7FEFF 		bl	Delay_mS
+  85:../Sources/BMP180.c **** 	I2CReadMultiRegisters(BMP180_ADDR,BMP180_REG_RESULT,temp,3);
+ 707              		.loc 1 85 0
+ 708 051a 07F10403 		add	r3, r7, #4
+ 709 051e 4FF07700 		mov	r0, #119
+ 710 0522 4FF0F601 		mov	r1, #246
+ 711 0526 1A46     		mov	r2, r3
+ 712 0528 4FF00303 		mov	r3, #3
+ 713 052c FFF7FEFF 		bl	I2CReadMultiRegisters
+  86:../Sources/BMP180.c **** 	UP=(((temp[0]<<16) | (temp[1]<<8) | (temp[2]))>>(8-BMP180_OSS));
+ 714              		.loc 1 86 0
+ 715 0530 3B79     		ldrb	r3, [r7, #4]	@ zero_extendqisi2
+ 716 0532 4FEA0342 		lsl	r2, r3, #16
+ 717 0536 7B79     		ldrb	r3, [r7, #5]	@ zero_extendqisi2
+ 718 0538 4FEA0323 		lsl	r3, r3, #8
+ 719 053c 1A43     		orrs	r2, r2, r3
+ 720 053e BB79     		ldrb	r3, [r7, #6]	@ zero_extendqisi2
+ 721 0540 1343     		orrs	r3, r3, r2
+ 722 0542 4FEA6313 		asr	r3, r3, #5
+ 723 0546 FB62     		str	r3, [r7, #44]
+  87:../Sources/BMP180.c **** 	B6=B5-4000;
+ 724              		.loc 1 87 0
+ 725 0548 40F20003 		movw	r3, #:lower16:B5
+ 726 054c C0F20003 		movt	r3, #:upper16:B5
+ 727 0550 1B88     		ldrh	r3, [r3, #0]
+ 728 0552 1BB2     		sxth	r3, r3
+ 729 0554 A3F57A63 		sub	r3, r3, #4000
+ 730 0558 BB62     		str	r3, [r7, #40]
+  88:../Sources/BMP180.c **** 	X1=((float)B2*(B6*B6/4096))/2048;
+ 731              		.loc 1 88 0
+ 732 055a 40F20003 		movw	r3, #:lower16:B2
+ 733 055e C0F20003 		movt	r3, #:upper16:B2
+ 734 0562 1B88     		ldrh	r3, [r3, #0]
+ 735 0564 1BB2     		sxth	r3, r3
+ 736 0566 1846     		mov	r0, r3
+ 737 0568 FFF7FEFF 		bl	__aeabi_i2f
+ 738 056c 0446     		mov	r4, r0
+ 739 056e BB6A     		ldr	r3, [r7, #40]
+ 740 0570 BA6A     		ldr	r2, [r7, #40]
+ 741 0572 02FB03F3 		mul	r3, r2, r3
+ 742 0576 002B     		cmp	r3, #0
+ 743 0578 01DA     		bge	.L13
+ 744 057a 03F6FF73 		addw	r3, r3, #4095
+ 745              	.L13:
+ 746 057e 4FEA2333 		asr	r3, r3, #12
+ 747 0582 1846     		mov	r0, r3
+ 748 0584 FFF7FEFF 		bl	__aeabi_i2f
+ 749 0588 0346     		mov	r3, r0
+ 750 058a 2046     		mov	r0, r4
+ 751 058c 1946     		mov	r1, r3
+ 752 058e FFF7FEFF 		bl	__aeabi_fmul
+ 753 0592 0346     		mov	r3, r0
+ 754 0594 1846     		mov	r0, r3
+ 755 0596 4FF08A41 		mov	r1, #1157627904
+ 756 059a FFF7FEFF 		bl	__aeabi_fdiv
+ 757 059e 0346     		mov	r3, r0
+ 758 05a0 7B62     		str	r3, [r7, #36]	@ float
+  89:../Sources/BMP180.c **** 	X2=((float)(AC2*B6)/2048);
+ 759              		.loc 1 89 0
+ 760 05a2 40F20003 		movw	r3, #:lower16:AC2
+ 761 05a6 C0F20003 		movt	r3, #:upper16:AC2
+ 762 05aa 1B88     		ldrh	r3, [r3, #0]
+ 763 05ac 1BB2     		sxth	r3, r3
+ 764 05ae BA6A     		ldr	r2, [r7, #40]
+ 765 05b0 02FB03F3 		mul	r3, r2, r3
+ 766 05b4 1846     		mov	r0, r3
+ 767 05b6 FFF7FEFF 		bl	__aeabi_i2f
+ 768 05ba 0346     		mov	r3, r0
+ 769 05bc 1846     		mov	r0, r3
+ 770 05be 4FF08A41 		mov	r1, #1157627904
+ 771 05c2 FFF7FEFF 		bl	__aeabi_fdiv
+ 772 05c6 0346     		mov	r3, r0
+ 773 05c8 3B62     		str	r3, [r7, #32]	@ float
+  90:../Sources/BMP180.c **** 	X3=X1+X2;
+ 774              		.loc 1 90 0
+ 775 05ca 786A     		ldr	r0, [r7, #36]	@ float
+ 776 05cc 396A     		ldr	r1, [r7, #32]	@ float
+ 777 05ce FFF7FEFF 		bl	__aeabi_fadd
+ 778 05d2 0346     		mov	r3, r0
+ 779 05d4 FB61     		str	r3, [r7, #28]	@ float
+  91:../Sources/BMP180.c **** 	B3=(((AC1*4+(int)X3)<<BMP180_OSS)+2)/4;
+ 780              		.loc 1 91 0
+ 781 05d6 40F20003 		movw	r3, #:lower16:AC1
+ 782 05da C0F20003 		movt	r3, #:upper16:AC1
+ 783 05de 1B88     		ldrh	r3, [r3, #0]
+ 784 05e0 1BB2     		sxth	r3, r3
+ 785 05e2 4FEA8304 		lsl	r4, r3, #2
+ 786 05e6 F869     		ldr	r0, [r7, #28]	@ float
+ 787 05e8 FFF7FEFF 		bl	__aeabi_f2iz
+ 788 05ec 0346     		mov	r3, r0
+ 789 05ee E318     		adds	r3, r4, r3
+ 790 05f0 4FEAC303 		lsl	r3, r3, #3
+ 791 05f4 03F10203 		add	r3, r3, #2
+ 792 05f8 002B     		cmp	r3, #0
+ 793 05fa 01DA     		bge	.L14
+ 794 05fc 03F10303 		add	r3, r3, #3
+ 795              	.L14:
+ 796 0600 4FEAA303 		asr	r3, r3, #2
+ 797 0604 BB61     		str	r3, [r7, #24]
+  92:../Sources/BMP180.c **** 	X1=(float)(AC3*B6)/8192;
+ 798              		.loc 1 92 0
+ 799 0606 40F20003 		movw	r3, #:lower16:AC3
+ 800 060a C0F20003 		movt	r3, #:upper16:AC3
+ 801 060e 1B88     		ldrh	r3, [r3, #0]
+ 802 0610 1BB2     		sxth	r3, r3
+ 803 0612 BA6A     		ldr	r2, [r7, #40]
+ 804 0614 02FB03F3 		mul	r3, r2, r3
+ 805 0618 1846     		mov	r0, r3
+ 806 061a FFF7FEFF 		bl	__aeabi_i2f
+ 807 061e 0346     		mov	r3, r0
+ 808 0620 1846     		mov	r0, r3
+ 809 0622 4FF08C41 		mov	r1, #1174405120
+ 810 0626 FFF7FEFF 		bl	__aeabi_fdiv
+ 811 062a 0346     		mov	r3, r0
+ 812 062c 7B62     		str	r3, [r7, #36]	@ float
+  93:../Sources/BMP180.c **** 	X2=(float)(B1*(B6*B6/4096))/65536;
+ 813              		.loc 1 93 0
+ 814 062e 40F20003 		movw	r3, #:lower16:B1
+ 815 0632 C0F20003 		movt	r3, #:upper16:B1
+ 816 0636 1B88     		ldrh	r3, [r3, #0]
+ 817 0638 1AB2     		sxth	r2, r3
+ 818 063a BB6A     		ldr	r3, [r7, #40]
+ 819 063c B96A     		ldr	r1, [r7, #40]
+ 820 063e 01FB03F3 		mul	r3, r1, r3
+ 821 0642 002B     		cmp	r3, #0
+ 822 0644 01DA     		bge	.L15
+ 823 0646 03F6FF73 		addw	r3, r3, #4095
+ 824              	.L15:
+ 825 064a 4FEA2333 		asr	r3, r3, #12
+ 826 064e 03FB02F3 		mul	r3, r3, r2
+ 827 0652 1846     		mov	r0, r3
+ 828 0654 FFF7FEFF 		bl	__aeabi_i2f
+ 829 0658 0346     		mov	r3, r0
+ 830 065a 1846     		mov	r0, r3
+ 831 065c 4FF08F41 		mov	r1, #1199570944
+ 832 0660 FFF7FEFF 		bl	__aeabi_fdiv
+ 833 0664 0346     		mov	r3, r0
+ 834 0666 3B62     		str	r3, [r7, #32]	@ float
+  94:../Sources/BMP180.c **** 	X3=((X1+X2)+2)/4;
+ 835              		.loc 1 94 0
+ 836 0668 786A     		ldr	r0, [r7, #36]	@ float
+ 837 066a 396A     		ldr	r1, [r7, #32]	@ float
+ 838 066c FFF7FEFF 		bl	__aeabi_fadd
+ 839 0670 0346     		mov	r3, r0
+ 840 0672 1846     		mov	r0, r3
+ 841 0674 4FF08041 		mov	r1, #1073741824
+ 842 0678 FFF7FEFF 		bl	__aeabi_fadd
+ 843 067c 0346     		mov	r3, r0
+ 844 067e 1846     		mov	r0, r3
+ 845 0680 4FF08141 		mov	r1, #1082130432
+ 846 0684 FFF7FEFF 		bl	__aeabi_fdiv
+ 847 0688 0346     		mov	r3, r0
+ 848 068a FB61     		str	r3, [r7, #28]	@ float
+  95:../Sources/BMP180.c **** 	B4=(float)(AC4*(X3+32768))/32768;
+ 849              		.loc 1 95 0
+ 850 068c 40F20003 		movw	r3, #:lower16:AC4
+ 851 0690 C0F20003 		movt	r3, #:upper16:AC4
+ 852 0694 1B88     		ldrh	r3, [r3, #0]
+ 853 0696 1846     		mov	r0, r3
+ 854 0698 FFF7FEFF 		bl	__aeabi_i2f
+ 855 069c 0446     		mov	r4, r0
+ 856 069e F869     		ldr	r0, [r7, #28]	@ float
+ 857 06a0 4FF08E41 		mov	r1, #1191182336
+ 858 06a4 FFF7FEFF 		bl	__aeabi_fadd
+ 859 06a8 0346     		mov	r3, r0
+ 860 06aa 2046     		mov	r0, r4
+ 861 06ac 1946     		mov	r1, r3
+ 862 06ae FFF7FEFF 		bl	__aeabi_fmul
+ 863 06b2 0346     		mov	r3, r0
+ 864 06b4 1846     		mov	r0, r3
+ 865 06b6 4FF08E41 		mov	r1, #1191182336
+ 866 06ba FFF7FEFF 		bl	__aeabi_fdiv
+ 867 06be 0346     		mov	r3, r0
+ 868 06c0 7B61     		str	r3, [r7, #20]	@ float
+  96:../Sources/BMP180.c **** 	B7=(UP-B3)*(50000>>BMP180_OSS);
+ 869              		.loc 1 96 0
+ 870 06c2 FA6A     		ldr	r2, [r7, #44]
+ 871 06c4 BB69     		ldr	r3, [r7, #24]
+ 872 06c6 D31A     		subs	r3, r2, r3
+ 873 06c8 41F66A02 		movw	r2, #6250
+ 874 06cc 02FB03F1 		mul	r1, r2, r3
+ 875 06d0 0A46     		mov	r2, r1
+ 876 06d2 4FEAE273 		asr	r3, r2, #31
+ 877 06d6 C7E90223 		strd	r2, [r7, #8]
+  97:../Sources/BMP180.c **** 	if(B7<0x80000000) p=(float)(B7*2)/B4;
+ 878              		.loc 1 97 0
+ 879 06da D7E90223 		ldrd	r2, [r7, #8]
+ 880 06de 6FF00040 		mvn	r0, #-2147483648
+ 881 06e2 4FF00001 		mov	r1, #0
+ 882 06e6 9042     		cmp	r0, r2
+ 883 06e8 71EB030C 		sbcs	ip, r1, r3
+ 884 06ec 15DB     		blt	.L16
+ 885              		.loc 1 97 0 is_stmt 0 discriminator 1
+ 886 06ee D7E90223 		ldrd	r2, [r7, #8]
+ 887 06f2 9218     		adds	r2, r2, r2
+ 888 06f4 43EB0303 		adc	r3, r3, r3
+ 889 06f8 1046     		mov	r0, r2
+ 890 06fa 1946     		mov	r1, r3
+ 891 06fc FFF7FEFF 		bl	__aeabi_l2f
+ 892 0700 0346     		mov	r3, r0
+ 893 0702 1846     		mov	r0, r3
+ 894 0704 7969     		ldr	r1, [r7, #20]	@ float
+ 895 0706 FFF7FEFF 		bl	__aeabi_fdiv
+ 896 070a 0346     		mov	r3, r0
+ 897 070c 1A46     		mov	r2, r3
+ 898 070e 40F20003 		movw	r3, #:lower16:p
+ 899 0712 C0F20003 		movt	r3, #:upper16:p
+ 900 0716 1A60     		str	r2, [r3, #0]	@ float
+ 901 0718 14E0     		b	.L17
+ 902              	.L16:
+  98:../Sources/BMP180.c **** 	else p=(double)((float)B7/B4)*2.0;
+ 903              		.loc 1 98 0 is_stmt 1
+ 904 071a D7E90201 		ldrd	r0, [r7, #8]
+ 905 071e FFF7FEFF 		bl	__aeabi_l2f
+ 906 0722 0346     		mov	r3, r0
+ 907 0724 1846     		mov	r0, r3
+ 908 0726 7969     		ldr	r1, [r7, #20]	@ float
+ 909 0728 FFF7FEFF 		bl	__aeabi_fdiv
+ 910 072c 0346     		mov	r3, r0
+ 911 072e 1846     		mov	r0, r3
+ 912 0730 1946     		mov	r1, r3
+ 913 0732 FFF7FEFF 		bl	__aeabi_fadd
+ 914 0736 0346     		mov	r3, r0
+ 915 0738 1A46     		mov	r2, r3
+ 916 073a 40F20003 		movw	r3, #:lower16:p
+ 917 073e C0F20003 		movt	r3, #:upper16:p
+ 918 0742 1A60     		str	r2, [r3, #0]	@ float
+ 919              	.L17:
+  99:../Sources/BMP180.c **** 	X1=(p/256)*(p/256);
+ 920              		.loc 1 99 0
+ 921 0744 40F20003 		movw	r3, #:lower16:p
+ 922 0748 C0F20003 		movt	r3, #:upper16:p
+ 923 074c 1B68     		ldr	r3, [r3, #0]	@ float
+ 924 074e 1846     		mov	r0, r3
+ 925 0750 4FF08741 		mov	r1, #1132462080
+ 926 0754 FFF7FEFF 		bl	__aeabi_fdiv
+ 927 0758 0346     		mov	r3, r0
+ 928 075a 1C46     		mov	r4, r3
+ 929 075c 40F20003 		movw	r3, #:lower16:p
+ 930 0760 C0F20003 		movt	r3, #:upper16:p
+ 931 0764 1B68     		ldr	r3, [r3, #0]	@ float
+ 932 0766 1846     		mov	r0, r3
+ 933 0768 4FF08741 		mov	r1, #1132462080
+ 934 076c FFF7FEFF 		bl	__aeabi_fdiv
+ 935 0770 0346     		mov	r3, r0
+ 936 0772 2046     		mov	r0, r4
+ 937 0774 1946     		mov	r1, r3
+ 938 0776 FFF7FEFF 		bl	__aeabi_fmul
+ 939 077a 0346     		mov	r3, r0
+ 940 077c 7B62     		str	r3, [r7, #36]	@ float
+ 100:../Sources/BMP180.c **** 	X1=(X1*3038)/65536;
+ 941              		.loc 1 100 0
+ 942 077e 786A     		ldr	r0, [r7, #36]	@ float
+ 943 0780 4FF46041 		mov	r1, #57344
+ 944 0784 C4F23D51 		movt	r1, 17725
+ 945 0788 FFF7FEFF 		bl	__aeabi_fmul
+ 946 078c 0346     		mov	r3, r0
+ 947 078e 1846     		mov	r0, r3
+ 948 0790 4FF08F41 		mov	r1, #1199570944
+ 949 0794 FFF7FEFF 		bl	__aeabi_fdiv
+ 950 0798 0346     		mov	r3, r0
+ 951 079a 7B62     		str	r3, [r7, #36]	@ float
+ 101:../Sources/BMP180.c **** 	X2=(-7357*p)/65536;
+ 952              		.loc 1 101 0
+ 953 079c 40F20003 		movw	r3, #:lower16:p
+ 954 07a0 C0F20003 		movt	r3, #:upper16:p
+ 955 07a4 1B68     		ldr	r3, [r3, #0]	@ float
+ 956 07a6 1846     		mov	r0, r3
+ 957 07a8 4FF46841 		mov	r1, #59392
+ 958 07ac CCF2E551 		movt	r1, 50661
+ 959 07b0 FFF7FEFF 		bl	__aeabi_fmul
+ 960 07b4 0346     		mov	r3, r0
+ 961 07b6 1846     		mov	r0, r3
+ 962 07b8 4FF08F41 		mov	r1, #1199570944
+ 963 07bc FFF7FEFF 		bl	__aeabi_fdiv
+ 964 07c0 0346     		mov	r3, r0
+ 965 07c2 3B62     		str	r3, [r7, #32]	@ float
+ 102:../Sources/BMP180.c **** 	p=p+(float)(X1+X2+3791)/16;
+ 966              		.loc 1 102 0
+ 967 07c4 786A     		ldr	r0, [r7, #36]	@ float
+ 968 07c6 396A     		ldr	r1, [r7, #32]	@ float
+ 969 07c8 FFF7FEFF 		bl	__aeabi_fadd
+ 970 07cc 0346     		mov	r3, r0
+ 971 07ce 1846     		mov	r0, r3
+ 972 07d0 4FF47041 		mov	r1, #61440
+ 973 07d4 C4F26C51 		movt	r1, 17772
+ 974 07d8 FFF7FEFF 		bl	__aeabi_fadd
+ 975 07dc 0346     		mov	r3, r0
+ 976 07de 1846     		mov	r0, r3
+ 977 07e0 4FF08341 		mov	r1, #1098907648
+ 978 07e4 FFF7FEFF 		bl	__aeabi_fdiv
+ 979 07e8 0346     		mov	r3, r0
+ 980 07ea 1A46     		mov	r2, r3
+ 981 07ec 40F20003 		movw	r3, #:lower16:p
+ 982 07f0 C0F20003 		movt	r3, #:upper16:p
+ 983 07f4 1B68     		ldr	r3, [r3, #0]	@ float
+ 984 07f6 1046     		mov	r0, r2
+ 985 07f8 1946     		mov	r1, r3
+ 986 07fa FFF7FEFF 		bl	__aeabi_fadd
+ 987 07fe 0346     		mov	r3, r0
+ 988 0800 1A46     		mov	r2, r3
+ 989 0802 40F20003 		movw	r3, #:lower16:p
+ 990 0806 C0F20003 		movt	r3, #:upper16:p
+ 991 080a 1A60     		str	r2, [r3, #0]	@ float
+ 103:../Sources/BMP180.c **** 	return p;
+ 992              		.loc 1 103 0
+ 993 080c 40F20003 		movw	r3, #:lower16:p
+ 994 0810 C0F20003 		movt	r3, #:upper16:p
+ 995 0814 1B68     		ldr	r3, [r3, #0]	@ float
+ 104:../Sources/BMP180.c **** }
+ 996              		.loc 1 104 0
+ 997 0816 1846     		mov	r0, r3
+ 998 0818 07F13407 		add	r7, r7, #52
+ 999 081c BD46     		mov	sp, r7
+ 1000 081e 90BD     		pop	{r4, r7, pc}
+ 1001              		.cfi_endproc
+ 1002              	.LFE3:
+ 1004              		.global	__aeabi_f2d
+ 1005              		.global	__aeabi_dsub
+ 1006              		.global	__aeabi_dmul
+ 1007              		.global	__aeabi_dadd
+ 1008              		.global	__aeabi_d2f
+ 1009              		.global	__aeabi_ddiv
+ 1010              		.global	__aeabi_d2iz
+ 1011              		.global	__aeabi_i2d
+ 1012              		.align	2
+ 1013              		.global	BMP180_get_pressure
+ 1014              		.thumb
+ 1015              		.thumb_func
+ 1017              	BMP180_get_pressure:
+ 1018              	.LFB4:
+ 105:../Sources/BMP180.c **** 
+ 106:../Sources/BMP180.c **** void BMP180_get_pressure()
+ 107:../Sources/BMP180.c **** {
+ 1019              		.loc 1 107 0
+ 1020              		.cfi_startproc
+ 1021              		@ args = 0, pretend = 0, frame = 32
+ 1022              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1023 0820 2DE9B043 		push	{r4, r5, r7, r8, r9, lr}
+ 1024              	.LCFI12:
+ 1025              		.cfi_def_cfa_offset 24
+ 1026              		.cfi_offset 4, -24
+ 1027              		.cfi_offset 5, -20
+ 1028              		.cfi_offset 7, -16
+ 1029              		.cfi_offset 8, -12
+ 1030              		.cfi_offset 9, -8
+ 1031              		.cfi_offset 14, -4
+ 1032 0824 88B0     		sub	sp, sp, #32
+ 1033              	.LCFI13:
+ 1034              		.cfi_def_cfa_offset 56
+ 1035 0826 00AF     		add	r7, sp, #0
+ 1036              	.LCFI14:
+ 1037              		.cfi_def_cfa_register 7
+ 108:../Sources/BMP180.c **** /*	
+ 109:../Sources/BMP180.c **** 	int g;
+ 110:../Sources/BMP180.c **** 	long P_sum=0;
+ 111:../Sources/BMP180.c **** 	for(g=0;g<10;g++) 
+ 112:../Sources/BMP180.c **** 		{
+ 113:../Sources/BMP180.c **** 		BMP180_read_temp();
+ 114:../Sources/BMP180.c **** 		P_sum=P_sum+BMP180_read_pressure();
+ 115:../Sources/BMP180.c **** 		}
+ 116:../Sources/BMP180.c **** 	P=P_sum/10;
+ 117:../Sources/BMP180.c **** */	
+ 118:../Sources/BMP180.c **** 	//P=(p+P)/2;
+ 119:../Sources/BMP180.c **** 	p=BMP180_read_pressure();
+ 1038              		.loc 1 119 0
+ 1039 0828 FFF7FEFF 		bl	BMP180_read_pressure
+ 1040 082c 0246     		mov	r2, r0
+ 1041 082e 40F20003 		movw	r3, #:lower16:p
+ 1042 0832 C0F20003 		movt	r3, #:upper16:p
+ 1043 0836 1A60     		str	r2, [r3, #0]	@ float
+ 120:../Sources/BMP180.c **** 	P=k_alt*P+(1.0-k_alt)*p;
+ 1044              		.loc 1 120 0
+ 1045 0838 40F20003 		movw	r3, #:lower16:k_alt
+ 1046 083c C0F20003 		movt	r3, #:upper16:k_alt
+ 1047 0840 1A68     		ldr	r2, [r3, #0]	@ float
+ 1048 0842 40F20003 		movw	r3, #:lower16:P
+ 1049 0846 C0F20003 		movt	r3, #:upper16:P
+ 1050 084a 1B68     		ldr	r3, [r3, #0]	@ float
+ 1051 084c 1046     		mov	r0, r2
+ 1052 084e 1946     		mov	r1, r3
+ 1053 0850 FFF7FEFF 		bl	__aeabi_fmul
+ 1054 0854 0346     		mov	r3, r0
+ 1055 0856 1846     		mov	r0, r3
+ 1056 0858 FFF7FEFF 		bl	__aeabi_f2d
+ 1057 085c 0446     		mov	r4, r0
+ 1058 085e 0D46     		mov	r5, r1
+ 1059 0860 40F20003 		movw	r3, #:lower16:k_alt
+ 1060 0864 C0F20003 		movt	r3, #:upper16:k_alt
+ 1061 0868 1B68     		ldr	r3, [r3, #0]	@ float
+ 1062 086a 1846     		mov	r0, r3
+ 1063 086c FFF7FEFF 		bl	__aeabi_f2d
+ 1064 0870 0246     		mov	r2, r0
+ 1065 0872 0B46     		mov	r3, r1
+ 1066 0874 4FF00000 		mov	r0, #0
+ 1067 0878 4FF00001 		mov	r1, #0
+ 1068 087c C3F6F071 		movt	r1, 16368
+ 1069 0880 FFF7FEFF 		bl	__aeabi_dsub
+ 1070 0884 0246     		mov	r2, r0
+ 1071 0886 0B46     		mov	r3, r1
+ 1072 0888 9046     		mov	r8, r2
+ 1073 088a 9946     		mov	r9, r3
+ 1074 088c 40F20003 		movw	r3, #:lower16:p
+ 1075 0890 C0F20003 		movt	r3, #:upper16:p
+ 1076 0894 1B68     		ldr	r3, [r3, #0]	@ float
+ 1077 0896 1846     		mov	r0, r3
+ 1078 0898 FFF7FEFF 		bl	__aeabi_f2d
+ 1079 089c 0246     		mov	r2, r0
+ 1080 089e 0B46     		mov	r3, r1
+ 1081 08a0 4046     		mov	r0, r8
+ 1082 08a2 4946     		mov	r1, r9
+ 1083 08a4 FFF7FEFF 		bl	__aeabi_dmul
+ 1084 08a8 0246     		mov	r2, r0
+ 1085 08aa 0B46     		mov	r3, r1
+ 1086 08ac 2046     		mov	r0, r4
+ 1087 08ae 2946     		mov	r1, r5
+ 1088 08b0 FFF7FEFF 		bl	__aeabi_dadd
+ 1089 08b4 0246     		mov	r2, r0
+ 1090 08b6 0B46     		mov	r3, r1
+ 1091 08b8 1046     		mov	r0, r2
+ 1092 08ba 1946     		mov	r1, r3
+ 1093 08bc FFF7FEFF 		bl	__aeabi_d2f
+ 1094 08c0 0246     		mov	r2, r0
+ 1095 08c2 40F20003 		movw	r3, #:lower16:P
+ 1096 08c6 C0F20003 		movt	r3, #:upper16:P
+ 1097 08ca 1A60     		str	r2, [r3, #0]	@ float
+ 121:../Sources/BMP180.c **** 	
+ 122:../Sources/BMP180.c **** 	P_stat[h]=P;
+ 1098              		.loc 1 122 0
+ 1099 08cc 40F20003 		movw	r3, #:lower16:h
+ 1100 08d0 C0F20003 		movt	r3, #:upper16:h
+ 1101 08d4 1C68     		ldr	r4, [r3, #0]
+ 1102 08d6 40F20003 		movw	r3, #:lower16:P
+ 1103 08da C0F20003 		movt	r3, #:upper16:P
+ 1104 08de 1B68     		ldr	r3, [r3, #0]	@ float
+ 1105 08e0 1846     		mov	r0, r3
+ 1106 08e2 FFF7FEFF 		bl	__aeabi_f2d
+ 1107 08e6 40F20003 		movw	r3, #:lower16:P_stat
+ 1108 08ea C0F20003 		movt	r3, #:upper16:P_stat
+ 1109 08ee 4FEAC402 		lsl	r2, r4, #3
+ 1110 08f2 9B18     		adds	r3, r3, r2
+ 1111 08f4 C3E90001 		strd	r0, [r3]
+ 123:../Sources/BMP180.c **** 	h++;
+ 1112              		.loc 1 123 0
+ 1113 08f8 40F20003 		movw	r3, #:lower16:h
+ 1114 08fc C0F20003 		movt	r3, #:upper16:h
+ 1115 0900 1B68     		ldr	r3, [r3, #0]
+ 1116 0902 03F10102 		add	r2, r3, #1
+ 1117 0906 40F20003 		movw	r3, #:lower16:h
+ 1118 090a C0F20003 		movt	r3, #:upper16:h
+ 1119 090e 1A60     		str	r2, [r3, #0]
+ 124:../Sources/BMP180.c **** 	if(h==100)
+ 1120              		.loc 1 124 0
+ 1121 0910 40F20003 		movw	r3, #:lower16:h
+ 1122 0914 C0F20003 		movt	r3, #:upper16:h
+ 1123 0918 1B68     		ldr	r3, [r3, #0]
+ 1124 091a 642B     		cmp	r3, #100
+ 1125 091c 40F0B280 		bne	.L19
+ 1126              	.LBB2:
+ 125:../Sources/BMP180.c **** 	{
+ 126:../Sources/BMP180.c **** 		int i;
+ 127:../Sources/BMP180.c **** 		double P_avg=0,P_error=0,P_error2=0;
+ 1127              		.loc 1 127 0
+ 1128 0920 4FF00002 		mov	r2, #0
+ 1129 0924 4FF00003 		mov	r3, #0
+ 1130 0928 C7E90423 		strd	r2, [r7, #16]
+ 1131 092c 4FF00002 		mov	r2, #0
+ 1132 0930 4FF00003 		mov	r3, #0
+ 1133 0934 C7E90223 		strd	r2, [r7, #8]
+ 1134 0938 4FF00002 		mov	r2, #0
+ 1135 093c 4FF00003 		mov	r3, #0
+ 1136 0940 C7E90023 		strd	r2, [r7]
+ 128:../Sources/BMP180.c **** 		for(i=0;i<100;i++)	P_avg=P_avg+P_stat[i];
+ 1137              		.loc 1 128 0
+ 1138 0944 4FF00003 		mov	r3, #0
+ 1139 0948 FB61     		str	r3, [r7, #28]
+ 1140 094a 15E0     		b	.L21
+ 1141              	.L22:
+ 1142              		.loc 1 128 0 is_stmt 0 discriminator 2
+ 1143 094c 40F20003 		movw	r3, #:lower16:P_stat
+ 1144 0950 C0F20003 		movt	r3, #:upper16:P_stat
+ 1145 0954 FA69     		ldr	r2, [r7, #28]
+ 1146 0956 4FEAC202 		lsl	r2, r2, #3
+ 1147 095a 9B18     		adds	r3, r3, r2
+ 1148 095c D3E90023 		ldrd	r2, [r3]
+ 1149 0960 D7E90401 		ldrd	r0, [r7, #16]
+ 1150 0964 FFF7FEFF 		bl	__aeabi_dadd
+ 1151 0968 0246     		mov	r2, r0
+ 1152 096a 0B46     		mov	r3, r1
+ 1153 096c C7E90423 		strd	r2, [r7, #16]
+ 1154 0970 FB69     		ldr	r3, [r7, #28]
+ 1155 0972 03F10103 		add	r3, r3, #1
+ 1156 0976 FB61     		str	r3, [r7, #28]
+ 1157              	.L21:
+ 1158              		.loc 1 128 0 discriminator 1
+ 1159 0978 FB69     		ldr	r3, [r7, #28]
+ 1160 097a 632B     		cmp	r3, #99
+ 1161 097c E6DD     		ble	.L22
+ 129:../Sources/BMP180.c **** 		P_avg=P_avg/100;
+ 1162              		.loc 1 129 0 is_stmt 1
+ 1163 097e D7E90401 		ldrd	r0, [r7, #16]
+ 1164 0982 4FF00002 		mov	r2, #0
+ 1165 0986 4FF00003 		mov	r3, #0
+ 1166 098a C4F25903 		movt	r3, 16473
+ 1167 098e FFF7FEFF 		bl	__aeabi_ddiv
+ 1168 0992 0246     		mov	r2, r0
+ 1169 0994 0B46     		mov	r3, r1
+ 1170 0996 C7E90423 		strd	r2, [r7, #16]
+ 130:../Sources/BMP180.c **** 		for(i=0;i<100;i++)
+ 1171              		.loc 1 130 0
+ 1172 099a 4FF00003 		mov	r3, #0
+ 1173 099e FB61     		str	r3, [r7, #28]
+ 1174 09a0 4CE0     		b	.L23
+ 1175              	.L24:
+ 131:../Sources/BMP180.c **** 			{
+ 132:../Sources/BMP180.c **** 			P_error=P_error+pow((P_stat[i]-P_avg),2);
+ 1176              		.loc 1 132 0 discriminator 2
+ 1177 09a2 40F20003 		movw	r3, #:lower16:P_stat
+ 1178 09a6 C0F20003 		movt	r3, #:upper16:P_stat
+ 1179 09aa FA69     		ldr	r2, [r7, #28]
+ 1180 09ac 4FEAC202 		lsl	r2, r2, #3
+ 1181 09b0 9B18     		adds	r3, r3, r2
+ 1182 09b2 D3E90023 		ldrd	r2, [r3]
+ 1183 09b6 1046     		mov	r0, r2
+ 1184 09b8 1946     		mov	r1, r3
+ 1185 09ba D7E90423 		ldrd	r2, [r7, #16]
+ 1186 09be FFF7FEFF 		bl	__aeabi_dsub
+ 1187 09c2 0246     		mov	r2, r0
+ 1188 09c4 0B46     		mov	r3, r1
+ 1189 09c6 1046     		mov	r0, r2
+ 1190 09c8 1946     		mov	r1, r3
+ 1191 09ca 4FF00002 		mov	r2, #0
+ 1192 09ce 4FF08043 		mov	r3, #1073741824
+ 1193 09d2 FFF7FEFF 		bl	pow
+ 1194 09d6 0246     		mov	r2, r0
+ 1195 09d8 0B46     		mov	r3, r1
+ 1196 09da D7E90201 		ldrd	r0, [r7, #8]
+ 1197 09de FFF7FEFF 		bl	__aeabi_dadd
+ 1198 09e2 0246     		mov	r2, r0
+ 1199 09e4 0B46     		mov	r3, r1
+ 1200 09e6 C7E90223 		strd	r2, [r7, #8]
+ 133:../Sources/BMP180.c **** 			P_error2=P_error2+(P_avg-abs(P_stat[i]));
+ 1201              		.loc 1 133 0 discriminator 2
+ 1202 09ea 40F20003 		movw	r3, #:lower16:P_stat
+ 1203 09ee C0F20003 		movt	r3, #:upper16:P_stat
+ 1204 09f2 FA69     		ldr	r2, [r7, #28]
+ 1205 09f4 4FEAC202 		lsl	r2, r2, #3
+ 1206 09f8 9B18     		adds	r3, r3, r2
+ 1207 09fa D3E90023 		ldrd	r2, [r3]
+ 1208 09fe 1046     		mov	r0, r2
+ 1209 0a00 1946     		mov	r1, r3
+ 1210 0a02 FFF7FEFF 		bl	__aeabi_d2iz
+ 1211 0a06 0346     		mov	r3, r0
+ 1212 0a08 002B     		cmp	r3, #0
+ 1213 0a0a B8BF     		it	lt
+ 1214 0a0c 5B42     		rsblt	r3, r3, #0
+ 1215 0a0e 1846     		mov	r0, r3
+ 1216 0a10 FFF7FEFF 		bl	__aeabi_i2d
+ 1217 0a14 0246     		mov	r2, r0
+ 1218 0a16 0B46     		mov	r3, r1
+ 1219 0a18 D7E90401 		ldrd	r0, [r7, #16]
+ 1220 0a1c FFF7FEFF 		bl	__aeabi_dsub
+ 1221 0a20 0246     		mov	r2, r0
+ 1222 0a22 0B46     		mov	r3, r1
+ 1223 0a24 D7E90001 		ldrd	r0, [r7]
+ 1224 0a28 FFF7FEFF 		bl	__aeabi_dadd
+ 1225 0a2c 0246     		mov	r2, r0
+ 1226 0a2e 0B46     		mov	r3, r1
+ 1227 0a30 C7E90023 		strd	r2, [r7]
+ 130:../Sources/BMP180.c **** 		for(i=0;i<100;i++)
+ 1228              		.loc 1 130 0 discriminator 2
+ 1229 0a34 FB69     		ldr	r3, [r7, #28]
+ 1230 0a36 03F10103 		add	r3, r3, #1
+ 1231 0a3a FB61     		str	r3, [r7, #28]
+ 1232              	.L23:
+ 130:../Sources/BMP180.c **** 		for(i=0;i<100;i++)
+ 1233              		.loc 1 130 0 is_stmt 0 discriminator 1
+ 1234 0a3c FB69     		ldr	r3, [r7, #28]
+ 1235 0a3e 632B     		cmp	r3, #99
+ 1236 0a40 AFDD     		ble	.L24
+ 134:../Sources/BMP180.c **** 			}
+ 135:../Sources/BMP180.c **** 		P_error=P_error/100;
+ 1237              		.loc 1 135 0 is_stmt 1
+ 1238 0a42 D7E90201 		ldrd	r0, [r7, #8]
+ 1239 0a46 4FF00002 		mov	r2, #0
+ 1240 0a4a 4FF00003 		mov	r3, #0
+ 1241 0a4e C4F25903 		movt	r3, 16473
+ 1242 0a52 FFF7FEFF 		bl	__aeabi_ddiv
+ 1243 0a56 0246     		mov	r2, r0
+ 1244 0a58 0B46     		mov	r3, r1
+ 1245 0a5a C7E90223 		strd	r2, [r7, #8]
+ 136:../Sources/BMP180.c **** 		P_error=pow(P_error,((float)1/2));
+ 1246              		.loc 1 136 0
+ 1247 0a5e D7E90201 		ldrd	r0, [r7, #8]
+ 1248 0a62 4FF00002 		mov	r2, #0
+ 1249 0a66 4FF00003 		mov	r3, #0
+ 1250 0a6a C3F6E073 		movt	r3, 16352
+ 1251 0a6e FFF7FEFF 		bl	pow
+ 1252 0a72 C7E90201 		strd	r0, [r7, #8]
+ 137:../Sources/BMP180.c **** 		h=0;
+ 1253              		.loc 1 137 0
+ 1254 0a76 40F20003 		movw	r3, #:lower16:h
+ 1255 0a7a C0F20003 		movt	r3, #:upper16:h
+ 1256 0a7e 4FF00002 		mov	r2, #0
+ 1257 0a82 1A60     		str	r2, [r3, #0]
+ 1258              	.L19:
+ 1259              	.LBE2:
+ 138:../Sources/BMP180.c **** 	}
+ 139:../Sources/BMP180.c **** }
+ 1260              		.loc 1 139 0
+ 1261 0a84 07F12007 		add	r7, r7, #32
+ 1262 0a88 BD46     		mov	sp, r7
+ 1263 0a8a BDE8B083 		pop	{r4, r5, r7, r8, r9, pc}
+ 1264              		.cfi_endproc
+ 1265              	.LFE4:
+ 1267 0a8e 00BF     		.align	2
+ 1268              		.global	get_start_altittude
+ 1269              		.thumb
+ 1270              		.thumb_func
+ 1272              	get_start_altittude:
+ 1273              	.LFB5:
+ 140:../Sources/BMP180.c **** 
+ 141:../Sources/BMP180.c **** void get_start_altittude()
+ 142:../Sources/BMP180.c **** {
+ 1274              		.loc 1 142 0
+ 1275              		.cfi_startproc
+ 1276              		@ args = 0, pretend = 0, frame = 816
+ 1277              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1278 0a90 80B5     		push	{r7, lr}
+ 1279              	.LCFI15:
+ 1280              		.cfi_def_cfa_offset 8
+ 1281              		.cfi_offset 7, -8
+ 1282              		.cfi_offset 14, -4
+ 1283 0a92 ADF54C7D 		sub	sp, sp, #816
+ 1284              	.LCFI16:
+ 1285              		.cfi_def_cfa_offset 824
+ 1286 0a96 00AF     		add	r7, sp, #0
+ 1287              	.LCFI17:
+ 1288              		.cfi_def_cfa_register 7
+ 143:../Sources/BMP180.c **** 	int i;
+ 144:../Sources/BMP180.c **** 	double P_start[100],P_sum=0;
+ 1289              		.loc 1 144 0
+ 1290 0a98 4FF00002 		mov	r2, #0
+ 1291 0a9c 4FF00003 		mov	r3, #0
+ 1292 0aa0 07F54871 		add	r1, r7, #800
+ 1293 0aa4 C1E90023 		strd	r2, [r1]
+ 145:../Sources/BMP180.c **** 	for(i=0;i<100;i++)
+ 1294              		.loc 1 145 0
+ 1295 0aa8 4FF00003 		mov	r3, #0
+ 1296 0aac C7F82C33 		str	r3, [r7, #812]
+ 1297 0ab0 2BE0     		b	.L26
+ 1298              	.L27:
+ 146:../Sources/BMP180.c **** 	{
+ 147:../Sources/BMP180.c **** 		BMP180_read_temp();
+ 1299              		.loc 1 147 0 discriminator 2
+ 1300 0ab2 FFF7FEFF 		bl	BMP180_read_temp
+ 148:../Sources/BMP180.c **** 		P_start[i]=BMP180_read_pressure();
+ 1301              		.loc 1 148 0 discriminator 2
+ 1302 0ab6 FFF7FEFF 		bl	BMP180_read_pressure
+ 1303 0aba 0346     		mov	r3, r0
+ 1304 0abc 1846     		mov	r0, r3
+ 1305 0abe FFF7FEFF 		bl	__aeabi_f2d
+ 1306 0ac2 0246     		mov	r2, r0
+ 1307 0ac4 0B46     		mov	r3, r1
+ 1308 0ac6 3846     		mov	r0, r7
+ 1309 0ac8 D7F82C13 		ldr	r1, [r7, #812]
+ 1310 0acc 4FEAC101 		lsl	r1, r1, #3
+ 1311 0ad0 4118     		adds	r1, r0, r1
+ 1312 0ad2 C1E90023 		strd	r2, [r1]
+ 149:../Sources/BMP180.c **** 		P_sum=P_sum+P_start[i];
+ 1313              		.loc 1 149 0 discriminator 2
+ 1314 0ad6 3A46     		mov	r2, r7
+ 1315 0ad8 D7F82C33 		ldr	r3, [r7, #812]
+ 1316 0adc 4FEAC303 		lsl	r3, r3, #3
+ 1317 0ae0 D318     		adds	r3, r2, r3
+ 1318 0ae2 D3E90023 		ldrd	r2, [r3]
+ 1319 0ae6 07F5487C 		add	ip, r7, #800
+ 1320 0aea DCE90001 		ldrd	r0, [ip]
+ 1321 0aee FFF7FEFF 		bl	__aeabi_dadd
+ 1322 0af2 0246     		mov	r2, r0
+ 1323 0af4 0B46     		mov	r3, r1
+ 1324 0af6 07F54871 		add	r1, r7, #800
+ 1325 0afa C1E90023 		strd	r2, [r1]
+ 145:../Sources/BMP180.c **** 	for(i=0;i<100;i++)
+ 1326              		.loc 1 145 0 discriminator 2
+ 1327 0afe D7F82C33 		ldr	r3, [r7, #812]
+ 1328 0b02 03F10103 		add	r3, r3, #1
+ 1329 0b06 C7F82C33 		str	r3, [r7, #812]
+ 1330              	.L26:
+ 145:../Sources/BMP180.c **** 	for(i=0;i<100;i++)
+ 1331              		.loc 1 145 0 is_stmt 0 discriminator 1
+ 1332 0b0a D7F82C33 		ldr	r3, [r7, #812]
+ 1333 0b0e 632B     		cmp	r3, #99
+ 1334 0b10 CFDD     		ble	.L27
+ 150:../Sources/BMP180.c **** 	}
+ 151:../Sources/BMP180.c **** 	P_sum=P_sum/100;
+ 1335              		.loc 1 151 0 is_stmt 1
+ 1336 0b12 07F54873 		add	r3, r7, #800
+ 1337 0b16 D3E90001 		ldrd	r0, [r3]
+ 1338 0b1a 4FF00002 		mov	r2, #0
+ 1339 0b1e 4FF00003 		mov	r3, #0
+ 1340 0b22 C4F25903 		movt	r3, 16473
+ 1341 0b26 FFF7FEFF 		bl	__aeabi_ddiv
+ 1342 0b2a 0246     		mov	r2, r0
+ 1343 0b2c 0B46     		mov	r3, r1
+ 1344 0b2e 07F5487C 		add	ip, r7, #800
+ 1345 0b32 CCE90023 		strd	r2, [ip]
+ 152:../Sources/BMP180.c **** 	start_altittude=44330*(1-pow((float)P_sum/101325,1/5.255));
+ 1346              		.loc 1 152 0
+ 1347 0b36 07F54873 		add	r3, r7, #800
+ 1348 0b3a D3E90001 		ldrd	r0, [r3]
+ 1349 0b3e FFF7FEFF 		bl	__aeabi_d2f
+ 1350 0b42 0346     		mov	r3, r0
+ 1351 0b44 1846     		mov	r0, r3
+ 1352 0b46 4EF28061 		movw	r1, #59008
+ 1353 0b4a C4F2C571 		movt	r1, 18373
+ 1354 0b4e FFF7FEFF 		bl	__aeabi_fdiv
+ 1355 0b52 0346     		mov	r3, r0
+ 1356 0b54 1846     		mov	r0, r3
+ 1357 0b56 FFF7FEFF 		bl	__aeabi_f2d
+ 1358 0b5a 0246     		mov	r2, r0
+ 1359 0b5c 0B46     		mov	r3, r1
+ 1360 0b5e 1046     		mov	r0, r2
+ 1361 0b60 1946     		mov	r1, r3
+ 1362 0b62 19A3     		adr	r3, .L28
+ 1363 0b64 D3E90023 		ldrd	r2, [r3]
+ 1364 0b68 FFF7FEFF 		bl	pow
+ 1365 0b6c 0246     		mov	r2, r0
+ 1366 0b6e 0B46     		mov	r3, r1
+ 1367 0b70 4FF00000 		mov	r0, #0
+ 1368 0b74 4FF00001 		mov	r1, #0
+ 1369 0b78 C3F6F071 		movt	r1, 16368
+ 1370 0b7c FFF7FEFF 		bl	__aeabi_dsub
+ 1371 0b80 0246     		mov	r2, r0
+ 1372 0b82 0B46     		mov	r3, r1
+ 1373 0b84 1046     		mov	r0, r2
+ 1374 0b86 1946     		mov	r1, r3
+ 1375 0b88 11A3     		adr	r3, .L28+8
+ 1376 0b8a D3E90023 		ldrd	r2, [r3]
+ 1377 0b8e FFF7FEFF 		bl	__aeabi_dmul
+ 1378 0b92 0246     		mov	r2, r0
+ 1379 0b94 0B46     		mov	r3, r1
+ 1380 0b96 1046     		mov	r0, r2
+ 1381 0b98 1946     		mov	r1, r3
+ 1382 0b9a FFF7FEFF 		bl	__aeabi_d2f
+ 1383 0b9e 0246     		mov	r2, r0
+ 1384 0ba0 40F20003 		movw	r3, #:lower16:start_altittude
+ 1385 0ba4 C0F20003 		movt	r3, #:upper16:start_altittude
+ 1386 0ba8 1A60     		str	r2, [r3, #0]	@ float
+ 153:../Sources/BMP180.c **** 	P=BMP180_read_pressure();
+ 1387              		.loc 1 153 0
+ 1388 0baa FFF7FEFF 		bl	BMP180_read_pressure
+ 1389 0bae 0246     		mov	r2, r0
+ 1390 0bb0 40F20003 		movw	r3, #:lower16:P
+ 1391 0bb4 C0F20003 		movt	r3, #:upper16:P
+ 1392 0bb8 1A60     		str	r2, [r3, #0]	@ float
+ 154:../Sources/BMP180.c **** }
+ 1393              		.loc 1 154 0
+ 1394 0bba 07F54C77 		add	r7, r7, #816
+ 1395 0bbe BD46     		mov	sp, r7
+ 1396 0bc0 80BD     		pop	{r7, pc}
+ 1397              	.L29:
+ 1398 0bc2 00BFAFF3 		.align	3
+ 1398      0080
+ 1399              	.L28:
+ 1400 0bc8 6C45D9CC 		.word	-858176148
+ 1401 0bcc 955BC83F 		.word	1070095253
+ 1402 0bd0 00000000 		.word	0
+ 1403 0bd4 40A5E540 		.word	1088791872
+ 1404              		.cfi_endproc
+ 1405              	.LFE5:
+ 1407              		.global	__aeabi_fsub
+ 1408              		.align	2
+ 1409              		.global	BMP180_get_altittude
+ 1410              		.thumb
+ 1411              		.thumb_func
+ 1413              	BMP180_get_altittude:
+ 1414              	.LFB6:
+ 155:../Sources/BMP180.c **** 
+ 156:../Sources/BMP180.c **** float BMP180_get_altittude()
+ 157:../Sources/BMP180.c **** {
+ 1415              		.loc 1 157 0
+ 1416              		.cfi_startproc
+ 1417              		@ args = 0, pretend = 0, frame = 0
+ 1418              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1419 0bd8 2DE9B043 		push	{r4, r5, r7, r8, r9, lr}
+ 1420              	.LCFI18:
+ 1421              		.cfi_def_cfa_offset 24
+ 1422              		.cfi_offset 4, -24
+ 1423              		.cfi_offset 5, -20
+ 1424              		.cfi_offset 7, -16
+ 1425              		.cfi_offset 8, -12
+ 1426              		.cfi_offset 9, -8
+ 1427              		.cfi_offset 14, -4
+ 1428 0bdc 00AF     		add	r7, sp, #0
+ 1429              	.LCFI19:
+ 1430              		.cfi_def_cfa_register 7
+ 158:../Sources/BMP180.c **** 	//BMP180_read_temp();
+ 159:../Sources/BMP180.c **** 	//BMP180_read_pressure();
+ 160:../Sources/BMP180.c **** 	//BMP180_get_pressure();
+ 161:../Sources/BMP180.c **** 	P=k_alt*P+(1.0-k_alt)*p;
+ 1431              		.loc 1 161 0
+ 1432 0bde 40F20003 		movw	r3, #:lower16:k_alt
+ 1433 0be2 C0F20003 		movt	r3, #:upper16:k_alt
+ 1434 0be6 1A68     		ldr	r2, [r3, #0]	@ float
+ 1435 0be8 40F20003 		movw	r3, #:lower16:P
+ 1436 0bec C0F20003 		movt	r3, #:upper16:P
+ 1437 0bf0 1B68     		ldr	r3, [r3, #0]	@ float
+ 1438 0bf2 1046     		mov	r0, r2
+ 1439 0bf4 1946     		mov	r1, r3
+ 1440 0bf6 FFF7FEFF 		bl	__aeabi_fmul
+ 1441 0bfa 0346     		mov	r3, r0
+ 1442 0bfc 1846     		mov	r0, r3
+ 1443 0bfe FFF7FEFF 		bl	__aeabi_f2d
+ 1444 0c02 0446     		mov	r4, r0
+ 1445 0c04 0D46     		mov	r5, r1
+ 1446 0c06 40F20003 		movw	r3, #:lower16:k_alt
+ 1447 0c0a C0F20003 		movt	r3, #:upper16:k_alt
+ 1448 0c0e 1B68     		ldr	r3, [r3, #0]	@ float
+ 1449 0c10 1846     		mov	r0, r3
+ 1450 0c12 FFF7FEFF 		bl	__aeabi_f2d
+ 1451 0c16 0246     		mov	r2, r0
+ 1452 0c18 0B46     		mov	r3, r1
+ 1453 0c1a 4FF00000 		mov	r0, #0
+ 1454 0c1e 4FF00001 		mov	r1, #0
+ 1455 0c22 C3F6F071 		movt	r1, 16368
+ 1456 0c26 FFF7FEFF 		bl	__aeabi_dsub
+ 1457 0c2a 0246     		mov	r2, r0
+ 1458 0c2c 0B46     		mov	r3, r1
+ 1459 0c2e 9046     		mov	r8, r2
+ 1460 0c30 9946     		mov	r9, r3
+ 1461 0c32 40F20003 		movw	r3, #:lower16:p
+ 1462 0c36 C0F20003 		movt	r3, #:upper16:p
+ 1463 0c3a 1B68     		ldr	r3, [r3, #0]	@ float
+ 1464 0c3c 1846     		mov	r0, r3
+ 1465 0c3e FFF7FEFF 		bl	__aeabi_f2d
+ 1466 0c42 0246     		mov	r2, r0
+ 1467 0c44 0B46     		mov	r3, r1
+ 1468 0c46 4046     		mov	r0, r8
+ 1469 0c48 4946     		mov	r1, r9
+ 1470 0c4a FFF7FEFF 		bl	__aeabi_dmul
+ 1471 0c4e 0246     		mov	r2, r0
+ 1472 0c50 0B46     		mov	r3, r1
+ 1473 0c52 2046     		mov	r0, r4
+ 1474 0c54 2946     		mov	r1, r5
+ 1475 0c56 FFF7FEFF 		bl	__aeabi_dadd
+ 1476 0c5a 0246     		mov	r2, r0
+ 1477 0c5c 0B46     		mov	r3, r1
+ 1478 0c5e 1046     		mov	r0, r2
+ 1479 0c60 1946     		mov	r1, r3
+ 1480 0c62 FFF7FEFF 		bl	__aeabi_d2f
+ 1481 0c66 0246     		mov	r2, r0
+ 1482 0c68 40F20003 		movw	r3, #:lower16:P
+ 1483 0c6c C0F20003 		movt	r3, #:upper16:P
+ 1484 0c70 1A60     		str	r2, [r3, #0]	@ float
+ 162:../Sources/BMP180.c **** 	absolute_altittude=44330*(1-pow((float)P/101325,1/5.255));
+ 1485              		.loc 1 162 0
+ 1486 0c72 40F20003 		movw	r3, #:lower16:P
+ 1487 0c76 C0F20003 		movt	r3, #:upper16:P
+ 1488 0c7a 1B68     		ldr	r3, [r3, #0]	@ float
+ 1489 0c7c 1846     		mov	r0, r3
+ 1490 0c7e 4EF28061 		movw	r1, #59008
+ 1491 0c82 C4F2C571 		movt	r1, 18373
+ 1492 0c86 FFF7FEFF 		bl	__aeabi_fdiv
+ 1493 0c8a 0346     		mov	r3, r0
+ 1494 0c8c 1846     		mov	r0, r3
+ 1495 0c8e FFF7FEFF 		bl	__aeabi_f2d
+ 1496 0c92 0246     		mov	r2, r0
+ 1497 0c94 0B46     		mov	r3, r1
+ 1498 0c96 1046     		mov	r0, r2
+ 1499 0c98 1946     		mov	r1, r3
+ 1500 0c9a 21A3     		adr	r3, .L32
+ 1501 0c9c D3E90023 		ldrd	r2, [r3]
+ 1502 0ca0 FFF7FEFF 		bl	pow
+ 1503 0ca4 0246     		mov	r2, r0
+ 1504 0ca6 0B46     		mov	r3, r1
+ 1505 0ca8 4FF00000 		mov	r0, #0
+ 1506 0cac 4FF00001 		mov	r1, #0
+ 1507 0cb0 C3F6F071 		movt	r1, 16368
+ 1508 0cb4 FFF7FEFF 		bl	__aeabi_dsub
+ 1509 0cb8 0246     		mov	r2, r0
+ 1510 0cba 0B46     		mov	r3, r1
+ 1511 0cbc 1046     		mov	r0, r2
+ 1512 0cbe 1946     		mov	r1, r3
+ 1513 0cc0 19A3     		adr	r3, .L32+8
+ 1514 0cc2 D3E90023 		ldrd	r2, [r3]
+ 1515 0cc6 FFF7FEFF 		bl	__aeabi_dmul
+ 1516 0cca 0246     		mov	r2, r0
+ 1517 0ccc 0B46     		mov	r3, r1
+ 1518 0cce 1046     		mov	r0, r2
+ 1519 0cd0 1946     		mov	r1, r3
+ 1520 0cd2 FFF7FEFF 		bl	__aeabi_d2f
+ 1521 0cd6 0246     		mov	r2, r0
+ 1522 0cd8 40F20003 		movw	r3, #:lower16:absolute_altittude
+ 1523 0cdc C0F20003 		movt	r3, #:upper16:absolute_altittude
+ 1524 0ce0 1A60     		str	r2, [r3, #0]	@ float
+ 163:../Sources/BMP180.c **** 	relative_altittude=absolute_altittude-start_altittude;
+ 1525              		.loc 1 163 0
+ 1526 0ce2 40F20003 		movw	r3, #:lower16:absolute_altittude
+ 1527 0ce6 C0F20003 		movt	r3, #:upper16:absolute_altittude
+ 1528 0cea 1A68     		ldr	r2, [r3, #0]	@ float
+ 1529 0cec 40F20003 		movw	r3, #:lower16:start_altittude
+ 1530 0cf0 C0F20003 		movt	r3, #:upper16:start_altittude
+ 1531 0cf4 1B68     		ldr	r3, [r3, #0]	@ float
+ 1532 0cf6 1046     		mov	r0, r2
+ 1533 0cf8 1946     		mov	r1, r3
+ 1534 0cfa FFF7FEFF 		bl	__aeabi_fsub
+ 1535 0cfe 0346     		mov	r3, r0
+ 1536 0d00 1A46     		mov	r2, r3
+ 1537 0d02 40F20003 		movw	r3, #:lower16:relative_altittude
+ 1538 0d06 C0F20003 		movt	r3, #:upper16:relative_altittude
+ 1539 0d0a 1A60     		str	r2, [r3, #0]	@ float
+ 164:../Sources/BMP180.c **** 	return absolute_altittude;
+ 1540              		.loc 1 164 0
+ 1541 0d0c 40F20003 		movw	r3, #:lower16:absolute_altittude
+ 1542 0d10 C0F20003 		movt	r3, #:upper16:absolute_altittude
+ 1543 0d14 1B68     		ldr	r3, [r3, #0]	@ float
+ 165:../Sources/BMP180.c **** }
+ 1544              		.loc 1 165 0
+ 1545 0d16 1846     		mov	r0, r3
+ 1546 0d18 BDE8B083 		pop	{r4, r5, r7, r8, r9, pc}
+ 1547              	.L33:
+ 1548 0d1c AFF30080 		.align	3
+ 1549              	.L32:
+ 1550 0d20 6C45D9CC 		.word	-858176148
+ 1551 0d24 955BC83F 		.word	1070095253
+ 1552 0d28 00000000 		.word	0
+ 1553 0d2c 40A5E540 		.word	1088791872
+ 1554              		.cfi_endproc
+ 1555              	.LFE6:
+ 1557              		.align	2
+ 1558              		.global	BMP180_read_calibrate_data
+ 1559              		.thumb
+ 1560              		.thumb_func
+ 1562              	BMP180_read_calibrate_data:
+ 1563              	.LFB7:
+ 166:../Sources/BMP180.c **** void BMP180_read_calibrate_data()
+ 167:../Sources/BMP180.c **** {
+ 1564              		.loc 1 167 0
+ 1565              		.cfi_startproc
+ 1566              		@ args = 0, pretend = 0, frame = 32
+ 1567              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1568 0d30 80B5     		push	{r7, lr}
+ 1569              	.LCFI20:
+ 1570              		.cfi_def_cfa_offset 8
+ 1571              		.cfi_offset 7, -8
+ 1572              		.cfi_offset 14, -4
+ 1573 0d32 88B0     		sub	sp, sp, #32
+ 1574              	.LCFI21:
+ 1575              		.cfi_def_cfa_offset 40
+ 1576 0d34 00AF     		add	r7, sp, #0
+ 1577              	.LCFI22:
+ 1578              		.cfi_def_cfa_register 7
+ 168:../Sources/BMP180.c **** 	char MSB,LSB,i;
+ 169:../Sources/BMP180.c **** 	short AC[12];
+ 170:../Sources/BMP180.c **** 	for(i=0;i<11;i++)
+ 1579              		.loc 1 170 0
+ 1580 0d36 4FF00003 		mov	r3, #0
+ 1581 0d3a FB77     		strb	r3, [r7, #31]
+ 1582 0d3c 31E0     		b	.L35
+ 1583              	.L36:
+ 171:../Sources/BMP180.c **** 	{
+ 172:../Sources/BMP180.c **** 		MSB=I2CReadRegister(BMP180_ADDR,170+(2*i));
+ 1584              		.loc 1 172 0 discriminator 2
+ 1585 0d3e FB7F     		ldrb	r3, [r7, #31]	@ zero_extendqisi2
+ 1586 0d40 03F15503 		add	r3, r3, #85
+ 1587 0d44 DBB2     		uxtb	r3, r3
+ 1588 0d46 4FEA4303 		lsl	r3, r3, #1
+ 1589 0d4a DBB2     		uxtb	r3, r3
+ 1590 0d4c 4FF07700 		mov	r0, #119
+ 1591 0d50 1946     		mov	r1, r3
+ 1592 0d52 FFF7FEFF 		bl	I2CReadRegister
+ 1593 0d56 0346     		mov	r3, r0
+ 1594 0d58 BB77     		strb	r3, [r7, #30]
+ 173:../Sources/BMP180.c **** 		LSB=I2CReadRegister(BMP180_ADDR,171+(2*i));
+ 1595              		.loc 1 173 0 discriminator 2
+ 1596 0d5a FB7F     		ldrb	r3, [r7, #31]
+ 1597 0d5c 4FEA4303 		lsl	r3, r3, #1
+ 1598 0d60 DBB2     		uxtb	r3, r3
+ 1599 0d62 A3F15503 		sub	r3, r3, #85
+ 1600 0d66 DBB2     		uxtb	r3, r3
+ 1601 0d68 4FF07700 		mov	r0, #119
+ 1602 0d6c 1946     		mov	r1, r3
+ 1603 0d6e FFF7FEFF 		bl	I2CReadRegister
+ 1604 0d72 0346     		mov	r3, r0
+ 1605 0d74 7B77     		strb	r3, [r7, #29]
+ 174:../Sources/BMP180.c **** 		AC[i+1]=MSB<<8 | LSB;
+ 1606              		.loc 1 174 0 discriminator 2
+ 1607 0d76 FB7F     		ldrb	r3, [r7, #31]	@ zero_extendqisi2
+ 1608 0d78 03F10103 		add	r3, r3, #1
+ 1609 0d7c BA7F     		ldrb	r2, [r7, #30]	@ zero_extendqisi2
+ 1610 0d7e 4FEA0222 		lsl	r2, r2, #8
+ 1611 0d82 91B2     		uxth	r1, r2
+ 1612 0d84 7A7F     		ldrb	r2, [r7, #29]	@ zero_extendqisi2
+ 1613 0d86 92B2     		uxth	r2, r2
+ 1614 0d88 0A43     		orrs	r2, r2, r1
+ 1615 0d8a 92B2     		uxth	r2, r2
+ 1616 0d8c 4FEA4303 		lsl	r3, r3, #1
+ 1617 0d90 07F12001 		add	r1, r7, #32
+ 1618 0d94 CB18     		adds	r3, r1, r3
+ 1619 0d96 23F81C2C 		strh	r2, [r3, #-28]	@ movhi
+ 170:../Sources/BMP180.c **** 	for(i=0;i<11;i++)
+ 1620              		.loc 1 170 0 discriminator 2
+ 1621 0d9a FB7F     		ldrb	r3, [r7, #31]
+ 1622 0d9c 03F10103 		add	r3, r3, #1
+ 1623 0da0 FB77     		strb	r3, [r7, #31]
+ 1624              	.L35:
+ 170:../Sources/BMP180.c **** 	for(i=0;i<11;i++)
+ 1625              		.loc 1 170 0 is_stmt 0 discriminator 1
+ 1626 0da2 FB7F     		ldrb	r3, [r7, #31]	@ zero_extendqisi2
+ 1627 0da4 0A2B     		cmp	r3, #10
+ 1628 0da6 CAD9     		bls	.L36
+ 175:../Sources/BMP180.c **** 	}
+ 176:../Sources/BMP180.c **** 	AC1=AC[1];
+ 1629              		.loc 1 176 0 is_stmt 1
+ 1630 0da8 FA88     		ldrh	r2, [r7, #6]
+ 1631 0daa 40F20003 		movw	r3, #:lower16:AC1
+ 1632 0dae C0F20003 		movt	r3, #:upper16:AC1
+ 1633 0db2 1A80     		strh	r2, [r3, #0]	@ movhi
+ 177:../Sources/BMP180.c **** 	AC2=AC[2];
+ 1634              		.loc 1 177 0
+ 1635 0db4 3A89     		ldrh	r2, [r7, #8]
+ 1636 0db6 40F20003 		movw	r3, #:lower16:AC2
+ 1637 0dba C0F20003 		movt	r3, #:upper16:AC2
+ 1638 0dbe 1A80     		strh	r2, [r3, #0]	@ movhi
+ 178:../Sources/BMP180.c **** 	AC3=AC[3];
+ 1639              		.loc 1 178 0
+ 1640 0dc0 7A89     		ldrh	r2, [r7, #10]
+ 1641 0dc2 40F20003 		movw	r3, #:lower16:AC3
+ 1642 0dc6 C0F20003 		movt	r3, #:upper16:AC3
+ 1643 0dca 1A80     		strh	r2, [r3, #0]	@ movhi
+ 179:../Sources/BMP180.c **** 	AC4=AC[4];
+ 1644              		.loc 1 179 0
+ 1645 0dcc BB89     		ldrh	r3, [r7, #12]
+ 1646 0dce 9AB2     		uxth	r2, r3
+ 1647 0dd0 40F20003 		movw	r3, #:lower16:AC4
+ 1648 0dd4 C0F20003 		movt	r3, #:upper16:AC4
+ 1649 0dd8 1A80     		strh	r2, [r3, #0]	@ movhi
+ 180:../Sources/BMP180.c **** 	AC5=AC[5];
+ 1650              		.loc 1 180 0
+ 1651 0dda FB89     		ldrh	r3, [r7, #14]
+ 1652 0ddc 9AB2     		uxth	r2, r3
+ 1653 0dde 40F20003 		movw	r3, #:lower16:AC5
+ 1654 0de2 C0F20003 		movt	r3, #:upper16:AC5
+ 1655 0de6 1A80     		strh	r2, [r3, #0]	@ movhi
+ 181:../Sources/BMP180.c **** 	AC6=AC[6];
+ 1656              		.loc 1 181 0
+ 1657 0de8 3B8A     		ldrh	r3, [r7, #16]
+ 1658 0dea 9AB2     		uxth	r2, r3
+ 1659 0dec 40F20003 		movw	r3, #:lower16:AC6
+ 1660 0df0 C0F20003 		movt	r3, #:upper16:AC6
+ 1661 0df4 1A80     		strh	r2, [r3, #0]	@ movhi
+ 182:../Sources/BMP180.c **** 	B1=AC[7];
+ 1662              		.loc 1 182 0
+ 1663 0df6 7A8A     		ldrh	r2, [r7, #18]
+ 1664 0df8 40F20003 		movw	r3, #:lower16:B1
+ 1665 0dfc C0F20003 		movt	r3, #:upper16:B1
+ 1666 0e00 1A80     		strh	r2, [r3, #0]	@ movhi
+ 183:../Sources/BMP180.c **** 	B2=AC[8];
+ 1667              		.loc 1 183 0
+ 1668 0e02 BA8A     		ldrh	r2, [r7, #20]
+ 1669 0e04 40F20003 		movw	r3, #:lower16:B2
+ 1670 0e08 C0F20003 		movt	r3, #:upper16:B2
+ 1671 0e0c 1A80     		strh	r2, [r3, #0]	@ movhi
+ 184:../Sources/BMP180.c **** 	MB=AC[9];
+ 1672              		.loc 1 184 0
+ 1673 0e0e FA8A     		ldrh	r2, [r7, #22]
+ 1674 0e10 40F20003 		movw	r3, #:lower16:MB
+ 1675 0e14 C0F20003 		movt	r3, #:upper16:MB
+ 1676 0e18 1A80     		strh	r2, [r3, #0]	@ movhi
+ 185:../Sources/BMP180.c **** 	MC=AC[10];
+ 1677              		.loc 1 185 0
+ 1678 0e1a 3A8B     		ldrh	r2, [r7, #24]
+ 1679 0e1c 40F20003 		movw	r3, #:lower16:MC
+ 1680 0e20 C0F20003 		movt	r3, #:upper16:MC
+ 1681 0e24 1A80     		strh	r2, [r3, #0]	@ movhi
+ 186:../Sources/BMP180.c **** 	MD=AC[11];
+ 1682              		.loc 1 186 0
+ 1683 0e26 7A8B     		ldrh	r2, [r7, #26]
+ 1684 0e28 40F20003 		movw	r3, #:lower16:MD
+ 1685 0e2c C0F20003 		movt	r3, #:upper16:MD
+ 1686 0e30 1A80     		strh	r2, [r3, #0]	@ movhi
+ 187:../Sources/BMP180.c **** }
+ 1687              		.loc 1 187 0
+ 1688 0e32 07F12007 		add	r7, r7, #32
+ 1689 0e36 BD46     		mov	sp, r7
+ 1690 0e38 80BD     		pop	{r7, pc}
+ 1691              		.cfi_endproc
+ 1692              	.LFE7:
+ 1694 0e3a 00BF     		.align	2
+ 1695              		.global	init_BMP180
+ 1696              		.thumb
+ 1697              		.thumb_func
+ 1699              	init_BMP180:
+ 1700              	.LFB8:
+ 188:../Sources/BMP180.c **** 
+ 189:../Sources/BMP180.c **** void init_BMP180()
+ 190:../Sources/BMP180.c **** {
+ 1701              		.loc 1 190 0
+ 1702              		.cfi_startproc
+ 1703              		@ args = 0, pretend = 0, frame = 0
+ 1704              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1705 0e3c 80B5     		push	{r7, lr}
+ 1706              	.LCFI23:
+ 1707              		.cfi_def_cfa_offset 8
+ 1708              		.cfi_offset 7, -8
+ 1709              		.cfi_offset 14, -4
+ 1710 0e3e 00AF     		add	r7, sp, #0
+ 1711              	.LCFI24:
+ 1712              		.cfi_def_cfa_register 7
+ 191:../Sources/BMP180.c **** 	BMP180_read_calibrate_data(); //BMP180
+ 1713              		.loc 1 191 0
+ 1714 0e40 FFF7FEFF 		bl	BMP180_read_calibrate_data
+ 192:../Sources/BMP180.c **** 	get_start_altittude();
+ 1715              		.loc 1 192 0
+ 1716 0e44 FFF7FEFF 		bl	get_start_altittude
+ 193:../Sources/BMP180.c **** }
+ 1717              		.loc 1 193 0
+ 1718 0e48 80BD     		pop	{r7, pc}
+ 1719              		.cfi_endproc
+ 1720              	.LFE8:
+ 1722              	.Letext0:
+ 1723              		.file 2 "c:\\freescale\\cw mcu v10.6\\cross_tools\\arm-none-eabi-gcc-4_7_3\\bin\\../lib/gcc/arm-no
+ 1724              		.file 3 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/integer.h"
+ 1725              		.file 4 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/ff.h"
+ 1726              		.file 5 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/i
+ 1727              		.file 6 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/d
+ 1728              		.file 7 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/interrupts.h"
+ 1729              		.file 8 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/SDcard.h"
+ 1730              		.file 9 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/MPU6050.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 BMP180.c
+                            *COM*:00000004 I2C_Variable
+                            *COM*:00000001 uart_data
+                            *COM*:0000003c adc_data
+                            *COM*:00000004 Kp
+                            *COM*:00000004 Kd
+                            *COM*:00000004 Ki
+                            *COM*:00000004 zKp
+                            *COM*:00000004 zKd
+                            *COM*:00000004 basepower
+                            *COM*:00000004 setpoint_x
+                            *COM*:00000004 setpoint_y
+                            *COM*:00000004 setpoint_z
+                            *COM*:00000004 setpoint_alt
+                            *COM*:00000004 batt1_vol
+                            *COM*:00000004 batt2_vol
+                            *COM*:00000004 batt3_vol
+                            *COM*:00000004 BATT_VOLT
+                            *COM*:00000230 FatFs
+                            *COM*:00000224 fil
+                            *COM*:00000002 GYRO_XOUT_OFFSET
+                            *COM*:00000002 GYRO_YOUT_OFFSET
+                            *COM*:00000002 GYRO_ZOUT_OFFSET
+                            *COM*:00000002 ACCEL_XOUT_OFFSET
+                            *COM*:00000002 ACCEL_YOUT_OFFSET
+                            *COM*:00000002 ACCEL_ZOUT_OFFSET
+                            *COM*:00000004 GYRO_XANGLE
+                            *COM*:00000004 GYRO_YANGLE
+                            *COM*:00000004 GYRO_ZANGLE
+                            *COM*:00000002 GYRO_XOUT
+                            *COM*:00000002 GYRO_YOUT
+                            *COM*:00000002 GYRO_ZOUT
+                            *COM*:00000002 ACCEL_XOUT
+                            *COM*:00000002 ACCEL_YOUT
+                            *COM*:00000002 ACCEL_ZOUT
+                            *COM*:00000004 ACCEL_Gx
+                            *COM*:00000004 ACCEL_Gy
+                            *COM*:00000004 ACCEL_Gz
+                            *COM*:00000008 ACCEL
+                            *COM*:00000004 GYRO_XRATE
+                            *COM*:00000004 GYRO_YRATE
+                            *COM*:00000004 GYRO_ZRATE
+                            *COM*:00000004 ACCEL_XANGLE
+                            *COM*:00000004 ACCEL_YANGLE
+                            *COM*:00000004 gyro_xsensitivity
+                            *COM*:00000004 gyro_ysensitivity
+                            *COM*:00000004 gyro_zsensitivity
+                            *COM*:00000004 a
+                            *COM*:00000004 dt
+                            *COM*:00000004 COMPLEMENTARY_XANGLE
+                            *COM*:00000004 COMPLEMENTARY_YANGLE
+                            *COM*:0000000c filter_xterm
+                            *COM*:0000000c filter_yterm
+                            *COM*:00000004 XANGLE_OFFSET
+                            *COM*:00000004 YANGLE_OFFSET
+                            *COM*:00000004 TEMP
+                            *COM*:00000004 timeConstant
+                            *COM*:0000000e MPU_6050_buffer
+                            *COM*:00000002 AC1
+                            *COM*:00000002 AC2
+                            *COM*:00000002 AC3
+                            *COM*:00000002 B1
+                            *COM*:00000002 B2
+                            *COM*:00000002 MB
+                            *COM*:00000002 MC
+                            *COM*:00000002 MD
+                            *COM*:00000002 AC4
+                            *COM*:00000002 AC5
+                            *COM*:00000002 AC6
+                            *COM*:00000004 T
+                            *COM*:00000004 absolute_altittude
+                            *COM*:00000004 start_altittude
+                            *COM*:00000004 relative_altittude
+                            *COM*:00000004 P
+                            *COM*:00000002 B5
+                            *COM*:00000004 p
+                            *COM*:00000320 P_stat
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:99     .bss:00000000 h
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:96     .bss:00000000 $d
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:106    .data:00000000 k_alt
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:103    .data:00000000 $d
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:112    .text:00000000 $t
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:117    .text:00000000 BMP180_read_temp_interrupt
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:234    .text:000000ec BMP180_read_temp
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:361    .text:000001f0 BMP180_read_pressure_interrupt
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:681    .text:000004fc BMP180_read_pressure
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:1017   .text:00000820 BMP180_get_pressure
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:1272   .text:00000a90 get_start_altittude
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:1400   .text:00000bc8 $d
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:1408   .text:00000bd8 $t
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:1413   .text:00000bd8 BMP180_get_altittude
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:1550   .text:00000d20 $d
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:1557   .text:00000d30 $t
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:1562   .text:00000d30 BMP180_read_calibrate_data
+C:\Users\Norbert\AppData\Local\Temp\cczO34BI.s:1699   .text:00000e3c init_BMP180
+                     .debug_frame:00000010 $d
+                           .group:00000000 wm4.1.6111752e1bd0a440bd5209819217ec83
+                           .group:00000000 wm4.init.h.9.6215b16d96e0eb787ba872245cf7290f
+                           .group:00000000 wm4.stdint.h.10.90b695f550ca6cc3fb08fa83baf01e05
+                           .group:00000000 wm4.newlib.h.8.a9901dc52d1357e3e94003403d43f8b5
+                           .group:00000000 wm4.config.h.193.5fb8ef056cdff92dec3dee9552839d8c
+                           .group:00000000 wm4._ansi.h.23.95dee4059009fe3ab635a191bb73dc66
+                           .group:00000000 wm4.stdio.h.31.f48311dde756a2aec27351b58a280fb9
+                           .group:00000000 wm4.stddef.h.187.9e651b6b8b16e149c1353259404973ea
+                           .group:00000000 wm4.stdarg.h.34.3a23a216c0c293b3d2ea2e89281481e6
+                           .group:00000000 wm4._default_types.h.6.1dbd2e581fd590860c7c17f21d147e91
+                           .group:00000000 wm4.lock.h.2.9bc98482741e5e2a9450b12934a684ea
+                           .group:00000000 wm4.stddef.h.349.31f4c5baff3fa2689010b32028da9c47
+                           .group:00000000 wm4.reent.h.16.9e42f0e588b85e70b2bf6572af57ce64
+                           .group:00000000 wm4.types.h.23.0d949686bbcadd1621462d4fa1f884f9
+                           .group:00000000 wm4.stddef.h.40.cf962ebbec441b3ac67502735f0765db
+                           .group:00000000 wm4.types.h.2.e9cec8c90ab35f77d9f499e06ae02400
+                           .group:00000000 wm4.types.h.80.1f2c84c0d57dd52dd9936095d9ac218e
+                           .group:00000000 wm4.stdio.h.2.4aa87247282eca6c8f36f9de33d8df1a
+                           .group:00000000 wm4.stdio.h.63.dfdea6580b080784d08faace69b6ed76
+                           .group:00000000 wm4.stdarg.h.31.fa591a4b1df9e413e9f5b8097f9ae89d
+                           .group:00000000 wm4.string.h.8.ef946ad0bc9ad5c970c365dcd1fc4b0a
+                           .group:00000000 wm4.stddef.h.161.e50ff8a9d5d1abbc15641da28ac571bf
+                           .group:00000000 wm4.string.h.86.d5c872ff52e2712c985b588a0ef39f3c
+                           .group:00000000 wm4.math.h.35.07c7797db9e98c6f49a07908290b45ed
+                           .group:00000000 wm4.arm_cm4.h.9.78faaf62d86eb97a647af1ebafb07a11
+                           .group:00000000 wm4.SysTick.h.3.6f4da7f8fb96288ed4bbb4cee119df1f
+                           .group:00000000 wm4.Clock.h.3.a53d5ed3b11823f56a6aca141130352b
+                           .group:00000000 wm4.MK40X256VMD100.h.96.72dc045102cc699ba440f8fa0b280550
+                           .group:00000000 wm4.i2c.h.1.3f1b2e4dcc6bdba977be59d8a51e893b
+                           .group:00000000 wm4.misc.h.9.baaf43d8702a540222c668d182f75475
+                           .group:00000000 wm4.PWM.h.9.e42d58c40ee648255e53f4e4738007a9
+                           .group:00000000 wm4.SPI.h.9.60f1cb4029034538da62861db028322d
+                           .group:00000000 wm4.ADC.h.9.e7a31df2daef26f2c286655e5d3c10dd
+                           .group:00000000 wm4.dma.h.9.96660ff1bef0aa806d84c8ba8408982d
+                           .group:00000000 wm4.main.h.9.81396d5b502c9a6873858dab1b488864
+                           .group:00000000 wm4.ffconf.h.6.276819a3a49a7ae37f54890eecb94e63
+                           .group:00000000 wm4.ff.h.45.a981520ef44c98f5ccd354741039de67
+                           .group:00000000 wm4.SDcard.h.13.e5067f919396cc348c323ee4b231e5ee
+                           .group:00000000 wm4.diskio.h.6.da50361b93ad53e5f0de9110dc9ad28d
+                           .group:00000000 wm4.MPU6050.h.9.b96a5ef9f24cf228b62beca78b916cfc
+                           .group:00000000 wm4.BMP180.h.9.1e786092deac7b246665fc1406fb0f7b
+
+UNDEFINED SYMBOLS
+__aeabi_i2f
+__aeabi_fdiv
+__aeabi_f2iz
+I2CReadMultiRegisters
+I2CWriteRegister
+Delay_mS
+__aeabi_fmul
+__aeabi_fadd
+__aeabi_l2f
+__aeabi_f2d
+__aeabi_dsub
+__aeabi_dmul
+__aeabi_dadd
+__aeabi_d2f
+__aeabi_ddiv
+__aeabi_d2iz
+__aeabi_i2d
+pow
+__aeabi_fsub
+I2CReadRegister

@@ -68,7 +68,7 @@ void initTimer0()		//PIT0 Timer for PID
 	PIT_MCR = PIT_MCR_FRZ_MASK;		// Enable PIT module clock with debug freeze
 	PIT_LDVAL0 = CORE_CLOCK / PIT0_OVERFLOW_FREQUENCY;	// Calculate and Load timer reset value
 	PIT_TCTRL0 = PIT_TCTRL_TIE_MASK;	// Enable timer interrupt
-//	PIT_TCTRL0 |= PIT_TCTRL_TEN_MASK;	// Enable timer
+//	PIT0_TCTRL0 |= PIT_TCTRL_TEN_MASK;	// Enable timer
 }
 
 void initTimer1()		//TPM2 Timer for SDcard save

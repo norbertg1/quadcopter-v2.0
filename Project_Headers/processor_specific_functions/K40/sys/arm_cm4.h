@@ -16,10 +16,10 @@
 // function prototypes for arm_cm4.c
 void stop (void);
 void wait (void);
-void write_vtor (int);
-void enable_irq (int);
-void disable_irq (int);
-void set_irq_priority (int, int);
+void write_vtor (int vtor);
+void enable_irq (int irq);
+void disable_irq (int irq);
+void set_irq_priority (int irq, int prio);
 
 /*
  * Misc. Defines

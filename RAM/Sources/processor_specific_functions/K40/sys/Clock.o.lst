@@ -1,0 +1,447 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"Clock.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	I2C_Variable,4,4
+  19              		.comm	uart_data,1,1
+  20              		.comm	adc_data,60,4
+  21              		.comm	Kp,4,4
+  22              		.comm	Kd,4,4
+  23              		.comm	Ki,4,4
+  24              		.comm	zKp,4,4
+  25              		.comm	zKd,4,4
+  26              		.comm	basepower,4,4
+  27              		.comm	setpoint_x,4,4
+  28              		.comm	setpoint_y,4,4
+  29              		.comm	setpoint_z,4,4
+  30              		.comm	setpoint_alt,4,4
+  31              		.comm	batt1_vol,4,4
+  32              		.comm	batt2_vol,4,4
+  33              		.comm	batt3_vol,4,4
+  34              		.comm	BATT_VOLT,4,4
+  35              		.comm	FatFs,560,4
+  36              		.comm	fil,548,4
+  37              		.comm	GYRO_XOUT_OFFSET,2,2
+  38              		.comm	GYRO_YOUT_OFFSET,2,2
+  39              		.comm	GYRO_ZOUT_OFFSET,2,2
+  40              		.comm	ACCEL_XOUT_OFFSET,2,2
+  41              		.comm	ACCEL_YOUT_OFFSET,2,2
+  42              		.comm	ACCEL_ZOUT_OFFSET,2,2
+  43              		.comm	GYRO_XANGLE,4,4
+  44              		.comm	GYRO_YANGLE,4,4
+  45              		.comm	GYRO_ZANGLE,4,4
+  46              		.comm	GYRO_XOUT,2,2
+  47              		.comm	GYRO_YOUT,2,2
+  48              		.comm	GYRO_ZOUT,2,2
+  49              		.comm	ACCEL_XOUT,2,2
+  50              		.comm	ACCEL_YOUT,2,2
+  51              		.comm	ACCEL_ZOUT,2,2
+  52              		.comm	ACCEL_Gx,4,4
+  53              		.comm	ACCEL_Gy,4,4
+  54              		.comm	ACCEL_Gz,4,4
+  55              		.comm	ACCEL,8,8
+  56              		.comm	GYRO_XRATE,4,4
+  57              		.comm	GYRO_YRATE,4,4
+  58              		.comm	GYRO_ZRATE,4,4
+  59              		.comm	ACCEL_XANGLE,4,4
+  60              		.comm	ACCEL_YANGLE,4,4
+  61              		.comm	gyro_xsensitivity,4,4
+  62              		.comm	gyro_ysensitivity,4,4
+  63              		.comm	gyro_zsensitivity,4,4
+  64              		.comm	a,4,4
+  65              		.comm	dt,4,4
+  66              		.comm	COMPLEMENTARY_XANGLE,4,4
+  67              		.comm	COMPLEMENTARY_YANGLE,4,4
+  68              		.comm	filter_xterm,12,4
+  69              		.comm	filter_yterm,12,4
+  70              		.comm	XANGLE_OFFSET,4,4
+  71              		.comm	YANGLE_OFFSET,4,4
+  72              		.comm	TEMP,4,4
+  73              		.comm	timeConstant,4,4
+  74              		.comm	MPU_6050_buffer,14,4
+  75              		.comm	AC1,2,2
+  76              		.comm	AC2,2,2
+  77              		.comm	AC3,2,2
+  78              		.comm	B1,2,2
+  79              		.comm	B2,2,2
+  80              		.comm	MB,2,2
+  81              		.comm	MC,2,2
+  82              		.comm	MD,2,2
+  83              		.comm	AC4,2,2
+  84              		.comm	AC5,2,2
+  85              		.comm	AC6,2,2
+  86              		.comm	T,4,4
+  87              		.comm	absolute_altittude,4,4
+  88              		.comm	start_altittude,4,4
+  89              		.comm	relative_altittude,4,4
+  90              		.comm	P,4,4
+  91              		.align	2
+  92              		.global	InitClock
+  93              		.thumb
+  94              		.thumb_func
+  96              	InitClock:
+  97              	.LFB0:
+  98              		.file 1 "../Sources/processor_specific_functions/K40/sys/Clock.c"
+   1:../Sources/processor_specific_functions/K40/sys/Clock.c **** #include "init.h"
+   2:../Sources/processor_specific_functions/K40/sys/Clock.c **** #include "processor_specific_functions\K40\sys\derivative.h"
+   3:../Sources/processor_specific_functions/K40/sys/Clock.c **** 
+   4:../Sources/processor_specific_functions/K40/sys/Clock.c **** /*__relocate_code__*/ void InitClock()
+   5:../Sources/processor_specific_functions/K40/sys/Clock.c **** {
+  99              		.loc 1 5 0
+ 100              		.cfi_startproc
+ 101              		@ args = 0, pretend = 0, frame = 0
+ 102              		@ frame_needed = 1, uses_anonymous_args = 0
+ 103              		@ link register save eliminated.
+ 104 0000 80B4     		push	{r7}
+ 105              	.LCFI0:
+ 106              		.cfi_def_cfa_offset 4
+ 107              		.cfi_offset 7, -4
+ 108 0002 00AF     		add	r7, sp, #0
+ 109              	.LCFI1:
+ 110              		.cfi_def_cfa_register 7
+   6:../Sources/processor_specific_functions/K40/sys/Clock.c **** // If the internal load capacitors are being used, they should be selected 
+   7:../Sources/processor_specific_functions/K40/sys/Clock.c **** // before enabling the oscillator. Application specific. 16pF and 8pF selected
+   8:../Sources/processor_specific_functions/K40/sys/Clock.c **** // in this example
+   9:../Sources/processor_specific_functions/K40/sys/Clock.c ****   OSC_CR = OSC_CR_SC16P_MASK | OSC_CR_SC8P_MASK;
+ 111              		.loc 1 9 0
+ 112 0004 4FF4A043 		mov	r3, #20480
+ 113 0008 C4F20603 		movt	r3, 16390
+ 114 000c 4FF00302 		mov	r2, #3
+ 115 0010 1A70     		strb	r2, [r3, #0]
+  10:../Sources/processor_specific_functions/K40/sys/Clock.c **** // Enabling the oscillator for 8 MHz crystal
+  11:../Sources/processor_specific_functions/K40/sys/Clock.c **** // RANGE=1, should be set to match the frequency of the crystal being used
+  12:../Sources/processor_specific_functions/K40/sys/Clock.c **** // HGO=1, high gain is selected, provides better noise immunity but does draw
+  13:../Sources/processor_specific_functions/K40/sys/Clock.c **** // higher current
+  14:../Sources/processor_specific_functions/K40/sys/Clock.c **** // EREFS=1, enable the external oscillator
+  15:../Sources/processor_specific_functions/K40/sys/Clock.c **** // LP=0, low power mode not selected (not actually part of osc setup)
+  16:../Sources/processor_specific_functions/K40/sys/Clock.c **** // IRCS=0, slow internal ref clock selected (not actually part of osc setup)
+  17:../Sources/processor_specific_functions/K40/sys/Clock.c ****   MCG_C2 = MCG_C2_RANGE(1) | MCG_C2_HGO_MASK | MCG_C2_EREFS_MASK;
+ 116              		.loc 1 17 0
+ 117 0012 4FF48043 		mov	r3, #16384
+ 118 0016 C4F20603 		movt	r3, 16390
+ 119 001a 4FF01C02 		mov	r2, #28
+ 120 001e 5A70     		strb	r2, [r3, #1]
+  18:../Sources/processor_specific_functions/K40/sys/Clock.c **** // Select ext oscillator, reference divider and clear IREFS to start ext osc
+  19:../Sources/processor_specific_functions/K40/sys/Clock.c **** // CLKS=2, select the external clock source 
+  20:../Sources/processor_specific_functions/K40/sys/Clock.c **** // FRDIV=3, set the FLL ref divider to keep the ref clock in range 
+  21:../Sources/processor_specific_functions/K40/sys/Clock.c **** //         (even if FLL is not being used) 4 MHz / 128 = 31.25 kHz         
+  22:../Sources/processor_specific_functions/K40/sys/Clock.c **** // IREFS=0, select the external clock 
+  23:../Sources/processor_specific_functions/K40/sys/Clock.c **** // IRCLKEN=0, disable IRCLK (can enable it if desired)
+  24:../Sources/processor_specific_functions/K40/sys/Clock.c **** // IREFSTEN=0, disable IRC in stop mode (can keep it enabled in stop if desired)
+  25:../Sources/processor_specific_functions/K40/sys/Clock.c ****   MCG_C1 = MCG_C1_CLKS(2) | MCG_C1_FRDIV(2);
+ 121              		.loc 1 25 0
+ 122 0020 4FF48043 		mov	r3, #16384
+ 123 0024 C4F20603 		movt	r3, 16390
+ 124 0028 4FF09002 		mov	r2, #144
+ 125 002c 1A70     		strb	r2, [r3, #0]
+  26:../Sources/processor_specific_functions/K40/sys/Clock.c **** // wait for oscillator to initialize
+  27:../Sources/processor_specific_functions/K40/sys/Clock.c ****   while (!(MCG_S & MCG_S_OSCINIT_MASK)){}  
+ 126              		.loc 1 27 0
+ 127 002e 00BF     		nop
+ 128              	.L2:
+ 129              		.loc 1 27 0 is_stmt 0 discriminator 1
+ 130 0030 4FF48043 		mov	r3, #16384
+ 131 0034 C4F20603 		movt	r3, 16390
+ 132 0038 9B79     		ldrb	r3, [r3, #6]
+ 133 003a DBB2     		uxtb	r3, r3
+ 134 003c 03F00203 		and	r3, r3, #2
+ 135 0040 002B     		cmp	r3, #0
+ 136 0042 F5D0     		beq	.L2
+  28:../Sources/processor_specific_functions/K40/sys/Clock.c **** // wait for Reference clock to switch to external reference 
+  29:../Sources/processor_specific_functions/K40/sys/Clock.c ****   while (MCG_S & MCG_S_IREFST_MASK){} 
+ 137              		.loc 1 29 0 is_stmt 1
+ 138 0044 00BF     		nop
+ 139              	.L3:
+ 140              		.loc 1 29 0 is_stmt 0 discriminator 1
+ 141 0046 4FF48043 		mov	r3, #16384
+ 142 004a C4F20603 		movt	r3, 16390
+ 143 004e 9B79     		ldrb	r3, [r3, #6]
+ 144 0050 DBB2     		uxtb	r3, r3
+ 145 0052 03F01003 		and	r3, r3, #16
+ 146 0056 002B     		cmp	r3, #0
+ 147 0058 F5D1     		bne	.L3
+  30:../Sources/processor_specific_functions/K40/sys/Clock.c **** // Wait for MCGOUT to switch over to the external reference clock 
+  31:../Sources/processor_specific_functions/K40/sys/Clock.c ****   while (((MCG_S & MCG_S_CLKST_MASK) >> MCG_S_CLKST_SHIFT) != 0x2){}
+ 148              		.loc 1 31 0 is_stmt 1
+ 149 005a 00BF     		nop
+ 150              	.L4:
+ 151              		.loc 1 31 0 is_stmt 0 discriminator 1
+ 152 005c 4FF48043 		mov	r3, #16384
+ 153 0060 C4F20603 		movt	r3, 16390
+ 154 0064 9B79     		ldrb	r3, [r3, #6]
+ 155 0066 DBB2     		uxtb	r3, r3
+ 156 0068 03F00C03 		and	r3, r3, #12
+ 157 006c 4FEA9303 		lsr	r3, r3, #2
+ 158 0070 022B     		cmp	r3, #2
+ 159 0072 F3D1     		bne	.L4
+  32:../Sources/processor_specific_functions/K40/sys/Clock.c **** // Now configure the PLL and move to PBE mode
+  33:../Sources/processor_specific_functions/K40/sys/Clock.c **** // set the PRDIV field to generate a 4MHz reference clock (4MHz /1)
+  34:../Sources/processor_specific_functions/K40/sys/Clock.c ****   MCG_C5 = MCG_C5_PRDIV(0); // PRDIV=1 selects a divide by 1
+ 160              		.loc 1 34 0 is_stmt 1
+ 161 0074 4FF48043 		mov	r3, #16384
+ 162 0078 C4F20603 		movt	r3, 16390
+ 163 007c 4FF00002 		mov	r2, #0
+ 164 0080 1A71     		strb	r2, [r3, #4]
+  35:../Sources/processor_specific_functions/K40/sys/Clock.c **** // set the VDIV field to 0, which is x24, giving 4 x 24  = 96 MHz
+  36:../Sources/processor_specific_functions/K40/sys/Clock.c **** // the PLLS bit is set to enable the PLL
+  37:../Sources/processor_specific_functions/K40/sys/Clock.c **** // the clock monitor is enabled, CME=1 to cause a reset if crystal fails  
+  38:../Sources/processor_specific_functions/K40/sys/Clock.c **** // LOLIE can be optionally set to enable the loss of lock interrupt
+  39:../Sources/processor_specific_functions/K40/sys/Clock.c ****   
+  40:../Sources/processor_specific_functions/K40/sys/Clock.c ****   MCG_C6 = MCG_C6_CME_MASK | MCG_C6_PLLS_MASK;
+ 165              		.loc 1 40 0
+ 166 0082 4FF48043 		mov	r3, #16384
+ 167 0086 C4F20603 		movt	r3, 16390
+ 168 008a 4FF06002 		mov	r2, #96
+ 169 008e 5A71     		strb	r2, [r3, #5]
+  41:../Sources/processor_specific_functions/K40/sys/Clock.c **** // wait until the source of the PLLS clock has switched to the PLL  
+  42:../Sources/processor_specific_functions/K40/sys/Clock.c ****   while (!(MCG_S & MCG_S_PLLST_MASK)){}
+ 170              		.loc 1 42 0
+ 171 0090 00BF     		nop
+ 172              	.L5:
+ 173              		.loc 1 42 0 is_stmt 0 discriminator 1
+ 174 0092 4FF48043 		mov	r3, #16384
+ 175 0096 C4F20603 		movt	r3, 16390
+ 176 009a 9B79     		ldrb	r3, [r3, #6]
+ 177 009c DBB2     		uxtb	r3, r3
+ 178 009e 03F02003 		and	r3, r3, #32
+ 179 00a2 002B     		cmp	r3, #0
+ 180 00a4 F5D0     		beq	.L5
+  43:../Sources/processor_specific_functions/K40/sys/Clock.c **** // wait until the PLL has achieved lock
+  44:../Sources/processor_specific_functions/K40/sys/Clock.c ****   while (!(MCG_S & MCG_S_LOCK_MASK)){}
+ 181              		.loc 1 44 0 is_stmt 1
+ 182 00a6 00BF     		nop
+ 183              	.L6:
+ 184              		.loc 1 44 0 is_stmt 0 discriminator 1
+ 185 00a8 4FF48043 		mov	r3, #16384
+ 186 00ac C4F20603 		movt	r3, 16390
+ 187 00b0 9B79     		ldrb	r3, [r3, #6]
+ 188 00b2 DBB2     		uxtb	r3, r3
+ 189 00b4 03F04003 		and	r3, r3, #64
+ 190 00b8 002B     		cmp	r3, #0
+ 191 00ba F5D0     		beq	.L6
+  45:../Sources/processor_specific_functions/K40/sys/Clock.c **** // set up the SIM clock dividers BEFORE switching to the PLL to ensure the
+  46:../Sources/processor_specific_functions/K40/sys/Clock.c **** // system clock speeds are in spec.
+  47:../Sources/processor_specific_functions/K40/sys/Clock.c **** // core = PLL (96MHz), bus = PLL/2 (48MHz), flexbus = PLL/2 (48MHz), flash = PLL/4 (24MHz)  
+  48:../Sources/processor_specific_functions/K40/sys/Clock.c ****   SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(0) | SIM_CLKDIV1_OUTDIV2(1) 
+ 192              		.loc 1 48 0 is_stmt 1
+ 193 00bc 4FF4E043 		mov	r3, #28672
+ 194 00c0 C4F20403 		movt	r3, 16388
+ 195 00c4 03F58253 		add	r3, r3, #4160
+ 196 00c8 03F10403 		add	r3, r3, #4
+ 197 00cc 4FF00002 		mov	r2, #0
+ 198 00d0 C0F21312 		movt	r2, 275
+ 199 00d4 1A60     		str	r2, [r3, #0]
+  49:../Sources/processor_specific_functions/K40/sys/Clock.c ****               | SIM_CLKDIV1_OUTDIV3(1) | SIM_CLKDIV1_OUTDIV4(3);
+  50:../Sources/processor_specific_functions/K40/sys/Clock.c ****   
+  51:../Sources/processor_specific_functions/K40/sys/Clock.c **** // Transition into PEE by setting CLKS to 0
+  52:../Sources/processor_specific_functions/K40/sys/Clock.c **** // previous MCG_C1 settings remain the same, just need to set CLKS to 0
+  53:../Sources/processor_specific_functions/K40/sys/Clock.c ****   MCG_C1 &= ~MCG_C1_CLKS_MASK;
+ 200              		.loc 1 53 0
+ 201 00d6 4FF48043 		mov	r3, #16384
+ 202 00da C4F20603 		movt	r3, 16390
+ 203 00de 4FF48042 		mov	r2, #16384
+ 204 00e2 C4F20602 		movt	r2, 16390
+ 205 00e6 1278     		ldrb	r2, [r2, #0]
+ 206 00e8 D2B2     		uxtb	r2, r2
+ 207 00ea 02F03F02 		and	r2, r2, #63
+ 208 00ee D2B2     		uxtb	r2, r2
+ 209 00f0 1A70     		strb	r2, [r3, #0]
+  54:../Sources/processor_specific_functions/K40/sys/Clock.c **** // Wait for MCGOUT to switch over to the PLL
+  55:../Sources/processor_specific_functions/K40/sys/Clock.c ****   while (((MCG_S & MCG_S_CLKST_MASK) >> MCG_S_CLKST_SHIFT) != 0x3){}
+ 210              		.loc 1 55 0
+ 211 00f2 00BF     		nop
+ 212              	.L7:
+ 213              		.loc 1 55 0 is_stmt 0 discriminator 1
+ 214 00f4 4FF48043 		mov	r3, #16384
+ 215 00f8 C4F20603 		movt	r3, 16390
+ 216 00fc 9B79     		ldrb	r3, [r3, #6]
+ 217 00fe DBB2     		uxtb	r3, r3
+ 218 0100 03F00C03 		and	r3, r3, #12
+ 219 0104 4FEA9303 		lsr	r3, r3, #2
+ 220 0108 032B     		cmp	r3, #3
+ 221 010a F3D1     		bne	.L7
+  56:../Sources/processor_specific_functions/K40/sys/Clock.c **** // The USB clock divider in the System Clock Divider Register 2 (SIM_CLKDIV2) 
+  57:../Sources/processor_specific_functions/K40/sys/Clock.c **** // should be configured to generate the 48 MHz USB clock before configuring 
+  58:../Sources/processor_specific_functions/K40/sys/Clock.c **** // the USB module.
+  59:../Sources/processor_specific_functions/K40/sys/Clock.c ****     SIM_CLKDIV2 |= SIM_CLKDIV2_USBDIV(1) | SIM_CLKDIV2_I2SDIV(7); // sets USB divider to /2 assumin
+ 222              		.loc 1 59 0 is_stmt 1
+ 223 010c 4FF4E043 		mov	r3, #28672
+ 224 0110 C4F20403 		movt	r3, 16388
+ 225 0114 4FF4E042 		mov	r2, #28672
+ 226 0118 C4F20402 		movt	r2, 16388
+ 227 011c 02F58252 		add	r2, r2, #4160
+ 228 0120 02F10802 		add	r2, r2, #8
+ 229 0124 1268     		ldr	r2, [r2, #0]
+ 230 0126 42F4E002 		orr	r2, r2, #7340032
+ 231 012a 42F00202 		orr	r2, r2, #2
+ 232 012e 03F58253 		add	r3, r3, #4160
+ 233 0132 03F10803 		add	r3, r3, #8
+ 234 0136 1A60     		str	r2, [r3, #0]
+  60:../Sources/processor_specific_functions/K40/sys/Clock.c **** 										// state of the SIM_CLKDIV2 register
+  61:../Sources/processor_specific_functions/K40/sys/Clock.c **** 
+  62:../Sources/processor_specific_functions/K40/sys/Clock.c ****     SIM_SCGC4|=(SIM_SCGC4_USBOTG_MASK);             // USB Clock Gating
+ 235              		.loc 1 62 0
+ 236 0138 4FF4E043 		mov	r3, #28672
+ 237 013c C4F20403 		movt	r3, 16388
+ 238 0140 4FF4E042 		mov	r2, #28672
+ 239 0144 C4F20402 		movt	r2, 16388
+ 240 0148 02F58152 		add	r2, r2, #4128
+ 241 014c 02F11402 		add	r2, r2, #20
+ 242 0150 1268     		ldr	r2, [r2, #0]
+ 243 0152 42F48022 		orr	r2, r2, #262144
+ 244 0156 03F58153 		add	r3, r3, #4128
+ 245 015a 03F11403 		add	r3, r3, #20
+ 246 015e 1A60     		str	r2, [r3, #0]
+  63:../Sources/processor_specific_functions/K40/sys/Clock.c ****        
+  64:../Sources/processor_specific_functions/K40/sys/Clock.c **** }
+ 247              		.loc 1 64 0
+ 248 0160 BD46     		mov	sp, r7
+ 249 0162 80BC     		pop	{r7}
+ 250 0164 7047     		bx	lr
+ 251              		.cfi_endproc
+ 252              	.LFE0:
+ 254              	.Letext0:
+ 255              		.file 2 "c:\\freescale\\cw mcu v10.6\\cross_tools\\arm-none-eabi-gcc-4_7_3\\bin\\../lib/gcc/arm-no
+ 256              		.file 3 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions\\K40\
+ 257              		.file 4 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/integer.h"
+ 258              		.file 5 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/ff.h"
+ 259              		.file 6 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/i
+ 260              		.file 7 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/d
+ 261              		.file 8 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/interrupts.h"
+ 262              		.file 9 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/SDcard.h"
+ 263              		.file 10 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/MPU6050.h"
+ 264              		.file 11 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/BMP180.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 Clock.c
+                            *COM*:00000004 I2C_Variable
+                            *COM*:00000001 uart_data
+                            *COM*:0000003c adc_data
+                            *COM*:00000004 Kp
+                            *COM*:00000004 Kd
+                            *COM*:00000004 Ki
+                            *COM*:00000004 zKp
+                            *COM*:00000004 zKd
+                            *COM*:00000004 basepower
+                            *COM*:00000004 setpoint_x
+                            *COM*:00000004 setpoint_y
+                            *COM*:00000004 setpoint_z
+                            *COM*:00000004 setpoint_alt
+                            *COM*:00000004 batt1_vol
+                            *COM*:00000004 batt2_vol
+                            *COM*:00000004 batt3_vol
+                            *COM*:00000004 BATT_VOLT
+                            *COM*:00000230 FatFs
+                            *COM*:00000224 fil
+                            *COM*:00000002 GYRO_XOUT_OFFSET
+                            *COM*:00000002 GYRO_YOUT_OFFSET
+                            *COM*:00000002 GYRO_ZOUT_OFFSET
+                            *COM*:00000002 ACCEL_XOUT_OFFSET
+                            *COM*:00000002 ACCEL_YOUT_OFFSET
+                            *COM*:00000002 ACCEL_ZOUT_OFFSET
+                            *COM*:00000004 GYRO_XANGLE
+                            *COM*:00000004 GYRO_YANGLE
+                            *COM*:00000004 GYRO_ZANGLE
+                            *COM*:00000002 GYRO_XOUT
+                            *COM*:00000002 GYRO_YOUT
+                            *COM*:00000002 GYRO_ZOUT
+                            *COM*:00000002 ACCEL_XOUT
+                            *COM*:00000002 ACCEL_YOUT
+                            *COM*:00000002 ACCEL_ZOUT
+                            *COM*:00000004 ACCEL_Gx
+                            *COM*:00000004 ACCEL_Gy
+                            *COM*:00000004 ACCEL_Gz
+                            *COM*:00000008 ACCEL
+                            *COM*:00000004 GYRO_XRATE
+                            *COM*:00000004 GYRO_YRATE
+                            *COM*:00000004 GYRO_ZRATE
+                            *COM*:00000004 ACCEL_XANGLE
+                            *COM*:00000004 ACCEL_YANGLE
+                            *COM*:00000004 gyro_xsensitivity
+                            *COM*:00000004 gyro_ysensitivity
+                            *COM*:00000004 gyro_zsensitivity
+                            *COM*:00000004 a
+                            *COM*:00000004 dt
+                            *COM*:00000004 COMPLEMENTARY_XANGLE
+                            *COM*:00000004 COMPLEMENTARY_YANGLE
+                            *COM*:0000000c filter_xterm
+                            *COM*:0000000c filter_yterm
+                            *COM*:00000004 XANGLE_OFFSET
+                            *COM*:00000004 YANGLE_OFFSET
+                            *COM*:00000004 TEMP
+                            *COM*:00000004 timeConstant
+                            *COM*:0000000e MPU_6050_buffer
+                            *COM*:00000002 AC1
+                            *COM*:00000002 AC2
+                            *COM*:00000002 AC3
+                            *COM*:00000002 B1
+                            *COM*:00000002 B2
+                            *COM*:00000002 MB
+                            *COM*:00000002 MC
+                            *COM*:00000002 MD
+                            *COM*:00000002 AC4
+                            *COM*:00000002 AC5
+                            *COM*:00000002 AC6
+                            *COM*:00000004 T
+                            *COM*:00000004 absolute_altittude
+                            *COM*:00000004 start_altittude
+                            *COM*:00000004 relative_altittude
+                            *COM*:00000004 P
+C:\Users\Norbert\AppData\Local\Temp\ccPLI6zH.s:91     .text:00000000 $t
+C:\Users\Norbert\AppData\Local\Temp\ccPLI6zH.s:96     .text:00000000 InitClock
+                     .debug_frame:00000010 $d
+                           .group:00000000 wm4.1.6111752e1bd0a440bd5209819217ec83
+                           .group:00000000 wm4.init.h.9.6215b16d96e0eb787ba872245cf7290f
+                           .group:00000000 wm4.stdint.h.10.90b695f550ca6cc3fb08fa83baf01e05
+                           .group:00000000 wm4.newlib.h.8.a9901dc52d1357e3e94003403d43f8b5
+                           .group:00000000 wm4.config.h.193.5fb8ef056cdff92dec3dee9552839d8c
+                           .group:00000000 wm4._ansi.h.23.95dee4059009fe3ab635a191bb73dc66
+                           .group:00000000 wm4.stdio.h.31.f48311dde756a2aec27351b58a280fb9
+                           .group:00000000 wm4.stddef.h.187.9e651b6b8b16e149c1353259404973ea
+                           .group:00000000 wm4.stdarg.h.34.3a23a216c0c293b3d2ea2e89281481e6
+                           .group:00000000 wm4._default_types.h.6.1dbd2e581fd590860c7c17f21d147e91
+                           .group:00000000 wm4.lock.h.2.9bc98482741e5e2a9450b12934a684ea
+                           .group:00000000 wm4.stddef.h.349.31f4c5baff3fa2689010b32028da9c47
+                           .group:00000000 wm4.reent.h.16.9e42f0e588b85e70b2bf6572af57ce64
+                           .group:00000000 wm4.types.h.23.0d949686bbcadd1621462d4fa1f884f9
+                           .group:00000000 wm4.stddef.h.40.cf962ebbec441b3ac67502735f0765db
+                           .group:00000000 wm4.types.h.2.e9cec8c90ab35f77d9f499e06ae02400
+                           .group:00000000 wm4.types.h.80.1f2c84c0d57dd52dd9936095d9ac218e
+                           .group:00000000 wm4.stdio.h.2.4aa87247282eca6c8f36f9de33d8df1a
+                           .group:00000000 wm4.stdio.h.63.dfdea6580b080784d08faace69b6ed76
+                           .group:00000000 wm4.stdarg.h.31.fa591a4b1df9e413e9f5b8097f9ae89d
+                           .group:00000000 wm4.string.h.8.ef946ad0bc9ad5c970c365dcd1fc4b0a
+                           .group:00000000 wm4.stddef.h.161.e50ff8a9d5d1abbc15641da28ac571bf
+                           .group:00000000 wm4.string.h.86.d5c872ff52e2712c985b588a0ef39f3c
+                           .group:00000000 wm4.math.h.35.07c7797db9e98c6f49a07908290b45ed
+                           .group:00000000 wm4.arm_cm4.h.9.78faaf62d86eb97a647af1ebafb07a11
+                           .group:00000000 wm4.SysTick.h.3.6f4da7f8fb96288ed4bbb4cee119df1f
+                           .group:00000000 wm4.Clock.h.3.a53d5ed3b11823f56a6aca141130352b
+                           .group:00000000 wm4.MK40X256VMD100.h.96.72dc045102cc699ba440f8fa0b280550
+                           .group:00000000 wm4.i2c.h.1.3f1b2e4dcc6bdba977be59d8a51e893b
+                           .group:00000000 wm4.misc.h.9.baaf43d8702a540222c668d182f75475
+                           .group:00000000 wm4.PWM.h.9.e42d58c40ee648255e53f4e4738007a9
+                           .group:00000000 wm4.SPI.h.9.60f1cb4029034538da62861db028322d
+                           .group:00000000 wm4.ADC.h.9.e7a31df2daef26f2c286655e5d3c10dd
+                           .group:00000000 wm4.dma.h.9.96660ff1bef0aa806d84c8ba8408982d
+                           .group:00000000 wm4.main.h.9.81396d5b502c9a6873858dab1b488864
+                           .group:00000000 wm4.ffconf.h.6.276819a3a49a7ae37f54890eecb94e63
+                           .group:00000000 wm4.ff.h.45.a981520ef44c98f5ccd354741039de67
+                           .group:00000000 wm4.SDcard.h.13.e5067f919396cc348c323ee4b231e5ee
+                           .group:00000000 wm4.diskio.h.6.da50361b93ad53e5f0de9110dc9ad28d
+                           .group:00000000 wm4.MPU6050.h.9.b96a5ef9f24cf228b62beca78b916cfc
+                           .group:00000000 wm4.BMP180.h.9.1e786092deac7b246665fc1406fb0f7b
+
+NO UNDEFINED SYMBOLS

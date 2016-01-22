@@ -1,0 +1,619 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"Motor.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	I2C_Variable,4,4
+  19              		.comm	uart_data,1,1
+  20              		.comm	adc_data,60,4
+  21              		.comm	Kp,4,4
+  22              		.comm	Kd,4,4
+  23              		.comm	Ki,4,4
+  24              		.comm	zKp,4,4
+  25              		.comm	zKd,4,4
+  26              		.comm	basepower,4,4
+  27              		.comm	setpoint_x,4,4
+  28              		.comm	setpoint_y,4,4
+  29              		.comm	setpoint_z,4,4
+  30              		.comm	setpoint_alt,4,4
+  31              		.comm	batt1_vol,4,4
+  32              		.comm	batt2_vol,4,4
+  33              		.comm	batt3_vol,4,4
+  34              		.comm	BATT_VOLT,4,4
+  35              		.comm	FatFs,560,4
+  36              		.comm	fil,548,4
+  37              		.comm	GYRO_XOUT_OFFSET,2,2
+  38              		.comm	GYRO_YOUT_OFFSET,2,2
+  39              		.comm	GYRO_ZOUT_OFFSET,2,2
+  40              		.comm	ACCEL_XOUT_OFFSET,2,2
+  41              		.comm	ACCEL_YOUT_OFFSET,2,2
+  42              		.comm	ACCEL_ZOUT_OFFSET,2,2
+  43              		.comm	GYRO_XANGLE,4,4
+  44              		.comm	GYRO_YANGLE,4,4
+  45              		.comm	GYRO_ZANGLE,4,4
+  46              		.comm	GYRO_XOUT,2,2
+  47              		.comm	GYRO_YOUT,2,2
+  48              		.comm	GYRO_ZOUT,2,2
+  49              		.comm	ACCEL_XOUT,2,2
+  50              		.comm	ACCEL_YOUT,2,2
+  51              		.comm	ACCEL_ZOUT,2,2
+  52              		.comm	ACCEL_Gx,4,4
+  53              		.comm	ACCEL_Gy,4,4
+  54              		.comm	ACCEL_Gz,4,4
+  55              		.comm	ACCEL,8,8
+  56              		.comm	GYRO_XRATE,4,4
+  57              		.comm	GYRO_YRATE,4,4
+  58              		.comm	GYRO_ZRATE,4,4
+  59              		.comm	ACCEL_XANGLE,4,4
+  60              		.comm	ACCEL_YANGLE,4,4
+  61              		.comm	gyro_xsensitivity,4,4
+  62              		.comm	gyro_ysensitivity,4,4
+  63              		.comm	gyro_zsensitivity,4,4
+  64              		.comm	a,4,4
+  65              		.comm	dt,4,4
+  66              		.comm	COMPLEMENTARY_XANGLE,4,4
+  67              		.comm	COMPLEMENTARY_YANGLE,4,4
+  68              		.comm	filter_xterm,12,4
+  69              		.comm	filter_yterm,12,4
+  70              		.comm	XANGLE_OFFSET,4,4
+  71              		.comm	YANGLE_OFFSET,4,4
+  72              		.comm	TEMP,4,4
+  73              		.comm	timeConstant,4,4
+  74              		.comm	MPU_6050_buffer,14,4
+  75              		.comm	AC1,2,2
+  76              		.comm	AC2,2,2
+  77              		.comm	AC3,2,2
+  78              		.comm	B1,2,2
+  79              		.comm	B2,2,2
+  80              		.comm	MB,2,2
+  81              		.comm	MC,2,2
+  82              		.comm	MD,2,2
+  83              		.comm	AC4,2,2
+  84              		.comm	AC5,2,2
+  85              		.comm	AC6,2,2
+  86              		.comm	T,4,4
+  87              		.comm	absolute_altittude,4,4
+  88              		.comm	start_altittude,4,4
+  89              		.comm	relative_altittude,4,4
+  90              		.comm	P,4,4
+  91              		.global	__aeabi_i2f
+  92              		.global	__aeabi_fdiv
+  93              		.global	__aeabi_fmul
+  94              		.global	__aeabi_fadd
+  95              		.global	__aeabi_f2uiz
+  96              		.align	2
+  97              		.global	SetMotorPWM
+  98              		.thumb
+  99              		.thumb_func
+ 101              	SetMotorPWM:
+ 102              	.LFB0:
+ 103              		.file 1 "../Sources/Motor.c"
+   1:../Sources/Motor.c **** #include "init.h"
+   2:../Sources/Motor.c **** //#include "derivative.h"
+   3:../Sources/Motor.c **** 
+   4:../Sources/Motor.c **** void SetMotorPWM(int MotorA , int MotorB, int MotorC, int MotorD)
+   5:../Sources/Motor.c **** {
+ 104              		.loc 1 5 0
+ 105              		.cfi_startproc
+ 106              		@ args = 0, pretend = 0, frame = 16
+ 107              		@ frame_needed = 1, uses_anonymous_args = 0
+ 108 0000 90B5     		push	{r4, r7, lr}
+ 109              	.LCFI0:
+ 110              		.cfi_def_cfa_offset 12
+ 111              		.cfi_offset 4, -12
+ 112              		.cfi_offset 7, -8
+ 113              		.cfi_offset 14, -4
+ 114 0002 85B0     		sub	sp, sp, #20
+ 115              	.LCFI1:
+ 116              		.cfi_def_cfa_offset 32
+ 117 0004 00AF     		add	r7, sp, #0
+ 118              	.LCFI2:
+ 119              		.cfi_def_cfa_register 7
+ 120 0006 F860     		str	r0, [r7, #12]
+ 121 0008 B960     		str	r1, [r7, #8]
+ 122 000a 7A60     		str	r2, [r7, #4]
+ 123 000c 3B60     		str	r3, [r7, #0]
+   6:../Sources/Motor.c **** 	
+   7:../Sources/Motor.c **** 	if(MotorA>MOTOR_MAX)
+ 124              		.loc 1 7 0
+ 125 000e FB68     		ldr	r3, [r7, #12]
+ 126 0010 B3F52F7F 		cmp	r3, #700
+ 127 0014 03DD     		ble	.L2
+   8:../Sources/Motor.c **** 		MotorA = MOTOR_MAX;
+ 128              		.loc 1 8 0
+ 129 0016 4FF42F73 		mov	r3, #700
+ 130 001a FB60     		str	r3, [r7, #12]
+ 131 001c 05E0     		b	.L3
+ 132              	.L2:
+   9:../Sources/Motor.c **** 	else if(MotorA<=MOTOR_MIN)
+ 133              		.loc 1 9 0
+ 134 001e FB68     		ldr	r3, [r7, #12]
+ 135 0020 012B     		cmp	r3, #1
+ 136 0022 02DC     		bgt	.L3
+  10:../Sources/Motor.c **** 		MotorA = MOTOR_MIN;
+ 137              		.loc 1 10 0
+ 138 0024 4FF00103 		mov	r3, #1
+ 139 0028 FB60     		str	r3, [r7, #12]
+ 140              	.L3:
+  11:../Sources/Motor.c **** 	
+  12:../Sources/Motor.c **** 	if(MotorB>MOTOR_MAX)
+ 141              		.loc 1 12 0
+ 142 002a BB68     		ldr	r3, [r7, #8]
+ 143 002c B3F52F7F 		cmp	r3, #700
+ 144 0030 03DD     		ble	.L4
+  13:../Sources/Motor.c **** 			MotorB = MOTOR_MAX;
+ 145              		.loc 1 13 0
+ 146 0032 4FF42F73 		mov	r3, #700
+ 147 0036 BB60     		str	r3, [r7, #8]
+ 148 0038 05E0     		b	.L5
+ 149              	.L4:
+  14:../Sources/Motor.c **** 		else if(MotorB<MOTOR_MIN)
+ 150              		.loc 1 14 0
+ 151 003a BB68     		ldr	r3, [r7, #8]
+ 152 003c 002B     		cmp	r3, #0
+ 153 003e 02DC     		bgt	.L5
+  15:../Sources/Motor.c **** 			MotorB = MOTOR_MIN;
+ 154              		.loc 1 15 0
+ 155 0040 4FF00103 		mov	r3, #1
+ 156 0044 BB60     		str	r3, [r7, #8]
+ 157              	.L5:
+  16:../Sources/Motor.c **** 	
+  17:../Sources/Motor.c **** 	if(MotorC>MOTOR_MAX)
+ 158              		.loc 1 17 0
+ 159 0046 7B68     		ldr	r3, [r7, #4]
+ 160 0048 B3F52F7F 		cmp	r3, #700
+ 161 004c 03DD     		ble	.L6
+  18:../Sources/Motor.c **** 		MotorC = MOTOR_MAX;
+ 162              		.loc 1 18 0
+ 163 004e 4FF42F73 		mov	r3, #700
+ 164 0052 7B60     		str	r3, [r7, #4]
+ 165 0054 05E0     		b	.L7
+ 166              	.L6:
+  19:../Sources/Motor.c **** 		else if(MotorC<MOTOR_MIN)
+ 167              		.loc 1 19 0
+ 168 0056 7B68     		ldr	r3, [r7, #4]
+ 169 0058 002B     		cmp	r3, #0
+ 170 005a 02DC     		bgt	.L7
+  20:../Sources/Motor.c **** 			MotorC = MOTOR_MIN;
+ 171              		.loc 1 20 0
+ 172 005c 4FF00103 		mov	r3, #1
+ 173 0060 7B60     		str	r3, [r7, #4]
+ 174              	.L7:
+  21:../Sources/Motor.c **** 	
+  22:../Sources/Motor.c **** 	if(MotorD>MOTOR_MAX)
+ 175              		.loc 1 22 0
+ 176 0062 3B68     		ldr	r3, [r7, #0]
+ 177 0064 B3F52F7F 		cmp	r3, #700
+ 178 0068 03DD     		ble	.L8
+  23:../Sources/Motor.c **** 		MotorD = MOTOR_MAX;
+ 179              		.loc 1 23 0
+ 180 006a 4FF42F73 		mov	r3, #700
+ 181 006e 3B60     		str	r3, [r7, #0]
+ 182 0070 05E0     		b	.L9
+ 183              	.L8:
+  24:../Sources/Motor.c **** 		else if(MotorD<MOTOR_MIN)
+ 184              		.loc 1 24 0
+ 185 0072 3B68     		ldr	r3, [r7, #0]
+ 186 0074 002B     		cmp	r3, #0
+ 187 0076 02DC     		bgt	.L9
+  25:../Sources/Motor.c **** 			MotorD = MOTOR_MIN;
+ 188              		.loc 1 25 0
+ 189 0078 4FF00103 		mov	r3, #1
+ 190 007c 3B60     		str	r3, [r7, #0]
+ 191              	.L9:
+  26:../Sources/Motor.c **** #if MOTOR	
+  27:../Sources/Motor.c **** 	//ELEMENTARY_PROC_TIME*((ESC_MINIMUM_POWER+(ESC_POWER_DIFFERENCE)*((float)MotorA/1000))/1000);			/
+  28:../Sources/Motor.c **** 	FTM0_C7V = ELEMENTARY_PROC_TIME*((ESC_MINIMUM_POWER+(ESC_POWER_DIFFERENCE)*((float)MotorA/1000))/1
+ 192              		.loc 1 28 0
+ 193 007e 4FF40044 		mov	r4, #32768
+ 194 0082 C4F20304 		movt	r4, 16387
+ 195 0086 F868     		ldr	r0, [r7, #12]
+ 196 0088 FFF7FEFF 		bl	__aeabi_i2f
+ 197 008c 0346     		mov	r3, r0
+ 198 008e 1846     		mov	r0, r3
+ 199 0090 4FF00001 		mov	r1, #0
+ 200 0094 C4F27A41 		movt	r1, 17530
+ 201 0098 FFF7FEFF 		bl	__aeabi_fdiv
+ 202 009c 0346     		mov	r3, r0
+ 203 009e 1846     		mov	r0, r3
+ 204 00a0 4FF00001 		mov	r1, #0
+ 205 00a4 C4F24841 		movt	r1, 17480
+ 206 00a8 FFF7FEFF 		bl	__aeabi_fmul
+ 207 00ac 0346     		mov	r3, r0
+ 208 00ae 1846     		mov	r0, r3
+ 209 00b0 4FF40041 		mov	r1, #32768
+ 210 00b4 C4F28441 		movt	r1, 17540
+ 211 00b8 FFF7FEFF 		bl	__aeabi_fadd
+ 212 00bc 0346     		mov	r3, r0
+ 213 00be 1846     		mov	r0, r3
+ 214 00c0 4FF00001 		mov	r1, #0
+ 215 00c4 C4F27A41 		movt	r1, 17530
+ 216 00c8 FFF7FEFF 		bl	__aeabi_fdiv
+ 217 00cc 0346     		mov	r3, r0
+ 218 00ce 1846     		mov	r0, r3
+ 219 00d0 4FF40041 		mov	r1, #32768
+ 220 00d4 C4F23B51 		movt	r1, 17723
+ 221 00d8 FFF7FEFF 		bl	__aeabi_fmul
+ 222 00dc 0346     		mov	r3, r0
+ 223 00de 1846     		mov	r0, r3
+ 224 00e0 FFF7FEFF 		bl	__aeabi_f2uiz
+ 225 00e4 0346     		mov	r3, r0
+ 226 00e6 A364     		str	r3, [r4, #72]
+  29:../Sources/Motor.c **** 	FTM0_C7V = ELEMENTARY_PROC_TIME*((ESC_MINIMUM_POWER+(ESC_POWER_DIFFERENCE)*((float)MotorB/1000))/1
+ 227              		.loc 1 29 0
+ 228 00e8 4FF40044 		mov	r4, #32768
+ 229 00ec C4F20304 		movt	r4, 16387
+ 230 00f0 B868     		ldr	r0, [r7, #8]
+ 231 00f2 FFF7FEFF 		bl	__aeabi_i2f
+ 232 00f6 0346     		mov	r3, r0
+ 233 00f8 1846     		mov	r0, r3
+ 234 00fa 4FF00001 		mov	r1, #0
+ 235 00fe C4F27A41 		movt	r1, 17530
+ 236 0102 FFF7FEFF 		bl	__aeabi_fdiv
+ 237 0106 0346     		mov	r3, r0
+ 238 0108 1846     		mov	r0, r3
+ 239 010a 4FF00001 		mov	r1, #0
+ 240 010e C4F24841 		movt	r1, 17480
+ 241 0112 FFF7FEFF 		bl	__aeabi_fmul
+ 242 0116 0346     		mov	r3, r0
+ 243 0118 1846     		mov	r0, r3
+ 244 011a 4FF40041 		mov	r1, #32768
+ 245 011e C4F28441 		movt	r1, 17540
+ 246 0122 FFF7FEFF 		bl	__aeabi_fadd
+ 247 0126 0346     		mov	r3, r0
+ 248 0128 1846     		mov	r0, r3
+ 249 012a 4FF00001 		mov	r1, #0
+ 250 012e C4F27A41 		movt	r1, 17530
+ 251 0132 FFF7FEFF 		bl	__aeabi_fdiv
+ 252 0136 0346     		mov	r3, r0
+ 253 0138 1846     		mov	r0, r3
+ 254 013a 4FF40041 		mov	r1, #32768
+ 255 013e C4F23B51 		movt	r1, 17723
+ 256 0142 FFF7FEFF 		bl	__aeabi_fmul
+ 257 0146 0346     		mov	r3, r0
+ 258 0148 1846     		mov	r0, r3
+ 259 014a FFF7FEFF 		bl	__aeabi_f2uiz
+ 260 014e 0346     		mov	r3, r0
+ 261 0150 A364     		str	r3, [r4, #72]
+  30:../Sources/Motor.c **** 	FTM0_C7V = ELEMENTARY_PROC_TIME*((ESC_MINIMUM_POWER+(ESC_POWER_DIFFERENCE)*((float)MotorC/1000))/1
+ 262              		.loc 1 30 0
+ 263 0152 4FF40044 		mov	r4, #32768
+ 264 0156 C4F20304 		movt	r4, 16387
+ 265 015a 7868     		ldr	r0, [r7, #4]
+ 266 015c FFF7FEFF 		bl	__aeabi_i2f
+ 267 0160 0346     		mov	r3, r0
+ 268 0162 1846     		mov	r0, r3
+ 269 0164 4FF00001 		mov	r1, #0
+ 270 0168 C4F27A41 		movt	r1, 17530
+ 271 016c FFF7FEFF 		bl	__aeabi_fdiv
+ 272 0170 0346     		mov	r3, r0
+ 273 0172 1846     		mov	r0, r3
+ 274 0174 4FF00001 		mov	r1, #0
+ 275 0178 C4F24841 		movt	r1, 17480
+ 276 017c FFF7FEFF 		bl	__aeabi_fmul
+ 277 0180 0346     		mov	r3, r0
+ 278 0182 1846     		mov	r0, r3
+ 279 0184 4FF40041 		mov	r1, #32768
+ 280 0188 C4F28441 		movt	r1, 17540
+ 281 018c FFF7FEFF 		bl	__aeabi_fadd
+ 282 0190 0346     		mov	r3, r0
+ 283 0192 1846     		mov	r0, r3
+ 284 0194 4FF00001 		mov	r1, #0
+ 285 0198 C4F27A41 		movt	r1, 17530
+ 286 019c FFF7FEFF 		bl	__aeabi_fdiv
+ 287 01a0 0346     		mov	r3, r0
+ 288 01a2 1846     		mov	r0, r3
+ 289 01a4 4FF40041 		mov	r1, #32768
+ 290 01a8 C4F23B51 		movt	r1, 17723
+ 291 01ac FFF7FEFF 		bl	__aeabi_fmul
+ 292 01b0 0346     		mov	r3, r0
+ 293 01b2 1846     		mov	r0, r3
+ 294 01b4 FFF7FEFF 		bl	__aeabi_f2uiz
+ 295 01b8 0346     		mov	r3, r0
+ 296 01ba A364     		str	r3, [r4, #72]
+  31:../Sources/Motor.c **** 	FTM0_C7V = ELEMENTARY_PROC_TIME*((ESC_MINIMUM_POWER+(ESC_POWER_DIFFERENCE)*((float)MotorD/1000))/1
+ 297              		.loc 1 31 0
+ 298 01bc 4FF40044 		mov	r4, #32768
+ 299 01c0 C4F20304 		movt	r4, 16387
+ 300 01c4 3868     		ldr	r0, [r7, #0]
+ 301 01c6 FFF7FEFF 		bl	__aeabi_i2f
+ 302 01ca 0346     		mov	r3, r0
+ 303 01cc 1846     		mov	r0, r3
+ 304 01ce 4FF00001 		mov	r1, #0
+ 305 01d2 C4F27A41 		movt	r1, 17530
+ 306 01d6 FFF7FEFF 		bl	__aeabi_fdiv
+ 307 01da 0346     		mov	r3, r0
+ 308 01dc 1846     		mov	r0, r3
+ 309 01de 4FF00001 		mov	r1, #0
+ 310 01e2 C4F24841 		movt	r1, 17480
+ 311 01e6 FFF7FEFF 		bl	__aeabi_fmul
+ 312 01ea 0346     		mov	r3, r0
+ 313 01ec 1846     		mov	r0, r3
+ 314 01ee 4FF40041 		mov	r1, #32768
+ 315 01f2 C4F28441 		movt	r1, 17540
+ 316 01f6 FFF7FEFF 		bl	__aeabi_fadd
+ 317 01fa 0346     		mov	r3, r0
+ 318 01fc 1846     		mov	r0, r3
+ 319 01fe 4FF00001 		mov	r1, #0
+ 320 0202 C4F27A41 		movt	r1, 17530
+ 321 0206 FFF7FEFF 		bl	__aeabi_fdiv
+ 322 020a 0346     		mov	r3, r0
+ 323 020c 1846     		mov	r0, r3
+ 324 020e 4FF40041 		mov	r1, #32768
+ 325 0212 C4F23B51 		movt	r1, 17723
+ 326 0216 FFF7FEFF 		bl	__aeabi_fmul
+ 327 021a 0346     		mov	r3, r0
+ 328 021c 1846     		mov	r0, r3
+ 329 021e FFF7FEFF 		bl	__aeabi_f2uiz
+ 330 0222 0346     		mov	r3, r0
+ 331 0224 A364     		str	r3, [r4, #72]
+  32:../Sources/Motor.c **** #else
+  33:../Sources/Motor.c **** 	FTM0_C7V = 0;
+  34:../Sources/Motor.c **** 	FTM0_C7V = 0;
+  35:../Sources/Motor.c **** 	FTM0_C7V = 0;
+  36:../Sources/Motor.c **** 	FTM0_C7V = 0;
+  37:../Sources/Motor.c **** #endif
+  38:../Sources/Motor.c **** }
+ 332              		.loc 1 38 0
+ 333 0226 07F11407 		add	r7, r7, #20
+ 334 022a BD46     		mov	sp, r7
+ 335 022c 90BD     		pop	{r4, r7, pc}
+ 336              		.cfi_endproc
+ 337              	.LFE0:
+ 339              		.global	__aeabi_f2d
+ 340              		.global	__aeabi_dmul
+ 341              		.global	__aeabi_dadd
+ 342              		.global	__aeabi_d2f
+ 343 022e 00BF     		.align	2
+ 344              		.global	Convert_FORCEtoPWM
+ 345              		.thumb
+ 346              		.thumb_func
+ 348              	Convert_FORCEtoPWM:
+ 349              	.LFB1:
+  39:../Sources/Motor.c **** 
+  40:../Sources/Motor.c **** float Convert_FORCEtoPWM(float force)
+  41:../Sources/Motor.c **** {
+ 350              		.loc 1 41 0
+ 351              		.cfi_startproc
+ 352              		@ args = 0, pretend = 0, frame = 8
+ 353              		@ frame_needed = 1, uses_anonymous_args = 0
+ 354 0230 B0B5     		push	{r4, r5, r7, lr}
+ 355              	.LCFI3:
+ 356              		.cfi_def_cfa_offset 16
+ 357              		.cfi_offset 4, -16
+ 358              		.cfi_offset 5, -12
+ 359              		.cfi_offset 7, -8
+ 360              		.cfi_offset 14, -4
+ 361 0232 82B0     		sub	sp, sp, #8
+ 362              	.LCFI4:
+ 363              		.cfi_def_cfa_offset 24
+ 364 0234 00AF     		add	r7, sp, #0
+ 365              	.LCFI5:
+ 366              		.cfi_def_cfa_register 7
+ 367 0236 7860     		str	r0, [r7, #4]	@ float
+  42:../Sources/Motor.c **** 	return -0.0006*force*force+1.607*force+58.149;
+ 368              		.loc 1 42 0
+ 369 0238 7868     		ldr	r0, [r7, #4]	@ float
+ 370 023a FFF7FEFF 		bl	__aeabi_f2d
+ 371 023e 0246     		mov	r2, r0
+ 372 0240 0B46     		mov	r3, r1
+ 373 0242 1046     		mov	r0, r2
+ 374 0244 1946     		mov	r1, r3
+ 375 0246 1EA3     		adr	r3, .L12
+ 376 0248 D3E90023 		ldrd	r2, [r3]
+ 377 024c FFF7FEFF 		bl	__aeabi_dmul
+ 378 0250 0246     		mov	r2, r0
+ 379 0252 0B46     		mov	r3, r1
+ 380 0254 1446     		mov	r4, r2
+ 381 0256 1D46     		mov	r5, r3
+ 382 0258 7868     		ldr	r0, [r7, #4]	@ float
+ 383 025a FFF7FEFF 		bl	__aeabi_f2d
+ 384 025e 0246     		mov	r2, r0
+ 385 0260 0B46     		mov	r3, r1
+ 386 0262 2046     		mov	r0, r4
+ 387 0264 2946     		mov	r1, r5
+ 388 0266 FFF7FEFF 		bl	__aeabi_dmul
+ 389 026a 0246     		mov	r2, r0
+ 390 026c 0B46     		mov	r3, r1
+ 391 026e 1446     		mov	r4, r2
+ 392 0270 1D46     		mov	r5, r3
+ 393 0272 7868     		ldr	r0, [r7, #4]	@ float
+ 394 0274 FFF7FEFF 		bl	__aeabi_f2d
+ 395 0278 0246     		mov	r2, r0
+ 396 027a 0B46     		mov	r3, r1
+ 397 027c 1046     		mov	r0, r2
+ 398 027e 1946     		mov	r1, r3
+ 399 0280 11A3     		adr	r3, .L12+8
+ 400 0282 D3E90023 		ldrd	r2, [r3]
+ 401 0286 FFF7FEFF 		bl	__aeabi_dmul
+ 402 028a 0246     		mov	r2, r0
+ 403 028c 0B46     		mov	r3, r1
+ 404 028e 2046     		mov	r0, r4
+ 405 0290 2946     		mov	r1, r5
+ 406 0292 FFF7FEFF 		bl	__aeabi_dadd
+ 407 0296 0246     		mov	r2, r0
+ 408 0298 0B46     		mov	r3, r1
+ 409 029a 1046     		mov	r0, r2
+ 410 029c 1946     		mov	r1, r3
+ 411 029e 0CA3     		adr	r3, .L12+16
+ 412 02a0 D3E90023 		ldrd	r2, [r3]
+ 413 02a4 FFF7FEFF 		bl	__aeabi_dadd
+ 414 02a8 0246     		mov	r2, r0
+ 415 02aa 0B46     		mov	r3, r1
+ 416 02ac 1046     		mov	r0, r2
+ 417 02ae 1946     		mov	r1, r3
+ 418 02b0 FFF7FEFF 		bl	__aeabi_d2f
+ 419 02b4 0346     		mov	r3, r0
+  43:../Sources/Motor.c **** 	return 8.6518*pow(force,0.7005);	//Kiserletileg meghatarozott, lassu
+  44:../Sources/Motor.c **** }
+ 420              		.loc 1 44 0
+ 421 02b6 1846     		mov	r0, r3
+ 422 02b8 07F10807 		add	r7, r7, #8
+ 423 02bc BD46     		mov	sp, r7
+ 424 02be B0BD     		pop	{r4, r5, r7, pc}
+ 425              	.L13:
+ 426              		.align	3
+ 427              	.L12:
+ 428 02c0 61325530 		.word	810889825
+ 429 02c4 2AA943BF 		.word	-1086084822
+ 430 02c8 83C0CAA1 		.word	-1580547965
+ 431 02cc 45B6F93F 		.word	1073329733
+ 432 02d0 508D976E 		.word	1855425872
+ 433 02d4 12134D40 		.word	1078792978
+ 434              		.cfi_endproc
+ 435              	.LFE1:
+ 437              	.Letext0:
+ 438              		.file 2 "c:\\freescale\\cw mcu v10.6\\cross_tools\\arm-none-eabi-gcc-4_7_3\\bin\\../lib/gcc/arm-no
+ 439              		.file 3 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions\\K40\
+ 440              		.file 4 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/integer.h"
+ 441              		.file 5 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/ff.h"
+ 442              		.file 6 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/i
+ 443              		.file 7 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/d
+ 444              		.file 8 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/interrupts.h"
+ 445              		.file 9 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/SDcard.h"
+ 446              		.file 10 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/MPU6050.h"
+ 447              		.file 11 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/BMP180.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 Motor.c
+                            *COM*:00000004 I2C_Variable
+                            *COM*:00000001 uart_data
+                            *COM*:0000003c adc_data
+                            *COM*:00000004 Kp
+                            *COM*:00000004 Kd
+                            *COM*:00000004 Ki
+                            *COM*:00000004 zKp
+                            *COM*:00000004 zKd
+                            *COM*:00000004 basepower
+                            *COM*:00000004 setpoint_x
+                            *COM*:00000004 setpoint_y
+                            *COM*:00000004 setpoint_z
+                            *COM*:00000004 setpoint_alt
+                            *COM*:00000004 batt1_vol
+                            *COM*:00000004 batt2_vol
+                            *COM*:00000004 batt3_vol
+                            *COM*:00000004 BATT_VOLT
+                            *COM*:00000230 FatFs
+                            *COM*:00000224 fil
+                            *COM*:00000002 GYRO_XOUT_OFFSET
+                            *COM*:00000002 GYRO_YOUT_OFFSET
+                            *COM*:00000002 GYRO_ZOUT_OFFSET
+                            *COM*:00000002 ACCEL_XOUT_OFFSET
+                            *COM*:00000002 ACCEL_YOUT_OFFSET
+                            *COM*:00000002 ACCEL_ZOUT_OFFSET
+                            *COM*:00000004 GYRO_XANGLE
+                            *COM*:00000004 GYRO_YANGLE
+                            *COM*:00000004 GYRO_ZANGLE
+                            *COM*:00000002 GYRO_XOUT
+                            *COM*:00000002 GYRO_YOUT
+                            *COM*:00000002 GYRO_ZOUT
+                            *COM*:00000002 ACCEL_XOUT
+                            *COM*:00000002 ACCEL_YOUT
+                            *COM*:00000002 ACCEL_ZOUT
+                            *COM*:00000004 ACCEL_Gx
+                            *COM*:00000004 ACCEL_Gy
+                            *COM*:00000004 ACCEL_Gz
+                            *COM*:00000008 ACCEL
+                            *COM*:00000004 GYRO_XRATE
+                            *COM*:00000004 GYRO_YRATE
+                            *COM*:00000004 GYRO_ZRATE
+                            *COM*:00000004 ACCEL_XANGLE
+                            *COM*:00000004 ACCEL_YANGLE
+                            *COM*:00000004 gyro_xsensitivity
+                            *COM*:00000004 gyro_ysensitivity
+                            *COM*:00000004 gyro_zsensitivity
+                            *COM*:00000004 a
+                            *COM*:00000004 dt
+                            *COM*:00000004 COMPLEMENTARY_XANGLE
+                            *COM*:00000004 COMPLEMENTARY_YANGLE
+                            *COM*:0000000c filter_xterm
+                            *COM*:0000000c filter_yterm
+                            *COM*:00000004 XANGLE_OFFSET
+                            *COM*:00000004 YANGLE_OFFSET
+                            *COM*:00000004 TEMP
+                            *COM*:00000004 timeConstant
+                            *COM*:0000000e MPU_6050_buffer
+                            *COM*:00000002 AC1
+                            *COM*:00000002 AC2
+                            *COM*:00000002 AC3
+                            *COM*:00000002 B1
+                            *COM*:00000002 B2
+                            *COM*:00000002 MB
+                            *COM*:00000002 MC
+                            *COM*:00000002 MD
+                            *COM*:00000002 AC4
+                            *COM*:00000002 AC5
+                            *COM*:00000002 AC6
+                            *COM*:00000004 T
+                            *COM*:00000004 absolute_altittude
+                            *COM*:00000004 start_altittude
+                            *COM*:00000004 relative_altittude
+                            *COM*:00000004 P
+C:\Users\Norbert\AppData\Local\Temp\cczO7WCN.s:96     .text:00000000 $t
+C:\Users\Norbert\AppData\Local\Temp\cczO7WCN.s:101    .text:00000000 SetMotorPWM
+C:\Users\Norbert\AppData\Local\Temp\cczO7WCN.s:348    .text:00000230 Convert_FORCEtoPWM
+C:\Users\Norbert\AppData\Local\Temp\cczO7WCN.s:428    .text:000002c0 $d
+                     .debug_frame:00000010 $d
+                           .group:00000000 wm4.1.6111752e1bd0a440bd5209819217ec83
+                           .group:00000000 wm4.init.h.9.6215b16d96e0eb787ba872245cf7290f
+                           .group:00000000 wm4.stdint.h.10.90b695f550ca6cc3fb08fa83baf01e05
+                           .group:00000000 wm4.newlib.h.8.a9901dc52d1357e3e94003403d43f8b5
+                           .group:00000000 wm4.config.h.193.5fb8ef056cdff92dec3dee9552839d8c
+                           .group:00000000 wm4._ansi.h.23.95dee4059009fe3ab635a191bb73dc66
+                           .group:00000000 wm4.stdio.h.31.f48311dde756a2aec27351b58a280fb9
+                           .group:00000000 wm4.stddef.h.187.9e651b6b8b16e149c1353259404973ea
+                           .group:00000000 wm4.stdarg.h.34.3a23a216c0c293b3d2ea2e89281481e6
+                           .group:00000000 wm4._default_types.h.6.1dbd2e581fd590860c7c17f21d147e91
+                           .group:00000000 wm4.lock.h.2.9bc98482741e5e2a9450b12934a684ea
+                           .group:00000000 wm4.stddef.h.349.31f4c5baff3fa2689010b32028da9c47
+                           .group:00000000 wm4.reent.h.16.9e42f0e588b85e70b2bf6572af57ce64
+                           .group:00000000 wm4.types.h.23.0d949686bbcadd1621462d4fa1f884f9
+                           .group:00000000 wm4.stddef.h.40.cf962ebbec441b3ac67502735f0765db
+                           .group:00000000 wm4.types.h.2.e9cec8c90ab35f77d9f499e06ae02400
+                           .group:00000000 wm4.types.h.80.1f2c84c0d57dd52dd9936095d9ac218e
+                           .group:00000000 wm4.stdio.h.2.4aa87247282eca6c8f36f9de33d8df1a
+                           .group:00000000 wm4.stdio.h.63.dfdea6580b080784d08faace69b6ed76
+                           .group:00000000 wm4.stdarg.h.31.fa591a4b1df9e413e9f5b8097f9ae89d
+                           .group:00000000 wm4.string.h.8.ef946ad0bc9ad5c970c365dcd1fc4b0a
+                           .group:00000000 wm4.stddef.h.161.e50ff8a9d5d1abbc15641da28ac571bf
+                           .group:00000000 wm4.string.h.86.d5c872ff52e2712c985b588a0ef39f3c
+                           .group:00000000 wm4.math.h.35.07c7797db9e98c6f49a07908290b45ed
+                           .group:00000000 wm4.arm_cm4.h.9.78faaf62d86eb97a647af1ebafb07a11
+                           .group:00000000 wm4.SysTick.h.3.6f4da7f8fb96288ed4bbb4cee119df1f
+                           .group:00000000 wm4.Clock.h.3.a53d5ed3b11823f56a6aca141130352b
+                           .group:00000000 wm4.MK40X256VMD100.h.96.72dc045102cc699ba440f8fa0b280550
+                           .group:00000000 wm4.i2c.h.1.3f1b2e4dcc6bdba977be59d8a51e893b
+                           .group:00000000 wm4.misc.h.9.baaf43d8702a540222c668d182f75475
+                           .group:00000000 wm4.PWM.h.9.e42d58c40ee648255e53f4e4738007a9
+                           .group:00000000 wm4.SPI.h.9.60f1cb4029034538da62861db028322d
+                           .group:00000000 wm4.ADC.h.9.e7a31df2daef26f2c286655e5d3c10dd
+                           .group:00000000 wm4.dma.h.9.96660ff1bef0aa806d84c8ba8408982d
+                           .group:00000000 wm4.main.h.9.81396d5b502c9a6873858dab1b488864
+                           .group:00000000 wm4.ffconf.h.6.276819a3a49a7ae37f54890eecb94e63
+                           .group:00000000 wm4.ff.h.45.a981520ef44c98f5ccd354741039de67
+                           .group:00000000 wm4.SDcard.h.13.e5067f919396cc348c323ee4b231e5ee
+                           .group:00000000 wm4.diskio.h.6.da50361b93ad53e5f0de9110dc9ad28d
+                           .group:00000000 wm4.MPU6050.h.9.b96a5ef9f24cf228b62beca78b916cfc
+                           .group:00000000 wm4.BMP180.h.9.1e786092deac7b246665fc1406fb0f7b
+
+UNDEFINED SYMBOLS
+__aeabi_i2f
+__aeabi_fdiv
+__aeabi_fmul
+__aeabi_fadd
+__aeabi_f2uiz
+__aeabi_f2d
+__aeabi_dmul
+__aeabi_dadd
+__aeabi_d2f

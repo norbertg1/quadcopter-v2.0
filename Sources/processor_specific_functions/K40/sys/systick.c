@@ -1,49 +1,38 @@
-/*
- * systick.c
- *
- *  Created on: Jul 14, 2013
- *      Author: ML
- */
+#include "init.h"
+#include "processor_specific_functions\K40\sys\derivative.h"
 
-#include "processor_specific_functions\k40\sys\derivative.h"
-#include "processor_specific_functions\k40\sys\systick.h"
-#include "processor_specific_functions\k40\sys\clock.h"
 
-static volatile uint32_t DelayTimerTick = 0;
-volatile uint32_t Tick = 0;
+//Since this SysTick is part of the Cortex M4 Core,   you need to look in the 
+//Cortex M4 Generic Users Guide (ARM DUI 0553A)
 
-void initSysTick(void)
+//See Section 4.4
+void InitSysTick()
 {
-	SYST_RVR = CORE_CLOCK / SYSTICK_FREQUENCY;	// Set the reload to our desired frequency
-	SYST_CVR = 0; // Reset the current value
+	SYST_RVR = CORE_CLOCK/SYSTICK_FREQUENCY;
 	SYST_CSR = SysTick_CSR_ENABLE_MASK | SysTick_CSR_TICKINT_MASK | SysTick_CSR_CLKSOURCE_MASK;
-	
-	// IMPORTANT! Systick is part of cortex core not a kinetis peripheral
-	// its interrupt line is not passed through NVIC. You need to make sure that
-	// the SysTickIRQ function is populated in the vector table. See the kinetis_sysinit.c file
+
+	//Important!  Since the Systick is part of the Cortex core and NOT a kinetis peripheral
+	// its Interrupt line is not passed through NVIC.   You need to make sure that
+	//the SysTickIRQ function is poopulated in the vector table.  See the kinetis_sysinit.c file
 }
 
-void SysTick_Handler(void)
-{
-		DelayTimerTick++;
-}
+static volatile unsigned int DelayTimerTick = 0;
 
-void clearSysTick(void)
+void SysTickIrq()
 {
-	Tick = DelayTimerTick;
-}
-
-int getSysTick(void)
-{
-	return (DelayTimerTick - Tick);
-}
-
-void Delay_mS(uint32_t tick_Ms)
-{
-	DelayTimerTick = 0;
-	
-	while(DelayTimerTick < tick_Ms)
+	if(DelayTimerTick<0xFFFFFFFF)
 	{
-		
+		DelayTimerTick++;
 	}
 }
+
+void Delay_mS(unsigned int TicksIn_mS)
+{
+	DelayTimerTick = 0;
+
+	while(DelayTimerTick<TicksIn_mS)
+	{
+		//asm("WFI"); // wait for an interrupt
+	}
+}
+

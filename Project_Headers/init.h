@@ -46,10 +46,10 @@
 //KL25Z
 #ifdef K40
 #include "processor_specific_functions\K40\sys\arm_cm4.h"
-#include "processor_specific_functions\K40\sys\systick.h"
-#include "processor_specific_functions\K40\sys\clock.h"
+#include "processor_specific_functions\K40\sys\SysTick.h"
+#include "processor_specific_functions\K40\sys\Clock.h"
 #include "processor_specific_functions\K40\sys\derivative.h"
-#include "processor_specific_functions\K40\sys\MK20D10.h"
+//#include "processor_specific_functions\K40\sys\MK40DZ10.h"
 
 #include "processor_specific_functions/K40/i2c.h"
 #include "processor_specific_functions/K40/misc.h"

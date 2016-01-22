@@ -145,22 +145,22 @@ int main(void)
 	fr=create_log(&fil);
 	fr=f_write(&fil," No.    A     B     C     D   acc.x acc.y acc.z res.x res.y res.z timer\r\n",70,&x);	
 	
-	Zero_Sensors();
+	//Zero_Sensors();
 	motor_test();
 	a=1.0/(1+(1.0/400.0));
 	dt=0.0025;
 	
 	ADC0_SC1A = (8 | 0b1000000);		//start ADC conversion
 	enable_PID_interrupts
-	enable_SDcard_interrupts
+//	enable_SDcard_interrupts
 	uint16_t p=0,t=0;
 	while(1)
 	{	  
-		UART1_S1 &= UART_S1_OR_MASK;		//UARTra kell debuggolásnal, receive overrun
+	//	UART1_S1 &= UART_S1_OR_MASK;		//UARTra kell debuggolásnal, receive overrun
 		error(&fr);
 		t++;
 		//Set_LEDPWM(0,0,p);
-		SDcardw_Interrupt();
+	//	SDcardw_Interrupt();
 	//	ADC();
 	//	FTM0_C4V=(15600/2)-200*COMPLEMENTARY_YANGLE;	//GREEN LED PWM gyro+acc
 	//	FTM0_C2V=(15600/2)+200*COMPLEMENTARY_YANGLE;	//RED LED PWM	gyro+acc

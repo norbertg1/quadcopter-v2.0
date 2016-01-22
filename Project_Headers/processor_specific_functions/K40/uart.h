@@ -1,46 +1,20 @@
 /*
- * UART.h
+ * File:		uart.h
+ * Purpose:     Provide common ColdFire UART routines for polled serial IO
  *
- *  Created on: Mar 18, 2015
- *      Author: Norbi
+ * Notes:
  */
 
-#ifndef UART_H_
-#define UART_H_
+#ifndef __UART_H__
+#define __UART_H__
 
-#include <stdint.h>
+/********************************************************************/
 
-#define SDA_SERIAL_BAUD		115200
-#define SDA_SERIAL_OUTGOING_QUEUE_SIZE	2048
-#define SDA_SERIAL_INCOMING_QUEUE_SIZE	128
+void uart_init (UART_MemMapPtr, int, int);
+char uart_getchar (UART_MemMapPtr);
+void uart_putchar (UART_MemMapPtr, char);
+int uart_getchar_present (UART_MemMapPtr);
+void TransmitData(char TransData[]);
 
-#define QUEUE_FULL       -1
-#define QUEUE_EMPTY      -2
-#define QUEUE_OK          0
-
-typedef struct {
-    
-	uint16_t ReadPtr;
-    uint16_t WritePtr;
-    uint16_t QueueSize;
-    uint8_t *QueueStorage;
-    
-} ByteQueue;
-
-
-void InitUARTs();
-void UART_Process();
-void uart_putchar (UART_MemMapPtr channel, char ch);
-char uart_getchar (UART_MemMapPtr channel);
-int uart_getchar_present (UART_MemMapPtr channel);
-void uart_transmitdata(UART_MemMapPtr channel,char TransData[]);
-void uart1_init (int sysclk, int baud);
-void uart2_init (int sysclk, int baud);
-
-extern ByteQueue SDA_SERIAL_OUTGOING_QUEUE;
-extern ByteQueue SDA_SERIAL_INCOMING_QUEUE;
-
-uint8_t SDA_SERIAL_OUTGOING_QUEUE_Storage[SDA_SERIAL_OUTGOING_QUEUE_SIZE];
-uint8_t SDA_SERIAL_INCOMING_QUEUE_Storage[SDA_SERIAL_INCOMING_QUEUE_SIZE];
-
-#endif /* UART_H_ */
+/********************************************************************/
+#endif /* __UART_H__ */

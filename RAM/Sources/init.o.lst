@@ -1,0 +1,353 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"init.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	I2C_Variable,4,4
+  19              		.comm	uart_data,1,1
+  20              		.comm	adc_data,60,4
+  21              		.comm	Kp,4,4
+  22              		.comm	Kd,4,4
+  23              		.comm	Ki,4,4
+  24              		.comm	zKp,4,4
+  25              		.comm	zKd,4,4
+  26              		.comm	basepower,4,4
+  27              		.comm	setpoint_x,4,4
+  28              		.comm	setpoint_y,4,4
+  29              		.comm	setpoint_z,4,4
+  30              		.comm	setpoint_alt,4,4
+  31              		.comm	batt1_vol,4,4
+  32              		.comm	batt2_vol,4,4
+  33              		.comm	batt3_vol,4,4
+  34              		.comm	BATT_VOLT,4,4
+  35              		.comm	FatFs,560,4
+  36              		.comm	fil,548,4
+  37              		.comm	GYRO_XOUT_OFFSET,2,2
+  38              		.comm	GYRO_YOUT_OFFSET,2,2
+  39              		.comm	GYRO_ZOUT_OFFSET,2,2
+  40              		.comm	ACCEL_XOUT_OFFSET,2,2
+  41              		.comm	ACCEL_YOUT_OFFSET,2,2
+  42              		.comm	ACCEL_ZOUT_OFFSET,2,2
+  43              		.comm	GYRO_XANGLE,4,4
+  44              		.comm	GYRO_YANGLE,4,4
+  45              		.comm	GYRO_ZANGLE,4,4
+  46              		.comm	GYRO_XOUT,2,2
+  47              		.comm	GYRO_YOUT,2,2
+  48              		.comm	GYRO_ZOUT,2,2
+  49              		.comm	ACCEL_XOUT,2,2
+  50              		.comm	ACCEL_YOUT,2,2
+  51              		.comm	ACCEL_ZOUT,2,2
+  52              		.comm	ACCEL_Gx,4,4
+  53              		.comm	ACCEL_Gy,4,4
+  54              		.comm	ACCEL_Gz,4,4
+  55              		.comm	ACCEL,8,8
+  56              		.comm	GYRO_XRATE,4,4
+  57              		.comm	GYRO_YRATE,4,4
+  58              		.comm	GYRO_ZRATE,4,4
+  59              		.comm	ACCEL_XANGLE,4,4
+  60              		.comm	ACCEL_YANGLE,4,4
+  61              		.comm	gyro_xsensitivity,4,4
+  62              		.comm	gyro_ysensitivity,4,4
+  63              		.comm	gyro_zsensitivity,4,4
+  64              		.comm	a,4,4
+  65              		.comm	dt,4,4
+  66              		.comm	COMPLEMENTARY_XANGLE,4,4
+  67              		.comm	COMPLEMENTARY_YANGLE,4,4
+  68              		.comm	filter_xterm,12,4
+  69              		.comm	filter_yterm,12,4
+  70              		.comm	XANGLE_OFFSET,4,4
+  71              		.comm	YANGLE_OFFSET,4,4
+  72              		.comm	TEMP,4,4
+  73              		.comm	timeConstant,4,4
+  74              		.comm	MPU_6050_buffer,14,4
+  75              		.comm	AC1,2,2
+  76              		.comm	AC2,2,2
+  77              		.comm	AC3,2,2
+  78              		.comm	B1,2,2
+  79              		.comm	B2,2,2
+  80              		.comm	MB,2,2
+  81              		.comm	MC,2,2
+  82              		.comm	MD,2,2
+  83              		.comm	AC4,2,2
+  84              		.comm	AC5,2,2
+  85              		.comm	AC6,2,2
+  86              		.comm	T,4,4
+  87              		.comm	absolute_altittude,4,4
+  88              		.comm	start_altittude,4,4
+  89              		.comm	relative_altittude,4,4
+  90              		.comm	P,4,4
+  91              		.align	2
+  92              		.global	initInterrupts
+  93              		.thumb
+  94              		.thumb_func
+  96              	initInterrupts:
+  97              	.LFB0:
+  98              		.file 1 "../Sources/init.c"
+   1:../Sources/init.c **** #include "init.h"
+   2:../Sources/init.c **** 
+   3:../Sources/init.c **** void initInterrupts()		//MAX priority is 3!
+   4:../Sources/init.c **** {
+  99              		.loc 1 4 0
+ 100              		.cfi_startproc
+ 101              		@ args = 0, pretend = 0, frame = 0
+ 102              		@ frame_needed = 1, uses_anonymous_args = 0
+ 103 0000 80B5     		push	{r7, lr}
+ 104              	.LCFI0:
+ 105              		.cfi_def_cfa_offset 8
+ 106              		.cfi_offset 7, -8
+ 107              		.cfi_offset 14, -4
+ 108 0002 00AF     		add	r7, sp, #0
+ 109              	.LCFI1:
+ 110              		.cfi_def_cfa_register 7
+   5:../Sources/init.c **** 	enable_irq(INT_PIT0-16);		//PID Interrupt, Initialize the NVIC to enable the specified IRQ
+ 111              		.loc 1 5 0
+ 112 0004 4FF04400 		mov	r0, #68
+ 113 0008 FFF7FEFF 		bl	enable_irq
+   6:../Sources/init.c **** 	set_irq_priority (INT_PIT0-16, 1);	//Set priority 2
+ 114              		.loc 1 6 0
+ 115 000c 4FF04400 		mov	r0, #68
+ 116 0010 4FF00101 		mov	r1, #1
+ 117 0014 FFF7FEFF 		bl	set_irq_priority
+   7:../Sources/init.c **** 	//enable_irq(INT_UART1_RX_TX-16);			//Interrupt from data on bleutooth module	
+   8:../Sources/init.c **** 	//set_irq_priority (INT_UART1_RX_TX - 16, 0);
+   9:../Sources/init.c **** /*	enable_irq(INT_PORTA - 16);					//Interrupt from bluetooth module when lost signal
+  10:../Sources/init.c **** 	set_irq_priority (INT_PORTA - 16, 3);*/
+  11:../Sources/init.c **** //	enable_irq(INT_ADC0 - 16);		// Initialize the NVIC to enable the specified IRQ
+  12:../Sources/init.c **** //	set_irq_priority (INT_ADC0 - 16, 4); //Set priority 4 */
+  13:../Sources/init.c **** 	//enable_irq(INT_TPM2 - 16);		//SDcard log interrupt Initialize the NVIC to enable the specified I
+  14:../Sources/init.c **** 	//set_irq_priority (INT_TPM2 - 16, 3); //Set priority 3
+  15:../Sources/init.c **** }
+ 118              		.loc 1 15 0
+ 119 0018 80BD     		pop	{r7, pc}
+ 120              		.cfi_endproc
+ 121              	.LFE0:
+ 123 001a 00BF     		.align	2
+ 124              		.global	Init
+ 125              		.thumb
+ 126              		.thumb_func
+ 128              	Init:
+ 129              	.LFB1:
+  16:../Sources/init.c **** 
+  17:../Sources/init.c **** void Init()
+  18:../Sources/init.c **** {
+ 130              		.loc 1 18 0
+ 131              		.cfi_startproc
+ 132              		@ args = 0, pretend = 0, frame = 0
+ 133              		@ frame_needed = 1, uses_anonymous_args = 0
+ 134 001c 80B5     		push	{r7, lr}
+ 135              	.LCFI2:
+ 136              		.cfi_def_cfa_offset 8
+ 137              		.cfi_offset 7, -8
+ 138              		.cfi_offset 14, -4
+ 139 001e 00AF     		add	r7, sp, #0
+ 140              	.LCFI3:
+ 141              		.cfi_def_cfa_register 7
+  19:../Sources/init.c **** 	InitClock();
+ 142              		.loc 1 19 0
+ 143 0020 FFF7FEFF 		bl	InitClock
+  20:../Sources/init.c **** 	InitSysTick();
+ 144              		.loc 1 20 0
+ 145 0024 FFF7FEFF 		bl	InitSysTick
+  21:../Sources/init.c **** 	InitADC();
+ 146              		.loc 1 21 0
+ 147 0028 FFF7FEFF 		bl	InitADC
+  22:../Sources/init.c **** 	InitADCpins();
+ 148              		.loc 1 22 0
+ 149 002c FFF7FEFF 		bl	InitADCpins
+  23:../Sources/init.c **** //	DMA_ADC_init(DMA_BASE_PTR,ADC_SOURCE,CHANNEL_2,(uint32_t)(&ADC0_RA),(uint32_t)(&adc_data[0]),15,
+  24:../Sources/init.c **** 	initLEDs();			//A panelon levo LEDek inicializalasa	vagy ez
+ 150              		.loc 1 24 0
+ 151 0030 FFF7FEFF 		bl	initLEDs
+  25:../Sources/init.c **** 	init_Motor_PWM();
+ 152              		.loc 1 25 0
+ 153 0034 FFF7FEFF 		bl	init_Motor_PWM
+  26:../Sources/init.c **** 	init_Ticker();		//FTM1 Timer idõmérésre használlom, csak bekapcsolom
+ 154              		.loc 1 26 0
+ 155 0038 FFF7FEFF 		bl	init_Ticker
+  27:../Sources/init.c **** 	init_SPI0();		//SPI0 inicialzálása beálitasa
+ 156              		.loc 1 27 0
+ 157 003c FFF7FEFF 		bl	init_SPI0
+  28:../Sources/init.c **** //	init_SD();			//SD kártya inicializalasa
+  29:../Sources/init.c **** 	Init_I2C();		//
+ 158              		.loc 1 29 0
+ 159 0040 FFF7FEFF 		bl	Init_I2C
+  30:../Sources/init.c **** 	//RTC();				//RTC_TSR regiszter másodperc számláló bekapcsolása
+  31:../Sources/init.c **** 	initTimer0();		//Timer for PID interrupt
+ 160              		.loc 1 31 0
+ 161 0044 FFF7FEFF 		bl	initTimer0
+  32:../Sources/init.c **** 	initTimer1();		//Timer for SDcard log interrupt 
+ 162              		.loc 1 32 0
+ 163 0048 FFF7FEFF 		bl	initTimer1
+  33:../Sources/init.c **** //	init_PWM_LED();		//A panelon levo LEDek PWM meghajtasa 	vagy ez
+  34:../Sources/init.c **** //	InitUARTs();
+  35:../Sources/init.c **** //	DMA_uart_init(DMA_BASE_PTR,UART0_SOURCE,CHANNEL_1,(uint32_t)(&UART0_D),(uint32_t)(&uart_data),1,
+  36:../Sources/init.c **** //	initBluetooth(); //Interrupt on lost signal
+  37:../Sources/init.c **** 	initInterrupts();
+ 164              		.loc 1 37 0
+ 165 004c FFF7FEFF 		bl	initInterrupts
+  38:../Sources/init.c **** //	init_MPU6050();
+  39:../Sources/init.c **** //	init_BMP180();
+  40:../Sources/init.c **** 
+  41:../Sources/init.c **** }
+ 166              		.loc 1 41 0
+ 167 0050 80BD     		pop	{r7, pc}
+ 168              		.cfi_endproc
+ 169              	.LFE1:
+ 171              	.Letext0:
+ 172              		.file 2 "c:\\freescale\\cw mcu v10.6\\cross_tools\\arm-none-eabi-gcc-4_7_3\\bin\\../lib/gcc/arm-no
+ 173              		.file 3 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/integer.h"
+ 174              		.file 4 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/ff.h"
+ 175              		.file 5 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/i
+ 176              		.file 6 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/d
+ 177              		.file 7 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/interrupts.h"
+ 178              		.file 8 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/SDcard.h"
+ 179              		.file 9 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/MPU6050.h"
+ 180              		.file 10 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/BMP180.h"
+ 181              		.file 11 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions\\K40
+DEFINED SYMBOLS
+                            *ABS*:00000000 init.c
+                            *COM*:00000004 I2C_Variable
+                            *COM*:00000001 uart_data
+                            *COM*:0000003c adc_data
+                            *COM*:00000004 Kp
+                            *COM*:00000004 Kd
+                            *COM*:00000004 Ki
+                            *COM*:00000004 zKp
+                            *COM*:00000004 zKd
+                            *COM*:00000004 basepower
+                            *COM*:00000004 setpoint_x
+                            *COM*:00000004 setpoint_y
+                            *COM*:00000004 setpoint_z
+                            *COM*:00000004 setpoint_alt
+                            *COM*:00000004 batt1_vol
+                            *COM*:00000004 batt2_vol
+                            *COM*:00000004 batt3_vol
+                            *COM*:00000004 BATT_VOLT
+                            *COM*:00000230 FatFs
+                            *COM*:00000224 fil
+                            *COM*:00000002 GYRO_XOUT_OFFSET
+                            *COM*:00000002 GYRO_YOUT_OFFSET
+                            *COM*:00000002 GYRO_ZOUT_OFFSET
+                            *COM*:00000002 ACCEL_XOUT_OFFSET
+                            *COM*:00000002 ACCEL_YOUT_OFFSET
+                            *COM*:00000002 ACCEL_ZOUT_OFFSET
+                            *COM*:00000004 GYRO_XANGLE
+                            *COM*:00000004 GYRO_YANGLE
+                            *COM*:00000004 GYRO_ZANGLE
+                            *COM*:00000002 GYRO_XOUT
+                            *COM*:00000002 GYRO_YOUT
+                            *COM*:00000002 GYRO_ZOUT
+                            *COM*:00000002 ACCEL_XOUT
+                            *COM*:00000002 ACCEL_YOUT
+                            *COM*:00000002 ACCEL_ZOUT
+                            *COM*:00000004 ACCEL_Gx
+                            *COM*:00000004 ACCEL_Gy
+                            *COM*:00000004 ACCEL_Gz
+                            *COM*:00000008 ACCEL
+                            *COM*:00000004 GYRO_XRATE
+                            *COM*:00000004 GYRO_YRATE
+                            *COM*:00000004 GYRO_ZRATE
+                            *COM*:00000004 ACCEL_XANGLE
+                            *COM*:00000004 ACCEL_YANGLE
+                            *COM*:00000004 gyro_xsensitivity
+                            *COM*:00000004 gyro_ysensitivity
+                            *COM*:00000004 gyro_zsensitivity
+                            *COM*:00000004 a
+                            *COM*:00000004 dt
+                            *COM*:00000004 COMPLEMENTARY_XANGLE
+                            *COM*:00000004 COMPLEMENTARY_YANGLE
+                            *COM*:0000000c filter_xterm
+                            *COM*:0000000c filter_yterm
+                            *COM*:00000004 XANGLE_OFFSET
+                            *COM*:00000004 YANGLE_OFFSET
+                            *COM*:00000004 TEMP
+                            *COM*:00000004 timeConstant
+                            *COM*:0000000e MPU_6050_buffer
+                            *COM*:00000002 AC1
+                            *COM*:00000002 AC2
+                            *COM*:00000002 AC3
+                            *COM*:00000002 B1
+                            *COM*:00000002 B2
+                            *COM*:00000002 MB
+                            *COM*:00000002 MC
+                            *COM*:00000002 MD
+                            *COM*:00000002 AC4
+                            *COM*:00000002 AC5
+                            *COM*:00000002 AC6
+                            *COM*:00000004 T
+                            *COM*:00000004 absolute_altittude
+                            *COM*:00000004 start_altittude
+                            *COM*:00000004 relative_altittude
+                            *COM*:00000004 P
+C:\Users\Norbert\AppData\Local\Temp\ccpp6OcR.s:91     .text:00000000 $t
+C:\Users\Norbert\AppData\Local\Temp\ccpp6OcR.s:96     .text:00000000 initInterrupts
+C:\Users\Norbert\AppData\Local\Temp\ccpp6OcR.s:128    .text:0000001c Init
+                     .debug_frame:00000010 $d
+                           .group:00000000 wm4.1.6111752e1bd0a440bd5209819217ec83
+                           .group:00000000 wm4.init.h.9.6215b16d96e0eb787ba872245cf7290f
+                           .group:00000000 wm4.stdint.h.10.90b695f550ca6cc3fb08fa83baf01e05
+                           .group:00000000 wm4.newlib.h.8.a9901dc52d1357e3e94003403d43f8b5
+                           .group:00000000 wm4.config.h.193.5fb8ef056cdff92dec3dee9552839d8c
+                           .group:00000000 wm4._ansi.h.23.95dee4059009fe3ab635a191bb73dc66
+                           .group:00000000 wm4.stdio.h.31.f48311dde756a2aec27351b58a280fb9
+                           .group:00000000 wm4.stddef.h.187.9e651b6b8b16e149c1353259404973ea
+                           .group:00000000 wm4.stdarg.h.34.3a23a216c0c293b3d2ea2e89281481e6
+                           .group:00000000 wm4._default_types.h.6.1dbd2e581fd590860c7c17f21d147e91
+                           .group:00000000 wm4.lock.h.2.9bc98482741e5e2a9450b12934a684ea
+                           .group:00000000 wm4.stddef.h.349.31f4c5baff3fa2689010b32028da9c47
+                           .group:00000000 wm4.reent.h.16.9e42f0e588b85e70b2bf6572af57ce64
+                           .group:00000000 wm4.types.h.23.0d949686bbcadd1621462d4fa1f884f9
+                           .group:00000000 wm4.stddef.h.40.cf962ebbec441b3ac67502735f0765db
+                           .group:00000000 wm4.types.h.2.e9cec8c90ab35f77d9f499e06ae02400
+                           .group:00000000 wm4.types.h.80.1f2c84c0d57dd52dd9936095d9ac218e
+                           .group:00000000 wm4.stdio.h.2.4aa87247282eca6c8f36f9de33d8df1a
+                           .group:00000000 wm4.stdio.h.63.dfdea6580b080784d08faace69b6ed76
+                           .group:00000000 wm4.stdarg.h.31.fa591a4b1df9e413e9f5b8097f9ae89d
+                           .group:00000000 wm4.string.h.8.ef946ad0bc9ad5c970c365dcd1fc4b0a
+                           .group:00000000 wm4.stddef.h.161.e50ff8a9d5d1abbc15641da28ac571bf
+                           .group:00000000 wm4.string.h.86.d5c872ff52e2712c985b588a0ef39f3c
+                           .group:00000000 wm4.math.h.35.07c7797db9e98c6f49a07908290b45ed
+                           .group:00000000 wm4.arm_cm4.h.9.78faaf62d86eb97a647af1ebafb07a11
+                           .group:00000000 wm4.SysTick.h.3.6f4da7f8fb96288ed4bbb4cee119df1f
+                           .group:00000000 wm4.Clock.h.3.a53d5ed3b11823f56a6aca141130352b
+                           .group:00000000 wm4.MK40X256VMD100.h.96.72dc045102cc699ba440f8fa0b280550
+                           .group:00000000 wm4.i2c.h.1.3f1b2e4dcc6bdba977be59d8a51e893b
+                           .group:00000000 wm4.misc.h.9.baaf43d8702a540222c668d182f75475
+                           .group:00000000 wm4.PWM.h.9.e42d58c40ee648255e53f4e4738007a9
+                           .group:00000000 wm4.SPI.h.9.60f1cb4029034538da62861db028322d
+                           .group:00000000 wm4.ADC.h.9.e7a31df2daef26f2c286655e5d3c10dd
+                           .group:00000000 wm4.dma.h.9.96660ff1bef0aa806d84c8ba8408982d
+                           .group:00000000 wm4.main.h.9.81396d5b502c9a6873858dab1b488864
+                           .group:00000000 wm4.ffconf.h.6.276819a3a49a7ae37f54890eecb94e63
+                           .group:00000000 wm4.ff.h.45.a981520ef44c98f5ccd354741039de67
+                           .group:00000000 wm4.SDcard.h.13.e5067f919396cc348c323ee4b231e5ee
+                           .group:00000000 wm4.diskio.h.6.da50361b93ad53e5f0de9110dc9ad28d
+                           .group:00000000 wm4.MPU6050.h.9.b96a5ef9f24cf228b62beca78b916cfc
+                           .group:00000000 wm4.BMP180.h.9.1e786092deac7b246665fc1406fb0f7b
+
+UNDEFINED SYMBOLS
+enable_irq
+set_irq_priority
+InitClock
+InitSysTick
+InitADC
+InitADCpins
+initLEDs
+init_Motor_PWM
+init_Ticker
+init_SPI0
+Init_I2C
+initTimer0
+initTimer1

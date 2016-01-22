@@ -1,0 +1,387 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"SysTick.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	I2C_Variable,4,4
+  19              		.comm	uart_data,1,1
+  20              		.comm	adc_data,60,4
+  21              		.comm	Kp,4,4
+  22              		.comm	Kd,4,4
+  23              		.comm	Ki,4,4
+  24              		.comm	zKp,4,4
+  25              		.comm	zKd,4,4
+  26              		.comm	basepower,4,4
+  27              		.comm	setpoint_x,4,4
+  28              		.comm	setpoint_y,4,4
+  29              		.comm	setpoint_z,4,4
+  30              		.comm	setpoint_alt,4,4
+  31              		.comm	batt1_vol,4,4
+  32              		.comm	batt2_vol,4,4
+  33              		.comm	batt3_vol,4,4
+  34              		.comm	BATT_VOLT,4,4
+  35              		.comm	FatFs,560,4
+  36              		.comm	fil,548,4
+  37              		.comm	GYRO_XOUT_OFFSET,2,2
+  38              		.comm	GYRO_YOUT_OFFSET,2,2
+  39              		.comm	GYRO_ZOUT_OFFSET,2,2
+  40              		.comm	ACCEL_XOUT_OFFSET,2,2
+  41              		.comm	ACCEL_YOUT_OFFSET,2,2
+  42              		.comm	ACCEL_ZOUT_OFFSET,2,2
+  43              		.comm	GYRO_XANGLE,4,4
+  44              		.comm	GYRO_YANGLE,4,4
+  45              		.comm	GYRO_ZANGLE,4,4
+  46              		.comm	GYRO_XOUT,2,2
+  47              		.comm	GYRO_YOUT,2,2
+  48              		.comm	GYRO_ZOUT,2,2
+  49              		.comm	ACCEL_XOUT,2,2
+  50              		.comm	ACCEL_YOUT,2,2
+  51              		.comm	ACCEL_ZOUT,2,2
+  52              		.comm	ACCEL_Gx,4,4
+  53              		.comm	ACCEL_Gy,4,4
+  54              		.comm	ACCEL_Gz,4,4
+  55              		.comm	ACCEL,8,8
+  56              		.comm	GYRO_XRATE,4,4
+  57              		.comm	GYRO_YRATE,4,4
+  58              		.comm	GYRO_ZRATE,4,4
+  59              		.comm	ACCEL_XANGLE,4,4
+  60              		.comm	ACCEL_YANGLE,4,4
+  61              		.comm	gyro_xsensitivity,4,4
+  62              		.comm	gyro_ysensitivity,4,4
+  63              		.comm	gyro_zsensitivity,4,4
+  64              		.comm	a,4,4
+  65              		.comm	dt,4,4
+  66              		.comm	COMPLEMENTARY_XANGLE,4,4
+  67              		.comm	COMPLEMENTARY_YANGLE,4,4
+  68              		.comm	filter_xterm,12,4
+  69              		.comm	filter_yterm,12,4
+  70              		.comm	XANGLE_OFFSET,4,4
+  71              		.comm	YANGLE_OFFSET,4,4
+  72              		.comm	TEMP,4,4
+  73              		.comm	timeConstant,4,4
+  74              		.comm	MPU_6050_buffer,14,4
+  75              		.comm	AC1,2,2
+  76              		.comm	AC2,2,2
+  77              		.comm	AC3,2,2
+  78              		.comm	B1,2,2
+  79              		.comm	B2,2,2
+  80              		.comm	MB,2,2
+  81              		.comm	MC,2,2
+  82              		.comm	MD,2,2
+  83              		.comm	AC4,2,2
+  84              		.comm	AC5,2,2
+  85              		.comm	AC6,2,2
+  86              		.comm	T,4,4
+  87              		.comm	absolute_altittude,4,4
+  88              		.comm	start_altittude,4,4
+  89              		.comm	relative_altittude,4,4
+  90              		.comm	P,4,4
+  91              		.align	2
+  92              		.global	InitSysTick
+  93              		.thumb
+  94              		.thumb_func
+  96              	InitSysTick:
+  97              	.LFB0:
+  98              		.file 1 "../Sources/processor_specific_functions/K40/sys/SysTick.c"
+   1:../Sources/processor_specific_functions/K40/sys/SysTick.c **** #include "init.h"
+   2:../Sources/processor_specific_functions/K40/sys/SysTick.c **** #include "processor_specific_functions\K40\sys\derivative.h"
+   3:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 
+   4:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 
+   5:../Sources/processor_specific_functions/K40/sys/SysTick.c **** //Since this SysTick is part of the Cortex M4 Core,   you need to look in the 
+   6:../Sources/processor_specific_functions/K40/sys/SysTick.c **** //Cortex M4 Generic Users Guide (ARM DUI 0553A)
+   7:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 
+   8:../Sources/processor_specific_functions/K40/sys/SysTick.c **** //See Section 4.4
+   9:../Sources/processor_specific_functions/K40/sys/SysTick.c **** void InitSysTick()
+  10:../Sources/processor_specific_functions/K40/sys/SysTick.c **** {
+  99              		.loc 1 10 0
+ 100              		.cfi_startproc
+ 101              		@ args = 0, pretend = 0, frame = 0
+ 102              		@ frame_needed = 1, uses_anonymous_args = 0
+ 103              		@ link register save eliminated.
+ 104 0000 80B4     		push	{r7}
+ 105              	.LCFI0:
+ 106              		.cfi_def_cfa_offset 4
+ 107              		.cfi_offset 7, -4
+ 108 0002 00AF     		add	r7, sp, #0
+ 109              	.LCFI1:
+ 110              		.cfi_def_cfa_register 7
+  11:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 	SYST_RVR = CORE_CLOCK/SYSTICK_FREQUENCY;
+ 111              		.loc 1 11 0
+ 112 0004 4EF21003 		movw	r3, #57360
+ 113 0008 CEF20003 		movt	r3, 57344
+ 114 000c 4FF4EE42 		mov	r2, #30464
+ 115 0010 C0F20102 		movt	r2, 1
+ 116 0014 5A60     		str	r2, [r3, #4]
+  12:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 	SYST_CSR = SysTick_CSR_ENABLE_MASK | SysTick_CSR_TICKINT_MASK | SysTick_CSR_CLKSOURCE_MASK;
+ 117              		.loc 1 12 0
+ 118 0016 4EF21003 		movw	r3, #57360
+ 119 001a CEF20003 		movt	r3, 57344
+ 120 001e 4FF00702 		mov	r2, #7
+ 121 0022 1A60     		str	r2, [r3, #0]
+  13:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 
+  14:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 	//Important!  Since the Systick is part of the Cortex core and NOT a kinetis peripheral
+  15:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 	// its Interrupt line is not passed through NVIC.   You need to make sure that
+  16:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 	//the SysTickIRQ function is poopulated in the vector table.  See the kinetis_sysinit.c file
+  17:../Sources/processor_specific_functions/K40/sys/SysTick.c **** }
+ 122              		.loc 1 17 0
+ 123 0024 BD46     		mov	sp, r7
+ 124 0026 80BC     		pop	{r7}
+ 125 0028 7047     		bx	lr
+ 126              		.cfi_endproc
+ 127              	.LFE0:
+ 129              		.bss
+ 130              		.align	2
+ 131              	DelayTimerTick:
+ 132 0000 00000000 		.space	4
+ 133              		.text
+ 134 002a 00BF     		.align	2
+ 135              		.global	SysTickIrq
+ 136              		.thumb
+ 137              		.thumb_func
+ 139              	SysTickIrq:
+ 140              	.LFB1:
+  18:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 
+  19:../Sources/processor_specific_functions/K40/sys/SysTick.c **** static volatile unsigned int DelayTimerTick = 0;
+  20:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 
+  21:../Sources/processor_specific_functions/K40/sys/SysTick.c **** void SysTickIrq()
+  22:../Sources/processor_specific_functions/K40/sys/SysTick.c **** {
+ 141              		.loc 1 22 0
+ 142              		.cfi_startproc
+ 143              		@ args = 0, pretend = 0, frame = 0
+ 144              		@ frame_needed = 1, uses_anonymous_args = 0
+ 145              		@ link register save eliminated.
+ 146 002c 80B4     		push	{r7}
+ 147              	.LCFI2:
+ 148              		.cfi_def_cfa_offset 4
+ 149              		.cfi_offset 7, -4
+ 150 002e 00AF     		add	r7, sp, #0
+ 151              	.LCFI3:
+ 152              		.cfi_def_cfa_register 7
+  23:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 	if(DelayTimerTick<0xFFFFFFFF)
+ 153              		.loc 1 23 0
+ 154 0030 40F20003 		movw	r3, #:lower16:DelayTimerTick
+ 155 0034 C0F20003 		movt	r3, #:upper16:DelayTimerTick
+ 156 0038 1B68     		ldr	r3, [r3, #0]
+ 157 003a B3F1FF3F 		cmp	r3, #-1
+ 158 003e 0BD0     		beq	.L2
+  24:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 	{
+  25:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 		DelayTimerTick++;
+ 159              		.loc 1 25 0
+ 160 0040 40F20003 		movw	r3, #:lower16:DelayTimerTick
+ 161 0044 C0F20003 		movt	r3, #:upper16:DelayTimerTick
+ 162 0048 1B68     		ldr	r3, [r3, #0]
+ 163 004a 03F10102 		add	r2, r3, #1
+ 164 004e 40F20003 		movw	r3, #:lower16:DelayTimerTick
+ 165 0052 C0F20003 		movt	r3, #:upper16:DelayTimerTick
+ 166 0056 1A60     		str	r2, [r3, #0]
+ 167              	.L2:
+  26:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 	}
+  27:../Sources/processor_specific_functions/K40/sys/SysTick.c **** }
+ 168              		.loc 1 27 0
+ 169 0058 BD46     		mov	sp, r7
+ 170 005a 80BC     		pop	{r7}
+ 171 005c 7047     		bx	lr
+ 172              		.cfi_endproc
+ 173              	.LFE1:
+ 175 005e 00BF     		.align	2
+ 176              		.global	Delay_mS
+ 177              		.thumb
+ 178              		.thumb_func
+ 180              	Delay_mS:
+ 181              	.LFB2:
+  28:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 
+  29:../Sources/processor_specific_functions/K40/sys/SysTick.c **** void Delay_mS(unsigned int TicksIn_mS)
+  30:../Sources/processor_specific_functions/K40/sys/SysTick.c **** {
+ 182              		.loc 1 30 0
+ 183              		.cfi_startproc
+ 184              		@ args = 0, pretend = 0, frame = 8
+ 185              		@ frame_needed = 1, uses_anonymous_args = 0
+ 186              		@ link register save eliminated.
+ 187 0060 80B4     		push	{r7}
+ 188              	.LCFI4:
+ 189              		.cfi_def_cfa_offset 4
+ 190              		.cfi_offset 7, -4
+ 191 0062 83B0     		sub	sp, sp, #12
+ 192              	.LCFI5:
+ 193              		.cfi_def_cfa_offset 16
+ 194 0064 00AF     		add	r7, sp, #0
+ 195              	.LCFI6:
+ 196              		.cfi_def_cfa_register 7
+ 197 0066 7860     		str	r0, [r7, #4]
+  31:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 	DelayTimerTick = 0;
+ 198              		.loc 1 31 0
+ 199 0068 40F20003 		movw	r3, #:lower16:DelayTimerTick
+ 200 006c C0F20003 		movt	r3, #:upper16:DelayTimerTick
+ 201 0070 4FF00002 		mov	r2, #0
+ 202 0074 1A60     		str	r2, [r3, #0]
+  32:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 
+  33:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 	while(DelayTimerTick<TicksIn_mS)
+ 203              		.loc 1 33 0
+ 204 0076 00BF     		nop
+ 205              	.L5:
+ 206              		.loc 1 33 0 is_stmt 0 discriminator 1
+ 207 0078 40F20003 		movw	r3, #:lower16:DelayTimerTick
+ 208 007c C0F20003 		movt	r3, #:upper16:DelayTimerTick
+ 209 0080 1A68     		ldr	r2, [r3, #0]
+ 210 0082 7B68     		ldr	r3, [r7, #4]
+ 211 0084 9A42     		cmp	r2, r3
+ 212 0086 F7D3     		bcc	.L5
+  34:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 	{
+  35:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 		//asm("WFI"); // wait for an interrupt
+  36:../Sources/processor_specific_functions/K40/sys/SysTick.c **** 	}
+  37:../Sources/processor_specific_functions/K40/sys/SysTick.c **** }
+ 213              		.loc 1 37 0 is_stmt 1
+ 214 0088 07F10C07 		add	r7, r7, #12
+ 215 008c BD46     		mov	sp, r7
+ 216 008e 80BC     		pop	{r7}
+ 217 0090 7047     		bx	lr
+ 218              		.cfi_endproc
+ 219              	.LFE2:
+ 221              	.Letext0:
+ 222              		.file 2 "c:\\freescale\\cw mcu v10.6\\cross_tools\\arm-none-eabi-gcc-4_7_3\\bin\\../lib/gcc/arm-no
+ 223              		.file 3 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions\\K40\
+ 224              		.file 4 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/integer.h"
+ 225              		.file 5 "E:/saj\341t/quadcopter/quadcopter v2.0/Sources/ff10b/src/ff.h"
+ 226              		.file 6 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/i
+ 227              		.file 7 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/processor_specific_functions/K40/d
+ 228              		.file 8 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/interrupts.h"
+ 229              		.file 9 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/SDcard.h"
+ 230              		.file 10 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/MPU6050.h"
+ 231              		.file 11 "E:/saj\341t/quadcopter/quadcopter v2.0/Project_Headers/BMP180.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 SysTick.c
+                            *COM*:00000004 I2C_Variable
+                            *COM*:00000001 uart_data
+                            *COM*:0000003c adc_data
+                            *COM*:00000004 Kp
+                            *COM*:00000004 Kd
+                            *COM*:00000004 Ki
+                            *COM*:00000004 zKp
+                            *COM*:00000004 zKd
+                            *COM*:00000004 basepower
+                            *COM*:00000004 setpoint_x
+                            *COM*:00000004 setpoint_y
+                            *COM*:00000004 setpoint_z
+                            *COM*:00000004 setpoint_alt
+                            *COM*:00000004 batt1_vol
+                            *COM*:00000004 batt2_vol
+                            *COM*:00000004 batt3_vol
+                            *COM*:00000004 BATT_VOLT
+                            *COM*:00000230 FatFs
+                            *COM*:00000224 fil
+                            *COM*:00000002 GYRO_XOUT_OFFSET
+                            *COM*:00000002 GYRO_YOUT_OFFSET
+                            *COM*:00000002 GYRO_ZOUT_OFFSET
+                            *COM*:00000002 ACCEL_XOUT_OFFSET
+                            *COM*:00000002 ACCEL_YOUT_OFFSET
+                            *COM*:00000002 ACCEL_ZOUT_OFFSET
+                            *COM*:00000004 GYRO_XANGLE
+                            *COM*:00000004 GYRO_YANGLE
+                            *COM*:00000004 GYRO_ZANGLE
+                            *COM*:00000002 GYRO_XOUT
+                            *COM*:00000002 GYRO_YOUT
+                            *COM*:00000002 GYRO_ZOUT
+                            *COM*:00000002 ACCEL_XOUT
+                            *COM*:00000002 ACCEL_YOUT
+                            *COM*:00000002 ACCEL_ZOUT
+                            *COM*:00000004 ACCEL_Gx
+                            *COM*:00000004 ACCEL_Gy
+                            *COM*:00000004 ACCEL_Gz
+                            *COM*:00000008 ACCEL
+                            *COM*:00000004 GYRO_XRATE
+                            *COM*:00000004 GYRO_YRATE
+                            *COM*:00000004 GYRO_ZRATE
+                            *COM*:00000004 ACCEL_XANGLE
+                            *COM*:00000004 ACCEL_YANGLE
+                            *COM*:00000004 gyro_xsensitivity
+                            *COM*:00000004 gyro_ysensitivity
+                            *COM*:00000004 gyro_zsensitivity
+                            *COM*:00000004 a
+                            *COM*:00000004 dt
+                            *COM*:00000004 COMPLEMENTARY_XANGLE
+                            *COM*:00000004 COMPLEMENTARY_YANGLE
+                            *COM*:0000000c filter_xterm
+                            *COM*:0000000c filter_yterm
+                            *COM*:00000004 XANGLE_OFFSET
+                            *COM*:00000004 YANGLE_OFFSET
+                            *COM*:00000004 TEMP
+                            *COM*:00000004 timeConstant
+                            *COM*:0000000e MPU_6050_buffer
+                            *COM*:00000002 AC1
+                            *COM*:00000002 AC2
+                            *COM*:00000002 AC3
+                            *COM*:00000002 B1
+                            *COM*:00000002 B2
+                            *COM*:00000002 MB
+                            *COM*:00000002 MC
+                            *COM*:00000002 MD
+                            *COM*:00000002 AC4
+                            *COM*:00000002 AC5
+                            *COM*:00000002 AC6
+                            *COM*:00000004 T
+                            *COM*:00000004 absolute_altittude
+                            *COM*:00000004 start_altittude
+                            *COM*:00000004 relative_altittude
+                            *COM*:00000004 P
+C:\Users\Norbert\AppData\Local\Temp\cc38ThAy.s:91     .text:00000000 $t
+C:\Users\Norbert\AppData\Local\Temp\cc38ThAy.s:96     .text:00000000 InitSysTick
+C:\Users\Norbert\AppData\Local\Temp\cc38ThAy.s:130    .bss:00000000 $d
+C:\Users\Norbert\AppData\Local\Temp\cc38ThAy.s:131    .bss:00000000 DelayTimerTick
+C:\Users\Norbert\AppData\Local\Temp\cc38ThAy.s:139    .text:0000002c SysTickIrq
+C:\Users\Norbert\AppData\Local\Temp\cc38ThAy.s:180    .text:00000060 Delay_mS
+                     .debug_frame:00000010 $d
+                           .group:00000000 wm4.1.6111752e1bd0a440bd5209819217ec83
+                           .group:00000000 wm4.init.h.9.6215b16d96e0eb787ba872245cf7290f
+                           .group:00000000 wm4.stdint.h.10.90b695f550ca6cc3fb08fa83baf01e05
+                           .group:00000000 wm4.newlib.h.8.a9901dc52d1357e3e94003403d43f8b5
+                           .group:00000000 wm4.config.h.193.5fb8ef056cdff92dec3dee9552839d8c
+                           .group:00000000 wm4._ansi.h.23.95dee4059009fe3ab635a191bb73dc66
+                           .group:00000000 wm4.stdio.h.31.f48311dde756a2aec27351b58a280fb9
+                           .group:00000000 wm4.stddef.h.187.9e651b6b8b16e149c1353259404973ea
+                           .group:00000000 wm4.stdarg.h.34.3a23a216c0c293b3d2ea2e89281481e6
+                           .group:00000000 wm4._default_types.h.6.1dbd2e581fd590860c7c17f21d147e91
+                           .group:00000000 wm4.lock.h.2.9bc98482741e5e2a9450b12934a684ea
+                           .group:00000000 wm4.stddef.h.349.31f4c5baff3fa2689010b32028da9c47
+                           .group:00000000 wm4.reent.h.16.9e42f0e588b85e70b2bf6572af57ce64
+                           .group:00000000 wm4.types.h.23.0d949686bbcadd1621462d4fa1f884f9
+                           .group:00000000 wm4.stddef.h.40.cf962ebbec441b3ac67502735f0765db
+                           .group:00000000 wm4.types.h.2.e9cec8c90ab35f77d9f499e06ae02400
+                           .group:00000000 wm4.types.h.80.1f2c84c0d57dd52dd9936095d9ac218e
+                           .group:00000000 wm4.stdio.h.2.4aa87247282eca6c8f36f9de33d8df1a
+                           .group:00000000 wm4.stdio.h.63.dfdea6580b080784d08faace69b6ed76
+                           .group:00000000 wm4.stdarg.h.31.fa591a4b1df9e413e9f5b8097f9ae89d
+                           .group:00000000 wm4.string.h.8.ef946ad0bc9ad5c970c365dcd1fc4b0a
+                           .group:00000000 wm4.stddef.h.161.e50ff8a9d5d1abbc15641da28ac571bf
+                           .group:00000000 wm4.string.h.86.d5c872ff52e2712c985b588a0ef39f3c
+                           .group:00000000 wm4.math.h.35.07c7797db9e98c6f49a07908290b45ed
+                           .group:00000000 wm4.arm_cm4.h.9.78faaf62d86eb97a647af1ebafb07a11
+                           .group:00000000 wm4.SysTick.h.3.6f4da7f8fb96288ed4bbb4cee119df1f
+                           .group:00000000 wm4.Clock.h.3.a53d5ed3b11823f56a6aca141130352b
+                           .group:00000000 wm4.MK40X256VMD100.h.96.72dc045102cc699ba440f8fa0b280550
+                           .group:00000000 wm4.i2c.h.1.3f1b2e4dcc6bdba977be59d8a51e893b
+                           .group:00000000 wm4.misc.h.9.baaf43d8702a540222c668d182f75475
+                           .group:00000000 wm4.PWM.h.9.e42d58c40ee648255e53f4e4738007a9
+                           .group:00000000 wm4.SPI.h.9.60f1cb4029034538da62861db028322d
+                           .group:00000000 wm4.ADC.h.9.e7a31df2daef26f2c286655e5d3c10dd
+                           .group:00000000 wm4.dma.h.9.96660ff1bef0aa806d84c8ba8408982d
+                           .group:00000000 wm4.main.h.9.81396d5b502c9a6873858dab1b488864
+                           .group:00000000 wm4.ffconf.h.6.276819a3a49a7ae37f54890eecb94e63
+                           .group:00000000 wm4.ff.h.45.a981520ef44c98f5ccd354741039de67
+                           .group:00000000 wm4.SDcard.h.13.e5067f919396cc348c323ee4b231e5ee
+                           .group:00000000 wm4.diskio.h.6.da50361b93ad53e5f0de9110dc9ad28d
+                           .group:00000000 wm4.MPU6050.h.9.b96a5ef9f24cf228b62beca78b916cfc
+                           .group:00000000 wm4.BMP180.h.9.1e786092deac7b246665fc1406fb0f7b
+
+NO UNDEFINED SYMBOLS

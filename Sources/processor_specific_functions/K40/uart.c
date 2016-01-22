@@ -11,6 +11,12 @@
 typedef unsigned short uint16;
 typedef unsigned char uint8;
 
+
+void InitUARTs(){
+	uart_init (UART0_BASE_PTR, CORE_CLOCK/1000, 115200);
+
+}
+
 /********************************************************************/
 /*
  * Initialize the UART for 8N1 operation, interrupts disabled, and
@@ -30,8 +36,10 @@ void uart_init (UART_MemMapPtr uartch, int sysclk, int baud)
     register uint16 sbr, brfa;
     uint8 temp;
     
-    PORTE_PCR0 = PORT_PCR_MUX(3);	//UART1_TX
-    PORTE_PCR1 = PORT_PCR_MUX(3);	//UART1_RX
+    SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK;
+    
+    PORTA_PCR14 = PORT_PCR_MUX(3);	//UART1_TX
+    PORTA_PCR15 = PORT_PCR_MUX(3);	//UART1_RX
 	/* Enable the clock to the selected UART */
     
     if(uartch == UART0_BASE_PTR)

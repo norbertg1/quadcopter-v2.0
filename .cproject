@@ -25,10 +25,21 @@
 							<targetPlatform id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.platform.debug.355203055" isAbstract="false" name="Windows Platform" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.platform.debug"/>
 							<builder buildPath="${ProjDirPath}/RAM" id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.builder.debug.1455883823" keepEnvironmentInBuildfile="false" name="ARM Ltd Windows GNU Make builder" parallelBuildOn="true" parallelBuildWorkspaceOn="true" parallelizationNumber="optimal" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.builder.debug"/>
 							<tool id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.assembler.debug.1489707758" name="ARM Ltd Windows GCC Assembler" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.assembler.debug">
+								<option id="org.eclipse.cdt.cross.arm.gnu.assembler.option.include.paths.903864493" superClass="org.eclipse.cdt.cross.arm.gnu.assembler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:${ProjDirPath}/Project_Headers}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:${ProjDirPath}/Project_Settings/Startup_Code}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/quadcopter v2.0/Sources/ff10b/src}&quot;"/>
+								</option>
 								<inputType id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.assembler.base.input.274531702" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.assembler.base.input"/>
 							</tool>
 							<tool id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.c.compiler.debug.141984900" name="ARM Ltd Windows GCC C Compiler" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.c.compiler.debug">
 								<option id="org.eclipse.cdt.cross.arm.gnu.c.compiler.option.optimization.level.1732457652" name="Optimization level" superClass="org.eclipse.cdt.cross.arm.gnu.c.compiler.option.optimization.level" value="org.eclipse.cdt.cross.arm.gnu.base.option.optimization.level.none" valueType="enumerated"/>
+								<option id="org.eclipse.cdt.cross.arm.gnu.c.compiler.option.include.paths.1824653714" superClass="org.eclipse.cdt.cross.arm.gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/quadcopter v2.0/Sources/ff10b/src/option}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/quadcopter v2.0/Sources/ff10b/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Project_Headers&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Project_Settings/Startup_Code&quot;"/>
+								</option>
 								<inputType id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.c.compiler.base.input.62595770" name="ARM Ltd Windows GCC C Compiler" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.c.compiler.base.input"/>
 								<inputType id="org.eclipse.cdt.cross.arm.gnu.c.compiler.input.asmSourcePreproc.1018683706" superClass="org.eclipse.cdt.cross.arm.gnu.c.compiler.input.asmSourcePreproc"/>
 							</tool>
@@ -45,6 +56,11 @@
 							<tool id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.archiver.base.1373934702" name="ARM Ltd Windows GCC Archiver" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.archiver.base"/>
 							<tool id="com.freescale.cdt.cross.arm.gnu.sourcery.windows.elf.disassembler.debug.1135544074" name="ARM Ltd Windows GCC Disassembler" superClass="com.freescale.cdt.cross.arm.gnu.sourcery.windows.elf.disassembler.debug"/>
 							<tool id="com.freescale.cdt.cross.arm.gnu.sourcery.windows.elf.preprocessor.debug.490714697" name="ARM Ltd Windows GCC C Preprocessor" superClass="com.freescale.cdt.cross.arm.gnu.sourcery.windows.elf.preprocessor.debug">
+								<option id="com.freescale.cdt.cross.arm.gnu.preprocessor.dirs.include.paths.544581859" superClass="com.freescale.cdt.cross.arm.gnu.preprocessor.dirs.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:${ProjDirPath}/Project_Headers}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:${ProjDirPath}/Project_Settings/Startup_Code}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/quadcopter v2.0/Sources/ff10b/src}&quot;"/>
+								</option>
 								<inputType id="com.freescale.cdt.cross.arm.gnu.preprocessor.source.926800263" name="Preprocessor Input" superClass="com.freescale.cdt.cross.arm.gnu.preprocessor.source"/>
 							</tool>
 							<tool id="com.freescale.cdt.cross.arm.gnu.sourcery.windows.elf.cpp.preprocessor.debug.456184433" name="ARM Ltd Windows GCC C++ Preprocessor" superClass="com.freescale.cdt.cross.arm.gnu.sourcery.windows.elf.cpp.preprocessor.debug"/>
@@ -143,6 +159,8 @@
 								<option id="org.eclipse.cdt.cross.arm.gnu.assembler.option.misc.enable.lstfilename.519467287" name="Enable Assembler Listing" superClass="org.eclipse.cdt.cross.arm.gnu.assembler.option.misc.enable.lstfilename" value="false" valueType="boolean"/>
 								<option id="org.eclipse.cdt.cross.arm.gnu.assembler.option.include.paths.1803391762" name="Include paths (-I)" superClass="org.eclipse.cdt.cross.arm.gnu.assembler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/quadcopter v2.0/Sources/ff10b/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:${ProjDirPath}/Project_Headers}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:${ProjDirPath}/Project_Settings/Startup_Code}&quot;"/>
 								</option>
 								<inputType id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.assembler.base.input.782243447" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.assembler.base.input"/>
 							</tool>
@@ -205,6 +223,7 @@
 							<tool id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.printsize.debug.693546895" name="ARM Ltd Windows GNU Print Size" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.printsize.debug"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.1042780132.Project_Settings/Linker_Files/MK20DX256_ram.ld" name="MK20DX256_ram.ld" rcbsApplicability="disable" resourcePath="Project_Settings/Linker_Files/MK20DX256_ram.ld" toolsToInvoke=""/>
 					<folderInfo id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.1042780132.1254960634" name="/" resourcePath="Project_Headers/processor_specific_functions/KL25Z">
 						<toolChain id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.toolchain.debug.208413441" name="ARM Ltd Windows GCC (G++ Lite)" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.toolchain.debug" unusedChildren="">
 							<option id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.option.debugging.level.687793037.247449966" name="Debug level" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.option.debugging.level.687793037"/>
@@ -233,7 +252,6 @@
 							<tool id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.printsize.debug.929874292" name="ARM Ltd Windows GNU Print Size" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.printsize.debug.693546895"/>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.1042780132.Project_Settings/Linker_Files/MK20DX256_ram.ld" name="MK20DX256_ram.ld" rcbsApplicability="disable" resourcePath="Project_Settings/Linker_Files/MK20DX256_ram.ld" toolsToInvoke=""/>
 					<folderInfo id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.1042780132.2104747805" name="/" resourcePath="Sources/processor_specific_functions/KL25Z">
 						<toolChain id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.toolchain.debug.2033924715" name="ARM Ltd Windows GCC (G++ Lite)" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.toolchain.debug" unusedChildren="">
 							<option id="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.option.debugging.level.687793037.631523191" name="Debug level" superClass="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.option.debugging.level.687793037"/>
@@ -263,7 +281,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="Sources/ff10b/doc/img/app4.c|Sources/ff10b/src/option/syscall.c|Sources/ff10b/src/option/ccsbcs.c|Sources/ff10b/doc/img/app3.c|Sources/ff10b/doc/img/app2.c|Sources/ff10b/doc/img/app1.c|Sources/ff10b/src/option/cc950.c|Sources/ff10b/src/option/cc949.c|Sources/ff10b/src/option/cc936.c|Sources/ff10b/src/option/cc932.c|Project_Settings/Linker_Files/MK20DX256_ram.ld|Project_Headers/processor_specific_functions/KL25Z|Sources/processor_specific_functions/eDMA_i2c.c|Sources/processor_specific_functions/KL25Z" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Project_Headers/processor_specific_functions/K40/sys/MK40DZ10.h|Sources/ff10b/doc/img/app4.c|Sources/ff10b/src/option/syscall.c|Sources/ff10b/src/option/ccsbcs.c|Sources/ff10b/doc/img/app3.c|Sources/ff10b/doc/img/app2.c|Sources/ff10b/doc/img/app1.c|Sources/ff10b/src/option/cc950.c|Sources/ff10b/src/option/cc949.c|Sources/ff10b/src/option/cc936.c|Sources/ff10b/src/option/cc932.c|Project_Settings/Linker_Files/MK20DX256_ram.ld|Project_Headers/processor_specific_functions/KL25Z|Sources/processor_specific_functions/eDMA_i2c.c|Sources/processor_specific_functions/KL25Z" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -288,10 +306,10 @@
 		<scannerConfigBuildInfo instanceId="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.646195188;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.646195188.;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.assembler.debug.1489707758;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.assembler.base.input.274531702">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.cross.arm.gnu.ARM_CS_GCCWinManagedMakePerProjectProfileC"/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.646195188;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.646195188.;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.c.compiler.debug.141984900;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.c.compiler.base.input.62595770">
+		<scannerConfigBuildInfo instanceId="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.1042780132;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.1042780132.;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.c.compiler.debug.1834893401;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.c.compiler.base.input.1340030940">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.cross.arm.gnu.ARM_CS_GCCWinManagedMakePerProjectProfileC"/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.1042780132;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.1042780132.;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.c.compiler.debug.1834893401;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.c.compiler.base.input.1340030940">
+		<scannerConfigBuildInfo instanceId="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.646195188;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.646195188.;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.c.compiler.debug.141984900;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.c.compiler.base.input.62595770">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.cross.arm.gnu.ARM_CS_GCCWinManagedMakePerProjectProfileC"/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.1042780132;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.debug.1042780132.;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.elf.assembler.debug.475116500;org.eclipse.cdt.cross.arm.gnu.sourcery.windows.assembler.base.input.782243447">
