@@ -60,7 +60,7 @@
 #include "processor_specific_functions/K40/dma.h"
 #include "processor_specific_functions/K40/rtc.h"
 #include "processor_specific_functions/K40/LCD/Driver_SLCD.h"
-
+#include "turnigy_9x.h"
 #endif
 
 #include "interrupts.h"

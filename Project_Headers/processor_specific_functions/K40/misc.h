@@ -20,6 +20,8 @@
 #define	LED_On_GREEN	GPIOB_PCOR = 1<<19;		//A zöld be kapcsolása
 #define	LED_Off_GREEN	GPIOB_PSOR = 1<<19;		//A zöld ki kapcsolása
 //------------------------LED_init---------------------------------------------
+
+//------------------------Interrupt--------------------------------------------
 #define enable_PID_interrupts		PIT_TCTRL0 |= PIT_TCTRL_TIE_MASK;
 #define enable_SDcard_interrupts	PIT_TCTRL1 |= PIT_TCTRL_TIE_MASK;
 #define clear_PID_interrupt			PIT_TFLG0  |= PIT_TFLG_TIF_MASK;
@@ -39,5 +41,6 @@ void RTC();
 void initTimer0();
 void initTimer1();
 void initBluetooth();
+void init_turnigy9x();
 
 #endif /* MISC_H_ */

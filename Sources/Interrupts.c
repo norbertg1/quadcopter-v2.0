@@ -283,6 +283,14 @@ end:
 	else	ADC1_SC1A=adc_register;
 }
 
+void turnigy_timer(){
+	
+}
+
+void turnigy_interrupt(){
+	
+}
+
 void ADC_DMA()
 {
 	

@@ -14,6 +14,7 @@ C_SRCS_QUOTED += \
 "../Sources/init.c" \
 "../Sources/main.c" \
 "../Sources/sa_mtb.c" \
+"../Sources/turnigy_9x.c" \
 
 C_SRCS += \
 ../Sources/BMP180.c \
@@ -24,6 +25,7 @@ C_SRCS += \
 ../Sources/init.c \
 ../Sources/main.c \
 ../Sources/sa_mtb.c \
+../Sources/turnigy_9x.c \
 
 OBJS += \
 ./Sources/BMP180_c.obj \
@@ -34,6 +36,7 @@ OBJS += \
 ./Sources/init_c.obj \
 ./Sources/main_c.obj \
 ./Sources/sa_mtb_c.obj \
+./Sources/turnigy_9x_c.obj \
 
 OBJS_QUOTED += \
 "./Sources/BMP180_c.obj" \
@@ -44,6 +47,7 @@ OBJS_QUOTED += \
 "./Sources/init_c.obj" \
 "./Sources/main_c.obj" \
 "./Sources/sa_mtb_c.obj" \
+"./Sources/turnigy_9x_c.obj" \
 
 C_DEPS += \
 ./Sources/BMP180_c.d \
@@ -54,6 +58,7 @@ C_DEPS += \
 ./Sources/init_c.d \
 ./Sources/main_c.d \
 ./Sources/sa_mtb_c.d \
+./Sources/turnigy_9x_c.d \
 
 C_DEPS_QUOTED += \
 "./Sources/BMP180_c.d" \
@@ -64,6 +69,7 @@ C_DEPS_QUOTED += \
 "./Sources/init_c.d" \
 "./Sources/main_c.d" \
 "./Sources/sa_mtb_c.d" \
+"./Sources/turnigy_9x_c.d" \
 
 OBJS_OS_FORMAT += \
 ./Sources/BMP180_c.obj \
@@ -74,6 +80,7 @@ OBJS_OS_FORMAT += \
 ./Sources/init_c.obj \
 ./Sources/main_c.obj \
 ./Sources/sa_mtb_c.obj \
+./Sources/turnigy_9x_c.obj \
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -143,6 +150,14 @@ Sources/sa_mtb_c.obj: ../Sources/sa_mtb.c
 	@echo 'Executing target #8 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/sa_mtb.args" -o "Sources/sa_mtb_c.obj" -c "$<" -MD -gccdep
+	@echo 'Finished building: $<'
+	@echo ' '
+
+Sources/turnigy_9x_c.obj: ../Sources/turnigy_9x.c
+	@echo 'Building file: $<'
+	@echo 'Executing target #9 $<'
+	@echo 'Invoking: ARM Compiler'
+	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/turnigy_9x.args" -o "Sources/turnigy_9x_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
 	@echo ' '
 

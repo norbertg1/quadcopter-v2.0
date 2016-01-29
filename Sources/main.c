@@ -166,6 +166,13 @@ int main(void)
 //	fr=f_write(&fil," No.    A     B     C     D   acc.x acc.y acc.z res.x res.y res.z timer\r\n",70,&x);	
 	
 	//Zero_Sensors();
+	while(1){
+		if(ch0_pulse){
+			break;
+		}
+	}
+	
+	
 	motor_test();
 	a=1.0/(1+(1.0/400.0));
 	dt=0.0025;

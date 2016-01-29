@@ -2,7 +2,7 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-#Progress monitor hint: 25
+#Progress monitor hint: 26
 first : all
 -include ../makefile.init
 
@@ -73,7 +73,7 @@ all: warning-messages explicit-dependencies testfreescalecompiler.afx
 # Tool invocations
 testfreescalecompiler.afx: $(OBJS) $(LCF_BUILD_DEPENCENCY) $(USER_OBJS) $(LCF_SRCS)
 	@echo 'Building target: $@'
-	@echo 'Executing target #26 $@'
+	@echo 'Executing target #27 $@'
 	@echo 'Invoking: ARM Linker'
 	"$(ARM_ToolsDirEnv)/mwldarm" -o "testfreescalecompiler.afx" @@"testfreescalecompiler.args"  $(USER_OBJS_QUOTED) $(LIBS_QUOTED)
 	@echo 'Finished building target: $@'

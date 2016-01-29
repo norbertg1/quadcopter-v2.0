@@ -24,8 +24,8 @@ void init_PWM()
 	FTM1_CNT = 0;
 	FTM2_CNT = 0;	
 	// FTM Counter Value - reset counter to zero
-	FTM1_MOD = FTM12_CLOCK/(1<<FTM12_CLK_PRESCALE)/PWM_FREQUNECY;
-	FTM2_MOD = FTM12_CLOCK/(1<<FTM12_CLK_PRESCALE)/PWM_FREQUNECY;  
+	FTM1_MOD = FTM_CLOCK/(1<<FTM_CLK_PRESCALE)/PWM_FREQUNECY;
+	FTM2_MOD = FTM_CLOCK/(1<<FTM_CLK_PRESCALE)/PWM_FREQUNECY;  
 	// Count value of full duty cycle
 	//TMPM0_MOD erteket ha eleri a szamlalo(TPM0_CNT) akkor tortenik a megszakitas(PWM egy periodusa) a szamlalo csak 16bites
 	FTM1_CNTIN = 0;

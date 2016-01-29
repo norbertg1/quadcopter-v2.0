@@ -51,7 +51,7 @@ OBJS_OS_FORMAT += \
 # Each subdirectory must supply rules for building sources it contributes
 Sources/processor_specific_functions/K40/sys/Clock_c.obj: ../Sources/processor_specific_functions/K40/sys/Clock.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #16 $<'
+	@echo 'Executing target #17 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/processor_specific_functions/K40/sys/Clock.args" -o "Sources/processor_specific_functions/K40/sys/Clock_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
@@ -64,7 +64,7 @@ Sources/processor_specific_functions/K40/sys/%.d: ../Sources/processor_specific_
 
 Sources/processor_specific_functions/K40/sys/SysTick_c.obj: ../Sources/processor_specific_functions/K40/sys/SysTick.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #17 $<'
+	@echo 'Executing target #18 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/processor_specific_functions/K40/sys/SysTick.args" -o "Sources/processor_specific_functions/K40/sys/SysTick_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
@@ -72,7 +72,7 @@ Sources/processor_specific_functions/K40/sys/SysTick_c.obj: ../Sources/processor
 
 Sources/processor_specific_functions/K40/sys/arm_cm4_c.obj: ../Sources/processor_specific_functions/K40/sys/arm_cm4.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #18 $<'
+	@echo 'Executing target #19 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/processor_specific_functions/K40/sys/arm_cm4.args" -o "Sources/processor_specific_functions/K40/sys/arm_cm4_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
@@ -80,7 +80,7 @@ Sources/processor_specific_functions/K40/sys/arm_cm4_c.obj: ../Sources/processor
 
 Sources/processor_specific_functions/K40/sys/sa_mtb_c.obj: ../Sources/processor_specific_functions/K40/sys/sa_mtb.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #19 $<'
+	@echo 'Executing target #20 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/processor_specific_functions/K40/sys/sa_mtb.args" -o "Sources/processor_specific_functions/K40/sys/sa_mtb_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'

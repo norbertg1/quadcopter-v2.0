@@ -72,7 +72,7 @@ OBJS_OS_FORMAT += \
 # Each subdirectory must supply rules for building sources it contributes
 Sources/processor_specific_functions/K40/ADC_c.obj: ../Sources/processor_specific_functions/K40/ADC.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #9 $<'
+	@echo 'Executing target #10 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/processor_specific_functions/K40/ADC.args" -o "Sources/processor_specific_functions/K40/ADC_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
@@ -85,7 +85,7 @@ Sources/processor_specific_functions/K40/%.d: ../Sources/processor_specific_func
 
 Sources/processor_specific_functions/K40/PWM_c.obj: ../Sources/processor_specific_functions/K40/PWM.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #10 $<'
+	@echo 'Executing target #11 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/processor_specific_functions/K40/PWM.args" -o "Sources/processor_specific_functions/K40/PWM_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
@@ -93,7 +93,7 @@ Sources/processor_specific_functions/K40/PWM_c.obj: ../Sources/processor_specifi
 
 Sources/processor_specific_functions/K40/SPI_c.obj: ../Sources/processor_specific_functions/K40/SPI.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #11 $<'
+	@echo 'Executing target #12 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/processor_specific_functions/K40/SPI.args" -o "Sources/processor_specific_functions/K40/SPI_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
@@ -101,7 +101,7 @@ Sources/processor_specific_functions/K40/SPI_c.obj: ../Sources/processor_specifi
 
 Sources/processor_specific_functions/K40/i2c_c.obj: ../Sources/processor_specific_functions/K40/i2c.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #12 $<'
+	@echo 'Executing target #13 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/processor_specific_functions/K40/i2c.args" -o "Sources/processor_specific_functions/K40/i2c_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
@@ -109,7 +109,7 @@ Sources/processor_specific_functions/K40/i2c_c.obj: ../Sources/processor_specifi
 
 Sources/processor_specific_functions/K40/misc_c.obj: ../Sources/processor_specific_functions/K40/misc.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #13 $<'
+	@echo 'Executing target #14 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/processor_specific_functions/K40/misc.args" -o "Sources/processor_specific_functions/K40/misc_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
@@ -117,7 +117,7 @@ Sources/processor_specific_functions/K40/misc_c.obj: ../Sources/processor_specif
 
 Sources/processor_specific_functions/K40/rtc_c.obj: ../Sources/processor_specific_functions/K40/rtc.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #14 $<'
+	@echo 'Executing target #15 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/processor_specific_functions/K40/rtc.args" -o "Sources/processor_specific_functions/K40/rtc_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
@@ -125,7 +125,7 @@ Sources/processor_specific_functions/K40/rtc_c.obj: ../Sources/processor_specifi
 
 Sources/processor_specific_functions/K40/uart_c.obj: ../Sources/processor_specific_functions/K40/uart.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #15 $<'
+	@echo 'Executing target #16 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/processor_specific_functions/K40/uart.args" -o "Sources/processor_specific_functions/K40/uart_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'

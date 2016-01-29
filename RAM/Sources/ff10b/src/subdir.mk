@@ -37,7 +37,7 @@ OBJS_OS_FORMAT += \
 # Each subdirectory must supply rules for building sources it contributes
 Sources/ff10b/src/diskio_c.obj: ../Sources/ff10b/src/diskio.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #23 $<'
+	@echo 'Executing target #24 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/ff10b/src/diskio.args" -o "Sources/ff10b/src/diskio_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
@@ -50,7 +50,7 @@ Sources/ff10b/src/%.d: ../Sources/ff10b/src/%.c
 
 Sources/ff10b/src/ff_c.obj: ../Sources/ff10b/src/ff.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #24 $<'
+	@echo 'Executing target #25 $<'
 	@echo 'Invoking: ARM Compiler'
 	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/ff10b/src/ff.args" -o "Sources/ff10b/src/ff_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
