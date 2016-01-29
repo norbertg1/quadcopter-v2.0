@@ -1,7 +1,7 @@
 #include "init.h"
 #include "processor_specific_functions\K40\sys\derivative.h"
 
-/*__relocate_code__*/ void InitClock()
+__relocate_code__ void InitClock()
 {
 // If the internal load capacitors are being used, they should be selected 
 // before enabling the oscillator. Application specific. 16pF and 8pF selected

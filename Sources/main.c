@@ -28,6 +28,9 @@ void Zero_Sensors()
 }
 void calibrate_ESC()						//ESC kalibrasa, 1. Az MCU-t ne a kalibralando ESCrol taplaljuk
 {
+	int A=0; int B=0; int C=0;int D=0;
+	int x=190;
+	
 	initLEDs();			//!!!!!-----MPU6050 plug off%!!!---!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	LED_Toggle_RED;						
 	Delay_mS(100);						
@@ -41,8 +44,7 @@ void calibrate_ESC()						//ESC kalibrasa, 1. Az MCU-t ne a kalibralando ESCrol 
 	LED_On_RED;
 	SetMotorPWM(1,1,1,1);
 	Delay_mS(2000);
-	int A=0,B=0,C=0,D=0;
-	int x=190;
+	
 	while(1)							//4. Varjuk ki még lefut a program
 	{
 		SetMotorPWM(A,B,C,D);
@@ -56,17 +58,34 @@ void motor_test()
 	int i,j;
 	for(i=0;i<4;i++)
 	{
-		for(j=0;j<150;j++)
+		for(j=0;j<135;j++)	//150
 		{
 			Delay_mS(5);
-			//if(i==0) SetMotorPWM(j,0,0,0);
-			//if(i==1) SetMotorPWM(0,j,0,0);
-			//if(i==2) SetMotorPWM(0,0,j,0);
-			//if(i==3) SetMotorPWM(0,0,0,j);
 			SetMotorPWM(j,j,j,j);
 		}
 	}
 }
+
+void motor_identify()
+{
+	int i=0,j;
+	while(1)
+	{
+		for(j=0;j<150;j++)	{					//150
+			_SLCDModule_TurnOffAllSegments();
+			_SLCDModule_PrintNumber(i%4+1,5);
+			if(i%4==0)	SetMotorPWM(j,0,0,0);
+			if(i%4==1)	SetMotorPWM(0,j,0,0);
+			if(i%4==2)	SetMotorPWM(0,0,j,0);
+			if(i%4==3)	SetMotorPWM(0,0,0,j);
+			Delay_mS(5);
+		}
+		i++;
+		//SetMotorPWM(175,0,0,0);
+		Delay_mS(1000);
+	}
+}
+
 void motor_start(int basepower)
 {
 	SetMotorPWM(75,75,75,75);
@@ -135,32 +154,36 @@ void error(FRESULT *fr)
 
 int main(void)
    {	
+	UINT x=5;
+	FRESULT fr;    /* FatFs return code */
+	uint16_t p=0,t=0;
 	Init();
 	//Set_LEDPWM(0,0,0); helyett LCDre valami
 //	calibrate_ESC();	//MPU6050 plug off!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //	calibrate_BATT_voltmeter();
-	UINT x=5;
-	FRESULT fr;    /* FatFs return code */
-	
-	fr=create_log(&fil);
-	fr=f_write(&fil," No.    A     B     C     D   acc.x acc.y acc.z res.x res.y res.z timer\r\n",70,&x);	
+
+//	fr=create_log(&fil);
+//	fr=f_write(&fil," No.    A     B     C     D   acc.x acc.y acc.z res.x res.y res.z timer\r\n",70,&x);	
 	
 	//Zero_Sensors();
 	motor_test();
 	a=1.0/(1+(1.0/400.0));
 	dt=0.0025;
-	
-	ADC0_SC1A = (8 | 0b1000000);		//start ADC conversion
+	ADC0_SC1A = (0 | 0b1000000);		//start ADC conversion
 	enable_PID_interrupts
 //	enable_SDcard_interrupts
-	uint16_t p=0,t=0;
+	_SLCDModule_TurnOffAllSegments();
+	_SLCDModule_TurnOnFreescaleSign();
 	while(1)
 	{	  
-	//	UART1_S1 &= UART_S1_OR_MASK;		//UARTra kell debuggolásnal, receive overrun
+		_SLCDModule_TurnOffAllSegments();
+		_SLCDModule_PrintNumber(basepower,5);
+		//uart_putchar(UART4_BASE_PTR,'a');
+		UART4_S1 &= UART_S1_OR_MASK;		//UARTra kell debuggolásnal, receive overrun
 		error(&fr);
-		t++;
+		
 		//Set_LEDPWM(0,0,p);
-	//	SDcardw_Interrupt();
+		//SDcardw_Interrupt();
 	//	ADC();
 	//	FTM0_C4V=(15600/2)-200*COMPLEMENTARY_YANGLE;	//GREEN LED PWM gyro+acc
 	//	FTM0_C2V=(15600/2)+200*COMPLEMENTARY_YANGLE;	//RED LED PWM	gyro+acc

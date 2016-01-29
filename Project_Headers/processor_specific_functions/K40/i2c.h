@@ -22,4 +22,4 @@ char I2CReadRegister(char SlaveID, char u8RegisterAddress);
 void I2CReadMultiRegisters(char SlaveID, char u8RegisterAddress, char * r,char n);
 void DMA_I2CReadMultiRegisters(char SlaveID, char u8RegisterAddress, char * r,char n);
 
-int I2C_Variable;
+extern int I2C_Variable;

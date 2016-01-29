@@ -11,6 +11,20 @@
 extern "C" {
 #endif
 
+/* Address of Watchdog Unlock Register (16 bits) */
+#if defined MCU_MKE15D7 || defined MCU_MKE14D7
+#define KINETIS_WDOG_UNLOCK_ADDR	0x4003A00E
+#else
+#define KINETIS_WDOG_UNLOCK_ADDR	0x4005200E
+#endif /*MCU_MKE15D7 || MCU_MKE14D7*/
+	
+/* Address of Watchdog Status and Control Register High (16 bits) */
+#if defined MCU_MKE15D7 || defined MCU_MKE14D7
+#define KINETIS_WDOG_STCTRLH_ADDR	0x4003A000
+#else
+#define KINETIS_WDOG_STCTRLH_ADDR	0x40052000
+#endif /*MCU_MKE15D7 || MCU_MKE14D7*/
+	
 /* Unlocking Watchdog sequence words*/
 #define KINETIS_WDOG_UNLOCK_SEQ_1	0xC520
 #define KINETIS_WDOG_UNLOCK_SEQ_2	0xD928
@@ -25,13 +39,23 @@ void __init_hardware();
 
 /*
 ** ===================================================================
-**     Method      :  Default_Handler
+**     Method      :  isr_default
 **
 **     Description :
-**         The default interrupt handler.
+**         The default ISR.
 ** ===================================================================
 */
-void Default_Handler();
+void isr_default(void);
+
+/*
+** ===================================================================
+**     Method      :  isrINT_NMI
+**
+**     Description :
+**         This ISR services the Non Maskable Interrupt interrupt.
+** ===================================================================
+*/
+void isrINT_NMI(void);
 
 #ifdef __cplusplus
 }

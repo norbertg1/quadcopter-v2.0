@@ -44,8 +44,8 @@ void RTC()		//Increment RTC_TSR register every second	KL25
 	Delay_mS(100);
 	RTC_SR |= RTC_SR_TCE_MASK;
 	
-
-	/*SIM_SCGC6 |= SIM_SCGC6_RTC_MASK;	Masodperc szamlalo
+/*
+	SIM_SCGC6 |= SIM_SCGC6_RTC_MASK;	//Masodperc szamlalo
 	RTC_CR |= RTC_CR_OSCE_MASK;
 	Delay_mS(100);
 	RTC_SR = 0;
@@ -65,19 +65,21 @@ void RTC()		//Increment RTC_TSR register every second	KL25
 void initTimer0()		//PIT0 Timer for PID
 {
 	SIM_SCGC6 |= SIM_SCGC6_PIT_MASK;
+	PIT_MCR = 0;
 	PIT_MCR = PIT_MCR_FRZ_MASK;		// Enable PIT module clock with debug freeze
-	PIT_LDVAL0 = CORE_CLOCK / PIT0_OVERFLOW_FREQUENCY;	// Calculate and Load timer reset value
-	PIT_TCTRL0 = PIT_TCTRL_TIE_MASK;	// Enable timer interrupt
-//	PIT0_TCTRL0 |= PIT_TCTRL_TEN_MASK;	// Enable timer
+	PIT_LDVAL0 = PERIPHERAL_BUS_CLOCK / PIT0_OVERFLOW_FREQUENCY;	// Calculate and Load timer reset value
+//	PIT_TCTRL0 = PIT_TCTRL_TIE_MASK;	// Enable timer interrupt
+	PIT_TCTRL0 |= PIT_TCTRL_TEN_MASK;	// Enable timer
 }
 
 void initTimer1()		//TPM2 Timer for SDcard save
 {
 	SIM_SCGC6 |= SIM_SCGC6_PIT_MASK;
+	PIT_MCR = 0;
 	PIT_MCR = PIT_MCR_FRZ_MASK;		// Enable PIT module clock with debug freeze	
-	PIT_LDVAL1 = CORE_CLOCK / PIT1_OVERFLOW_FREQUENCY;	// Calculate and Load timer reset value
-	PIT_TCTRL1 = PIT_TCTRL_TIE_MASK;	// Enable timer interrupt
-//	PIT_TCTRL1 |= PIT_TCTRL_TEN_MASK;	// Enable timer
+	PIT_LDVAL1 = PERIPHERAL_BUS_CLOCK / PIT1_OVERFLOW_FREQUENCY;	// Calculate and Load timer reset value
+//	PIT_TCTRL1 = PIT_TCTRL_TIE_MASK;	// Enable timer interrupt
+	PIT_TCTRL1 |= PIT_TCTRL_TEN_MASK;	// Enable timer
 }
 
 void initBluetooth()		//Configure interrupt on lost signal

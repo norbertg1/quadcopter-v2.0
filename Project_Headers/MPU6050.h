@@ -118,56 +118,56 @@
 #define MPU6050_RA_FIFO_R_W 0x74
 #define MPU6050_RA_WHO_AM_I 0x75
 
-int16_t GYRO_XOUT_OFFSET;
-int16_t GYRO_YOUT_OFFSET;
-int16_t GYRO_ZOUT_OFFSET;
+extern  int16_t GYRO_XOUT_OFFSET;
+extern  int16_t GYRO_YOUT_OFFSET;
+extern  int16_t GYRO_ZOUT_OFFSET;
 
-int16_t ACCEL_XOUT_OFFSET;
-int16_t ACCEL_YOUT_OFFSET;
-int16_t ACCEL_ZOUT_OFFSET;
+extern int16_t ACCEL_XOUT_OFFSET;
+extern int16_t ACCEL_YOUT_OFFSET;
+extern int16_t ACCEL_ZOUT_OFFSET;
 
-float GYRO_XANGLE;
-float GYRO_YANGLE;
-float GYRO_ZANGLE;
+extern float GYRO_XANGLE;
+extern float GYRO_YANGLE;
+extern float GYRO_ZANGLE;
 
-int16_t GYRO_XOUT;
-int16_t GYRO_YOUT;
-int16_t GYRO_ZOUT;
+extern int16_t GYRO_XOUT;
+extern int16_t GYRO_YOUT;
+extern int16_t GYRO_ZOUT;
 
-int16_t ACCEL_XOUT;
-int16_t ACCEL_YOUT;
-int16_t ACCEL_ZOUT;
-float ACCEL_Gx;
-float ACCEL_Gy;
-float ACCEL_Gz;
-double ACCEL;
+extern int16_t ACCEL_XOUT;
+extern int16_t ACCEL_YOUT;
+extern int16_t ACCEL_ZOUT;
+extern float ACCEL_Gx;
+extern float ACCEL_Gy;
+extern float ACCEL_Gz;
+extern double ACCEL;
 
-float GYRO_XRATE;
-float GYRO_YRATE;
-float GYRO_ZRATE;
+extern float GYRO_XRATE;
+extern float GYRO_YRATE;
+extern float GYRO_ZRATE;
 
-float ACCEL_XANGLE;
-float ACCEL_YANGLE;
+extern float ACCEL_XANGLE;
+extern float ACCEL_YANGLE;
 
-float gyro_xsensitivity;
-float gyro_ysensitivity;
-float gyro_zsensitivity;
-float a;
-float dt;
+extern float gyro_xsensitivity;
+extern float gyro_ysensitivity;
+extern float gyro_zsensitivity;
+extern float a;
+extern float dt;
 
-float COMPLEMENTARY_XANGLE;
-float COMPLEMENTARY_YANGLE;
+extern float COMPLEMENTARY_XANGLE;
+extern float COMPLEMENTARY_YANGLE;
 
-float filter_xterm[3];
-float filter_yterm[3];
+extern float filter_xterm[3];
+extern float filter_yterm[3];
 
-float XANGLE_OFFSET,YANGLE_OFFSET;
+extern float XANGLE_OFFSET,YANGLE_OFFSET;
 
-float TEMP;
+extern float TEMP;
 
-float timeConstant;
+extern float timeConstant;
 
-char MPU_6050_buffer[14];
+extern char MPU_6050_buffer[14];
 
 void Get_Accel_Values();
 void Get_Temp();

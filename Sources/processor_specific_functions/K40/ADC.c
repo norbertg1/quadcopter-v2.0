@@ -156,6 +156,7 @@ void InitADC()
 {
 	//Enable the clocks to ADCs 
 	SIM_SCGC6 |= (SIM_SCGC6_ADC0_MASK);
+	SIM_SCGC3 |= (SIM_SCGC3_ADC1_MASK);
     //SIM_SCGC3 |= (SIM_SCGC3_ADC1_MASK);
     
     //Lets calibrate the ADC. 1st setup how the channel will be used.
@@ -199,11 +200,15 @@ void InitADC()
     Master_Adc_Config.STATUS1A = AIEN_ON | DIFF_SINGLE | ADC_SC1_ADCH(31);
   //  Master_Adc_Config.STATUS1B = 0;//AIEN_ON | DIFF_SINGLE | ADC_SC1_ADCH(31);
     
-    ADC_Config_Alt(ADC0_BASE_PTR, &Master_Adc_Config);  // config ADC
- 
+    ADC_Config_Alt(ADC0_BASE_PTR, &Master_Adc_Config);  
+    ADC_Config_Alt(ADC1_BASE_PTR, &Master_Adc_Config);
+    // config ADC
+    
     // Calibrate the ADC in the configuration in which it will be used:
-     ADC_Cal(ADC0_BASE_PTR);                    // do the calibration
-     
+     ADC_Cal(ADC0_BASE_PTR);                   
+     ADC_Cal(ADC1_BASE_PTR);                    
+     // do the calibration
+
     // config the ADC again to desired conditions
     // ADC_Config_Alt(ADC1_BASE_PTR, &Master_Adc_Config);
      // Calibrate the ADC in the configuration in which it will be used:
@@ -224,12 +229,15 @@ void InitADC()
      							| ADC_SC3_AVGS(AVGS_32);
      
      ADC_Config_Alt(ADC0_BASE_PTR, &Master_Adc_Config);
+     ADC_Config_Alt(ADC1_BASE_PTR, &Master_Adc_Config);
      //ADC_Config_Alt(ADC1_BASE_PTR, &Master_Adc_Config);     
 }
 
-InitADCpins()
+void InitADCpins()
 {
-	SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTC_MASK | SIM_SCGC5_PORTD_MASK;
+	//SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK;
+	//PORTB_PCR0 = PORT_PCR_MUX(0);	//ADC0_SE8
+/*	SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTC_MASK | SIM_SCGC5_PORTD_MASK;
 	PORTE_PCR20 = PORT_PCR_MUX(0);	//ADC0_DP0, ADC0_SE0
 	PORTE_PCR21 = PORT_PCR_MUX(0);	//ADC0_DM0, ADC0_SE4a
 	PORTE_PCR22 = PORT_PCR_MUX(0);	//ADC0_DP3, ADC0_SE3
@@ -245,7 +253,7 @@ InitADCpins()
 	PORTB_PCR3 = PORT_PCR_MUX(0);	//ADC0_SE13
 	PORTC_PCR0 = PORT_PCR_MUX(0);	//ADC0_SE14
 	PORTC_PCR1 = PORT_PCR_MUX(0);	//ADC0_SE15
-	PORTE_PCR30 = PORT_PCR_MUX(0);	//ADC0_SE23
+	PORTE_PCR30 = PORT_PCR_MUX(0);	//ADC0_SE23*/
 }
 
 void ADC0_IRQ()

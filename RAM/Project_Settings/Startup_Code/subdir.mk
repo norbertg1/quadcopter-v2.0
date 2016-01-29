@@ -6,64 +6,39 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS_QUOTED += \
-"../Project_Settings/Startup_Code/__arm_end.c" \
-"../Project_Settings/Startup_Code/__arm_start.c" \
 "../Project_Settings/Startup_Code/kinetis_sysinit.c" \
 
 C_SRCS += \
-../Project_Settings/Startup_Code/__arm_end.c \
-../Project_Settings/Startup_Code/__arm_start.c \
 ../Project_Settings/Startup_Code/kinetis_sysinit.c \
 
 OBJS += \
-./Project_Settings/Startup_Code/__arm_end.o \
-./Project_Settings/Startup_Code/__arm_start.o \
-./Project_Settings/Startup_Code/kinetis_sysinit.o \
-
-C_DEPS += \
-./Project_Settings/Startup_Code/__arm_end.d \
-./Project_Settings/Startup_Code/__arm_start.d \
-./Project_Settings/Startup_Code/kinetis_sysinit.d \
+./Project_Settings/Startup_Code/kinetis_sysinit_c.obj \
 
 OBJS_QUOTED += \
-"./Project_Settings/Startup_Code/__arm_end.o" \
-"./Project_Settings/Startup_Code/__arm_start.o" \
-"./Project_Settings/Startup_Code/kinetis_sysinit.o" \
+"./Project_Settings/Startup_Code/kinetis_sysinit_c.obj" \
+
+C_DEPS += \
+./Project_Settings/Startup_Code/kinetis_sysinit_c.d \
 
 C_DEPS_QUOTED += \
-"./Project_Settings/Startup_Code/__arm_end.d" \
-"./Project_Settings/Startup_Code/__arm_start.d" \
-"./Project_Settings/Startup_Code/kinetis_sysinit.d" \
+"./Project_Settings/Startup_Code/kinetis_sysinit_c.d" \
 
 OBJS_OS_FORMAT += \
-./Project_Settings/Startup_Code/__arm_end.o \
-./Project_Settings/Startup_Code/__arm_start.o \
-./Project_Settings/Startup_Code/kinetis_sysinit.o \
+./Project_Settings/Startup_Code/kinetis_sysinit_c.obj \
 
 
 # Each subdirectory must supply rules for building sources it contributes
-Project_Settings/Startup_Code/__arm_end.o: ../Project_Settings/Startup_Code/__arm_end.c
+Project_Settings/Startup_Code/kinetis_sysinit_c.obj: ../Project_Settings/Startup_Code/kinetis_sysinit.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #22 $<'
-	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Project_Settings/Startup_Code/__arm_end.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Project_Settings/Startup_Code/__arm_end.o"
+	@echo 'Executing target #25 $<'
+	@echo 'Invoking: ARM Compiler'
+	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Project_Settings/Startup_Code/kinetis_sysinit.args" -o "Project_Settings/Startup_Code/kinetis_sysinit_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
 	@echo ' '
 
-Project_Settings/Startup_Code/__arm_start.o: ../Project_Settings/Startup_Code/__arm_start.c
-	@echo 'Building file: $<'
-	@echo 'Executing target #23 $<'
-	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Project_Settings/Startup_Code/__arm_start.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Project_Settings/Startup_Code/__arm_start.o"
-	@echo 'Finished building: $<'
-	@echo ' '
-
-Project_Settings/Startup_Code/kinetis_sysinit.o: ../Project_Settings/Startup_Code/kinetis_sysinit.c
-	@echo 'Building file: $<'
-	@echo 'Executing target #24 $<'
-	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Project_Settings/Startup_Code/kinetis_sysinit.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Project_Settings/Startup_Code/kinetis_sysinit.o"
-	@echo 'Finished building: $<'
+Project_Settings/Startup_Code/%.d: ../Project_Settings/Startup_Code/%.c
+	@echo 'Regenerating dependency file: $@'
+	
 	@echo ' '
 
 

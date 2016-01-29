@@ -14,40 +14,45 @@ C_SRCS += \
 ../Sources/ff10b/src/ff.c \
 
 OBJS += \
-./Sources/ff10b/src/diskio.o \
-./Sources/ff10b/src/ff.o \
-
-C_DEPS += \
-./Sources/ff10b/src/diskio.d \
-./Sources/ff10b/src/ff.d \
+./Sources/ff10b/src/diskio_c.obj \
+./Sources/ff10b/src/ff_c.obj \
 
 OBJS_QUOTED += \
-"./Sources/ff10b/src/diskio.o" \
-"./Sources/ff10b/src/ff.o" \
+"./Sources/ff10b/src/diskio_c.obj" \
+"./Sources/ff10b/src/ff_c.obj" \
+
+C_DEPS += \
+./Sources/ff10b/src/diskio_c.d \
+./Sources/ff10b/src/ff_c.d \
 
 C_DEPS_QUOTED += \
-"./Sources/ff10b/src/diskio.d" \
-"./Sources/ff10b/src/ff.d" \
+"./Sources/ff10b/src/diskio_c.d" \
+"./Sources/ff10b/src/ff_c.d" \
 
 OBJS_OS_FORMAT += \
-./Sources/ff10b/src/diskio.o \
-./Sources/ff10b/src/ff.o \
+./Sources/ff10b/src/diskio_c.obj \
+./Sources/ff10b/src/ff_c.obj \
 
 
 # Each subdirectory must supply rules for building sources it contributes
-Sources/ff10b/src/diskio.o: ../Sources/ff10b/src/diskio.c
+Sources/ff10b/src/diskio_c.obj: ../Sources/ff10b/src/diskio.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #20 $<'
-	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/ff10b/src/diskio.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/ff10b/src/diskio.o"
+	@echo 'Executing target #23 $<'
+	@echo 'Invoking: ARM Compiler'
+	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/ff10b/src/diskio.args" -o "Sources/ff10b/src/diskio_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
 	@echo ' '
 
-Sources/ff10b/src/ff.o: ../Sources/ff10b/src/ff.c
+Sources/ff10b/src/%.d: ../Sources/ff10b/src/%.c
+	@echo 'Regenerating dependency file: $@'
+	
+	@echo ' '
+
+Sources/ff10b/src/ff_c.obj: ../Sources/ff10b/src/ff.c
 	@echo 'Building file: $<'
-	@echo 'Executing target #21 $<'
-	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/ff10b/src/ff.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/ff10b/src/ff.o"
+	@echo 'Executing target #24 $<'
+	@echo 'Invoking: ARM Compiler'
+	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/ff10b/src/ff.args" -o "Sources/ff10b/src/ff_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
 	@echo ' '
 

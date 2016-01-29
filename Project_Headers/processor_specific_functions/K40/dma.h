@@ -24,7 +24,7 @@ void DMA_UART_init(DMA_MemMapPtr DMA_Channel, uint8_t dma_source, int index,
 void DMA_ADC_init(DMA_MemMapPtr DMA_Channel, uint8_t dma_source, int index,
 		uint32_t source_addr, uint32_t dest_addr, uint32_t num_bytes,uint32_t bytes_per_xfer);
 
-char uart_data;
-long adc_data[15];
+extern char uart_data;
+extern long adc_data[15];
 
 #endif /* DMA_H_ */

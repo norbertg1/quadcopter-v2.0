@@ -58,6 +58,9 @@
 #include "processor_specific_functions/K40/uart.h"
 #include "processor_specific_functions/K40/ADC.h"
 #include "processor_specific_functions/K40/dma.h"
+#include "processor_specific_functions/K40/rtc.h"
+#include "processor_specific_functions/K40/LCD/Driver_SLCD.h"
+
 #endif
 
 #include "interrupts.h"

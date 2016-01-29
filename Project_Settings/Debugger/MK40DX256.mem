@@ -8,7 +8,7 @@
 //  bus error.
 //
 // Board:
-//  Kinetis K20DX256M10
+//  Kinetis K40DX256M10
 //
 // Reference:
 //  -
@@ -17,7 +17,7 @@
 // All reserved ranges read back 0xBABA...
 reservedchar 0xBA
 
-usederivative "MK20D10"
+usederivative "MK40D10"
 
 //         Memory Map:
 //         ----------------------------------------------------------------------

@@ -6,6 +6,13 @@
  */
 
 #include "processor_specific_functions/K40/sys/derivative.h" /* include peripheral declarations */
+/*
+ * File:		arm_cm4.c
+ * Purpose:		Generic high-level routines for ARM Cortex M4 processors
+ *
+ * Notes:
+ */
+
 
 /***********************************************************************/
 /*
@@ -152,25 +159,26 @@ void disable_irq (int irq)
  * prio   irq priority. 0-15 levels. 0 max priority
  */
 
+#define ARM_INTERRUPT_LEVEL_BITS          4
+
 void set_irq_priority (int irq, int prio)
 {
     /*irq priority pointer*/
-   unsigned char *prio_reg;
+    uint8_t *prio_reg;
     
     /* Make sure that the IRQ is an allowable number. Right now up to 91 is 
      * used.
      */
-    if (irq > 91)
+    if (irq > 91){}
         //printf("\nERR! Invalid IRQ value passed to priority irq function!\n");
 
-    if (prio > 15)
+    if (prio > 15){}
         //printf("\nERR! Invalid priority value passed to priority irq function!\n");
     
-
-
     /* Determine which of the NVICIPx corresponds to the irq */
-    prio_reg = (unsigned char *)(((unsigned int)&NVICIP0) + irq);
+    prio_reg = (uint8_t *)(((uint32_t)&NVICIP0) + irq);
     /* Assign priority to IRQ */
-    *prio_reg = ( (prio&0xF) << 3 );             
+    *prio_reg = ( (prio&0xF) << (8 - ARM_INTERRUPT_LEVEL_BITS) );             
 }
+/***********************************************************************/
 /***********************************************************************/

@@ -60,8 +60,8 @@
 #define SD1_ACMD13 (0x40+13)            /* SD_STATUS (SDC) */
 #define SD1_ACMD23 (0x40+23)            /* SET_WR_BLK_ERASE_COUNT (SDC) */
 
-FATFS FatFs;
-FIL fil;       /* File object */
+extern FATFS FatFs;
+extern FIL fil;       /* File object */
 
 char init_SD();
 char init_SDcard();

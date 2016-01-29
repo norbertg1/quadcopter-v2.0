@@ -8,12 +8,9 @@
 
 #include "init.h"
 
-typedef unsigned short uint16;
-typedef unsigned char uint8;
-
 
 void InitUARTs(){
-	uart_init (UART0_BASE_PTR, CORE_CLOCK/1000, 115200);
+	uart_init (UART4_BASE_PTR, PERIPHERAL_BUS_CLOCK/1000, 115200);
 
 }
 
@@ -35,21 +32,31 @@ void uart_init (UART_MemMapPtr uartch, int sysclk, int baud)
 {
     register uint16 sbr, brfa;
     uint8 temp;
-    
     SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK;
     
-    PORTA_PCR14 = PORT_PCR_MUX(3);	//UART1_TX
-    PORTA_PCR15 = PORT_PCR_MUX(3);	//UART1_RX
+    PORTE_PCR24 = PORT_PCR_MUX(3);	//UART1_TX
+    PORTE_PCR25 = PORT_PCR_MUX(3);	//UART1_RX
 	/* Enable the clock to the selected UART */
     
+
+    
+	/* Enable the clock to the selected UART */    
     if(uartch == UART0_BASE_PTR)
 		SIM_SCGC4 |= SIM_SCGC4_UART0_MASK;
-    else    
+    else
     	if (uartch == UART1_BASE_PTR)
 			SIM_SCGC4 |= SIM_SCGC4_UART1_MASK;
     	else
     		if (uartch == UART2_BASE_PTR)
     			SIM_SCGC4 |= SIM_SCGC4_UART2_MASK;
+    		else
+    			if(uartch == UART3_BASE_PTR)
+    				SIM_SCGC4 |= SIM_SCGC4_UART3_MASK;
+    			else
+    				if(uartch == UART4_BASE_PTR)
+    					SIM_SCGC1 |= SIM_SCGC1_UART4_MASK;
+    				else
+    					SIM_SCGC1 |= SIM_SCGC1_UART5_MASK;
                                 
     /* Make sure that the transmitter and receiver are disabled while we 
      * change settings.
@@ -71,7 +78,7 @@ void uart_init (UART_MemMapPtr uartch, int sysclk, int baud)
     
     /* Determine if a fractional divider is needed to get closer to the baud rate */
     brfa = (((sysclk*32000)/(baud * 16)) - (sbr * 32));
-     
+    
     /* Save off the current value of the UARTx_C4 register except for the BRFA field */
     temp = UART_C4_REG(uartch) & ~(UART_C4_BRFA(0x1F));
     
@@ -80,6 +87,7 @@ void uart_init (UART_MemMapPtr uartch, int sysclk, int baud)
     /* Enable receiver and transmitter */
 	UART_C2_REG(uartch) |= (UART_C2_TE_MASK
 				| UART_C2_RE_MASK );
+	
 	UART_C2_REG(uartch) |= UART_C2_RIE_MASK;	//Interrupt when receive character
 
 }
@@ -111,8 +119,8 @@ char uart_getchar (UART_MemMapPtr channel)
  */ 
 void uart_putchar (UART_MemMapPtr channel, char ch)
 {
-	/* Wait until space is available in the FIFO */
-    while(!(UART_S1_REG(channel) & UART_S1_TDRE_MASK));	//modositva 2015.01.28
+    /* Wait until space is available in the FIFO */
+    while(!(UART_S1_REG(channel) & UART_S1_TDRE_MASK));
     
     /* Send the character */
     UART_D_REG(channel) = (uint8)ch;
@@ -133,16 +141,6 @@ int uart_getchar_present (UART_MemMapPtr channel)
     return (UART_S1_REG(channel) & UART_S1_RDRF_MASK);
 }
 /********************************************************************/
-    
-void TransmitData(char TransData[]) 
-{
-    uint8_t j;
-    int k;                          // Dummy variable
-     
-    k = strlen (TransData);
-    for (j=0; j< k; j++)                 // Loop for character string
-    {
-        uart_putchar(UART1_BASE_PTR, TransData[j]);     // Transmit a byte      
-    }
-}
- 
+
+
+

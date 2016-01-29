@@ -243,6 +243,8 @@ void Convert_Accel()
 
 void Calibrate_Gyros()
 {
+	char temp[6];
+	int x = 0;
 	int32_t GYRO_XOUT_OFFSET_SUM = 0;
 	int32_t GYRO_YOUT_OFFSET_SUM = 0;
 	int32_t GYRO_ZOUT_OFFSET_SUM = 0;
@@ -254,8 +256,7 @@ void Calibrate_Gyros()
 	I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_ZOUT_L);
 	I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_XOUT_H);
 	Delay_mS(1);
-	char temp[6];
-	int x = 0;
+
 	for(x = 0; x<1000; x++)
 	{
 		temp[0]=~I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_XOUT_H);

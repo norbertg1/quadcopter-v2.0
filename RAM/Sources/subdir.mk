@@ -26,118 +26,123 @@ C_SRCS += \
 ../Sources/sa_mtb.c \
 
 OBJS += \
-./Sources/BMP180.o \
-./Sources/Interrupts.o \
-./Sources/MPU6050.o \
-./Sources/Motor.o \
-./Sources/SDcard.o \
-./Sources/init.o \
-./Sources/main.o \
-./Sources/sa_mtb.o \
-
-C_DEPS += \
-./Sources/BMP180.d \
-./Sources/Interrupts.d \
-./Sources/MPU6050.d \
-./Sources/Motor.d \
-./Sources/SDcard.d \
-./Sources/init.d \
-./Sources/main.d \
-./Sources/sa_mtb.d \
+./Sources/BMP180_c.obj \
+./Sources/Interrupts_c.obj \
+./Sources/MPU6050_c.obj \
+./Sources/Motor_c.obj \
+./Sources/SDcard_c.obj \
+./Sources/init_c.obj \
+./Sources/main_c.obj \
+./Sources/sa_mtb_c.obj \
 
 OBJS_QUOTED += \
-"./Sources/BMP180.o" \
-"./Sources/Interrupts.o" \
-"./Sources/MPU6050.o" \
-"./Sources/Motor.o" \
-"./Sources/SDcard.o" \
-"./Sources/init.o" \
-"./Sources/main.o" \
-"./Sources/sa_mtb.o" \
+"./Sources/BMP180_c.obj" \
+"./Sources/Interrupts_c.obj" \
+"./Sources/MPU6050_c.obj" \
+"./Sources/Motor_c.obj" \
+"./Sources/SDcard_c.obj" \
+"./Sources/init_c.obj" \
+"./Sources/main_c.obj" \
+"./Sources/sa_mtb_c.obj" \
+
+C_DEPS += \
+./Sources/BMP180_c.d \
+./Sources/Interrupts_c.d \
+./Sources/MPU6050_c.d \
+./Sources/Motor_c.d \
+./Sources/SDcard_c.d \
+./Sources/init_c.d \
+./Sources/main_c.d \
+./Sources/sa_mtb_c.d \
 
 C_DEPS_QUOTED += \
-"./Sources/BMP180.d" \
-"./Sources/Interrupts.d" \
-"./Sources/MPU6050.d" \
-"./Sources/Motor.d" \
-"./Sources/SDcard.d" \
-"./Sources/init.d" \
-"./Sources/main.d" \
-"./Sources/sa_mtb.d" \
+"./Sources/BMP180_c.d" \
+"./Sources/Interrupts_c.d" \
+"./Sources/MPU6050_c.d" \
+"./Sources/Motor_c.d" \
+"./Sources/SDcard_c.d" \
+"./Sources/init_c.d" \
+"./Sources/main_c.d" \
+"./Sources/sa_mtb_c.d" \
 
 OBJS_OS_FORMAT += \
-./Sources/BMP180.o \
-./Sources/Interrupts.o \
-./Sources/MPU6050.o \
-./Sources/Motor.o \
-./Sources/SDcard.o \
-./Sources/init.o \
-./Sources/main.o \
-./Sources/sa_mtb.o \
+./Sources/BMP180_c.obj \
+./Sources/Interrupts_c.obj \
+./Sources/MPU6050_c.obj \
+./Sources/Motor_c.obj \
+./Sources/SDcard_c.obj \
+./Sources/init_c.obj \
+./Sources/main_c.obj \
+./Sources/sa_mtb_c.obj \
 
 
 # Each subdirectory must supply rules for building sources it contributes
-Sources/BMP180.o: ../Sources/BMP180.c
+Sources/BMP180_c.obj: ../Sources/BMP180.c
 	@echo 'Building file: $<'
 	@echo 'Executing target #1 $<'
-	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/BMP180.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/BMP180.o"
+	@echo 'Invoking: ARM Compiler'
+	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/BMP180.args" -o "Sources/BMP180_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
 	@echo ' '
 
-Sources/Interrupts.o: ../Sources/Interrupts.c
+Sources/%.d: ../Sources/%.c
+	@echo 'Regenerating dependency file: $@'
+	
+	@echo ' '
+
+Sources/Interrupts_c.obj: ../Sources/Interrupts.c
 	@echo 'Building file: $<'
 	@echo 'Executing target #2 $<'
-	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/Interrupts.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/Interrupts.o"
+	@echo 'Invoking: ARM Compiler'
+	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/Interrupts.args" -o "Sources/Interrupts_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
 	@echo ' '
 
-Sources/MPU6050.o: ../Sources/MPU6050.c
+Sources/MPU6050_c.obj: ../Sources/MPU6050.c
 	@echo 'Building file: $<'
 	@echo 'Executing target #3 $<'
-	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/MPU6050.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/MPU6050.o"
+	@echo 'Invoking: ARM Compiler'
+	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/MPU6050.args" -o "Sources/MPU6050_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
 	@echo ' '
 
-Sources/Motor.o: ../Sources/Motor.c
+Sources/Motor_c.obj: ../Sources/Motor.c
 	@echo 'Building file: $<'
 	@echo 'Executing target #4 $<'
-	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/Motor.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/Motor.o"
+	@echo 'Invoking: ARM Compiler'
+	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/Motor.args" -o "Sources/Motor_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
 	@echo ' '
 
-Sources/SDcard.o: ../Sources/SDcard.c
+Sources/SDcard_c.obj: ../Sources/SDcard.c
 	@echo 'Building file: $<'
 	@echo 'Executing target #5 $<'
-	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/SDcard.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/SDcard.o"
+	@echo 'Invoking: ARM Compiler'
+	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/SDcard.args" -o "Sources/SDcard_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
 	@echo ' '
 
-Sources/init.o: ../Sources/init.c
+Sources/init_c.obj: ../Sources/init.c
 	@echo 'Building file: $<'
 	@echo 'Executing target #6 $<'
-	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/init.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/init.o"
+	@echo 'Invoking: ARM Compiler'
+	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/init.args" -o "Sources/init_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
 	@echo ' '
 
-Sources/main.o: ../Sources/main.c
+Sources/main_c.obj: ../Sources/main.c
 	@echo 'Building file: $<'
 	@echo 'Executing target #7 $<'
-	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/main.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/main.o"
+	@echo 'Invoking: ARM Compiler'
+	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/main.args" -o "Sources/main_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
 	@echo ' '
 
-Sources/sa_mtb.o: ../Sources/sa_mtb.c
+Sources/sa_mtb_c.obj: ../Sources/sa_mtb.c
 	@echo 'Building file: $<'
 	@echo 'Executing target #8 $<'
-	@echo 'Invoking: ARM Ltd Windows GCC C Compiler'
-	"$(ARMSourceryDirEnv)/arm-none-eabi-gcc" "$<" @"Sources/sa_mtb.args" -Wa,-adhlns="$@.lst" -MMD -MP -MF"$(@:%.o=%.d)" -o"Sources/sa_mtb.o"
+	@echo 'Invoking: ARM Compiler'
+	"$(ARM_ToolsDirEnv)/mwccarm" -gccinc @@"Sources/sa_mtb.args" -o "Sources/sa_mtb_c.obj" -c "$<" -MD -gccdep
 	@echo 'Finished building: $<'
 	@echo ' '
 

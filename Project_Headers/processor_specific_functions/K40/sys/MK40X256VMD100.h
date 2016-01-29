@@ -267,7 +267,7 @@ typedef enum {
 #elif defined(__IAR_SYSTEMS_ICC__)
   #pragma language=extended
 #else
-  //#error Not supported compiler type
+  #error Not supported compiler type
 #endif
 
 /* ----------------------------------------------------------------------------
@@ -13770,7 +13770,7 @@ typedef struct WDOG_MemMap {
 #elif defined(__IAR_SYSTEMS_ICC__)
   #pragma language=default
 #else
- // #error Not supported compiler type
+  #error Not supported compiler type
 #endif
 
 /*! \} */ /* end of group Peripheral_defines */

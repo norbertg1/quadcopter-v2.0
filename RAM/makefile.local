@@ -7,4 +7,5 @@
 export GNU_Make_Install_DirEnv=$(CWInstallLocationEnv)/gnu/bin
 export ProjDirPath=E:/saját/quadcopter/quadcopter v2.0
 export CWInstallLocationEnv=C:/Freescale/CW MCU v10.6
-export ARMSourceryDirEnv=$(CWInstallLocationEnv)/Cross_Tools/arm-none-eabi-gcc-4_7_3/bin
+export MCUToolsBaseDirEnv=$(CWInstallLocationEnv)/MCU
+export ARM_ToolsDirEnv=$(CWInstallLocationEnv)/MCU/ARM_Tools/Command_Line_Tools

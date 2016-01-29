@@ -32,11 +32,11 @@ float BMP180_get_altittude();
 void BMP180_read_calibrate_data();
 void init_BMP180();
 
-short AC1,AC2,AC3,B1,B2,MB,MC,MD;
-unsigned short AC4,AC5,AC6;
-long T;
-float absolute_altittude,start_altittude,relative_altittude;
-float P;
+extern short AC1,AC2,AC3,B1,B2,MB,MC,MD;
+extern unsigned short AC4,AC5,AC6;
+extern long T;
+extern float absolute_altittude,start_altittude,relative_altittude;
+extern float P;
 
 #define Get_Altittude	44330*(1-pow(p/1013.25,1/5.255))	//expression for calculate absolite altittude in m, 1013.25hPa is pressure at sea leve
 

@@ -9,8 +9,7 @@
 #define _CPU_ARM_CM4_H
 
 
-/*ARM Cortex M4 implementation for interrupt priority shift*/
-#define ARM_INTERRUPT_LEVEL_BITS          4
+
 
 /***********************************************************************/
 // function prototypes for arm_cm4.c
@@ -21,6 +20,7 @@ void enable_irq (int irq);
 void disable_irq (int irq);
 void set_irq_priority (int irq, int prio);
 
+/*ARM Cortex M4 implementation for interrupt priority shift*/
 /*
  * Misc. Defines
  */

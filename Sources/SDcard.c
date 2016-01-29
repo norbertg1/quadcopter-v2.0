@@ -35,8 +35,8 @@
 
 char command(char cmd, int arg)
 {
+	uint16 i;
 	CS_LOW
-	int i;
 	spi_send( cmd );		//
 	spi_send(arg>>24);
 	spi_send(arg>>16);
@@ -60,6 +60,7 @@ char command(char cmd, int arg)
 }
 int command58()						//return OCR value
 {
+	int i,ocr;
 	CS_LOW
 	spi_send(SD1_CMD58);
 	spi_send(0);
@@ -67,7 +68,6 @@ int command58()						//return OCR value
 	spi_send(0);
 	spi_send(0);
 	spi_send(0x95);
-	int i,ocr;
 	for(i=0;i<COMMAND_TIMEOUT;i++)
 	{
 		if(!(spi_send(0xFF) & 0x80))
@@ -176,8 +176,8 @@ char init_SD()		//piros villogsas jelzi a hibat!!!
 		//#define BAUD_DIV 2 /* 8MHz SPI */
 		//#define BAUD_DIV 3 /* 6MHz SPI */
 		//#define BAUD_DIV 4 /* 3MHz SPI */
-//		SPI0_CTAR0 = SPI_CTAR_FMSZ(7) | SPI_CTAR_PBR(0) | SPI_CTAR_BR(BAUD_DIV) | SPI_CTAR_CSSCK(BAUD_DIV) | SPI_CTAR_DBR_MASK;
-//		SPI0_CTAR1 = SPI_CTAR_FMSZ(15) | SPI_CTAR_PBR(0) | SPI_CTAR_BR(BAUD_DIV) | SPI_CTAR_CSSCK(BAUD_DIV) | SPI_CTAR_DBR_MASK;
+		SPI1_CTAR0 = SPI_CTAR_FMSZ(7) | SPI_CTAR_PBR(0) | SPI_CTAR_BR(BAUD_DIV) | SPI_CTAR_CSSCK(BAUD_DIV) | SPI_CTAR_DBR_MASK;
+		SPI1_CTAR1 = SPI_CTAR_FMSZ(15) | SPI_CTAR_PBR(0) | SPI_CTAR_BR(BAUD_DIV) | SPI_CTAR_CSSCK(BAUD_DIV) | SPI_CTAR_DBR_MASK;
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //	SPI0_BR = (SPI_BR_SPPR(0x00) | SPI_BR_SPR(0x01));		//baud rate prescale divisor to 0 & set baud rate divisor to 1 for baud rate of: (0+1)*2^(0x01+1)=4; 24Mhz/4=6MHz ~187.5KB/s szamitasaim szerint  
 	return r;
@@ -294,7 +294,7 @@ FRESULT create_log(FIL* file)
 	UINT sequence=1;
 	char str[2],filename[7];
 	FRESULT fr;
-	fr=f_mount(&FatFs, "", 0);
+	fr=f_mount(&FatFs, " ", 0);
 	if(fr)	return fr;
 	fr=1;
 	while(fr!=0 && !(sequence>99) && fr!=FR_NOT_READY)			//ha létezik n.txt nevu fajl letrehozza (n+1).txt nevut
@@ -304,7 +304,7 @@ FRESULT create_log(FIL* file)
 		fr=f_open(file,filename,FA_CREATE_NEW);
 		sequence++;
 	}
-	fr=f_open(file,filename,FA_WRITE);
+	fr=f_open(&fil,filename,FA_WRITE);
 	return fr;
 }
 void write_dT(char *data,int n,...)
