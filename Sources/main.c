@@ -157,7 +157,12 @@ int main(void)
 	UINT x=5;
 	FRESULT fr;    /* FatFs return code */
 	uint16_t p=0,t=0;
+	char string_lcd[6];
 	Init();
+	PORTA_PCR13 = PORT_PCR_MUX(1);
+	GPIOA_PDDR |= 1<<13;
+	PORTA_PCR8 = PORT_PCR_MUX(1);
+	GPIOA_PDDR |= 1<<8;
 	//Set_LEDPWM(0,0,0); helyett LCDre valami
 //	calibrate_ESC();	//MPU6050 plug off!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //	calibrate_BATT_voltmeter();
@@ -166,25 +171,22 @@ int main(void)
 //	fr=f_write(&fil," No.    A     B     C     D   acc.x acc.y acc.z res.x res.y res.z timer\r\n",70,&x);	
 	
 	//Zero_Sensors();
-	while(1){
-		if(ch0_pulse){
-			break;
-		}
-	}
-	
-	
 	motor_test();
 	a=1.0/(1+(1.0/400.0));
 	dt=0.0025;
 	ADC0_SC1A = (0 | 0b1000000);		//start ADC conversion
+	ADC1_SC1A = (0 | 0b1000000);
 	enable_PID_interrupts
 //	enable_SDcard_interrupts
 	_SLCDModule_TurnOffAllSegments();
 	_SLCDModule_TurnOnFreescaleSign();
+	
 	while(1)
 	{	  
-		_SLCDModule_TurnOffAllSegments();
-		_SLCDModule_PrintNumber(basepower,5);
+//		_SLCDModule_TurnOffAllSegments();
+//		sprintf(string_lcd,"%d",(int)(t_period/10));
+//		_SLCDModule_PrintString(string_lcd,5);
+//		Delay_mS(500);
 		//uart_putchar(UART4_BASE_PTR,'a');
 		UART4_S1 &= UART_S1_OR_MASK;		//UARTra kell debuggolásnal, receive overrun
 		error(&fr);

@@ -135,12 +135,12 @@ static __declspec(vectortable) tVectorTable __vect_table = { /* Interrupt vector
    (tIsrFunc)UNASSIGNED_ISR,                               /* 70 (0x00000118) (prior: -) */
    (tIsrFunc)UNASSIGNED_ISR,                               /* 71 (0x0000011C) (prior: -) */
    (tIsrFunc)UNASSIGNED_ISR,                               /* 72 (0x00000120) (prior: -) */
-   (tIsrFunc)ADC,               			                /* 73 (0x00000124) (prior: -) */
-   (tIsrFunc)ADC,   			                            /* 74 (0x00000128) (prior: -) */
+   (tIsrFunc)ADC0,               			                /* 73 (0x00000124) (prior: -) */
+   (tIsrFunc)ADC1,   			                            /* 74 (0x00000128) (prior: -) */
    (tIsrFunc)UNASSIGNED_ISR,                               /* 75 (0x0000012C) (prior: -) */
    (tIsrFunc)UNASSIGNED_ISR,                               /* 76 (0x00000130) (prior: -) */
    (tIsrFunc)UNASSIGNED_ISR,                               /* 77 (0x00000134) (prior: -) */
-   (tIsrFunc)UNASSIGNED_ISR,                               /* 78 (0x00000138) (prior: -) */
+   (tIsrFunc)FTM0_interrupt,                               /* 78 (0x00000138) (prior: -) */
    (tIsrFunc)UNASSIGNED_ISR,                               /* 79 (0x0000013C) (prior: -) */
    (tIsrFunc)UNASSIGNED_ISR,                               /* 80 (0x00000140) (prior: -) */
    (tIsrFunc)UNASSIGNED_ISR,                               /* 81 (0x00000144) (prior: -) */

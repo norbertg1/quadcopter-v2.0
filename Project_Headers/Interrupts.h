@@ -12,12 +12,16 @@ void PID_Interrupt(void);
 void SDcardw_Interrupt(void);
 void UART_interrupt();
 void bluetooth_lostconnection();
-void ADC();
+void ADC0();
+void ADC1();
 void ADC_DMA();
+void capture_ppm();
+void FTM0_interrupt();
 
 extern float Kp,Kd,Ki,zKp,zKd;	//2.0 0.6 1.0 1 0.3
 extern int basepower,setpoint_x,setpoint_y,setpoint_z;
 extern float setpoint_alt;
-extern  float batt1_vol,batt2_vol,batt3_vol,BATT_VOLT;
+extern  float bat1_volt,bat2_volt,bat3_volt,BAT_VOLT;
+extern int32_t t_period;
 
 #endif /* INTERRUPTS_H_ */

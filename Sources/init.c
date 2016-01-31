@@ -6,14 +6,14 @@ void initInterrupts()		//MAX priority is 3!
 	set_irq_priority (INT_PIT0-16, 2);	//Set priority 2
 	enable_irq(INT_UART4_RX_TX-16);			//Interrupt from data on bleutooth module	
 	set_irq_priority (INT_UART4_RX_TX - 16, 1);
-//	enable_irq(INT_PORTA - 16);					//Interrupt from bluetooth module when lost signal
-//	set_irq_priority (INT_PORTA - 16, 10);
 	enable_irq(INT_ADC0 - 16);		// Initialize the NVIC to enable the specified IRQ
-	set_irq_priority (INT_ADC0 - 16, 3); //Set priority 4 */
+	set_irq_priority (INT_ADC0 - 16, 3); //Set priority  */
+	enable_irq(INT_ADC1 - 16);		// Initialize the NVIC to enable the specified IRQ
+	set_irq_priority (INT_ADC1 - 16, 3); //Set priority  */
 	//enable_irq(INT_TPM2 - 16);		//SDcard log interrupt Initialize the NVIC to enable the specified IRQ
 	//set_irq_priority (INT_TPM2 - 16, 3); //Set priority 3
-	//enable_irq(INT_PORTA - 16);		// Initialize the NVIC to enable the specified IRQ
-	//set_irq_priority (INT_PORTA - 16, 1); //Set priority 4 */
+	enable_irq(INT_PORTA - 16);		// Initialize the NVIC to enable the specified IRQ
+	set_irq_priority (INT_PORTA - 16, 1); //Set priority
 }
 
 
@@ -35,13 +35,12 @@ void Init()
 	//RTC();				//RTC_TSR regiszter másodperc számláló bekapcsolása
 	initTimer0();		//Timer for PID interrupt
 	initTimer1();		//Timer for SDcard log interrupt
-	init_turnigy_timer();
-	init_turnigy9x();
-//	init_PWM_LED();		//A panelon levo LEDek PWM meghajtasa 	vagy ez
+	initTimer2();		//Timer for Turnigy 9X v2 receiver
 	InitUARTs();
 //	DMA_uart_init(DMA_BASE_PTR,UART0_SOURCE,CHANNEL_1,(uint32_t)(&UART0_D),(uint32_t)(&uart_data),1,8);	//beallitani az interruptot még!!!
 //	initBluetooth(); //Interrupt on lost signal
 	initInterrupts();
+	init_turnigy9x();
 	init_MPU6050();
 //	init_BMP180();
 

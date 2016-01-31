@@ -28,7 +28,7 @@
 #define clear_SDcard_interrupt		PIT_TFLG1  |= PIT_TFLG_TIF_MASK;
 //-----------------------Timer module settings---------------------------------
 #define elapsed_s	RTC_TSR
-#define ticker	PIT_CVAL0/100		//ezzel a szamlaloval tudok idor mértni ket esemeny közt 
+#define ticker	(PIT_CVAL2/100)		//ezzel a szamlaloval tudok idor mértni ket esemeny közt 
 #define PIT0_OVERFLOW_FREQUENCY 400
 #define PIT1_OVERFLOW_FREQUENCY 200
 
@@ -40,6 +40,7 @@ void init_Ticker();
 void RTC();
 void initTimer0();
 void initTimer1();
+void initTimer2();
 void initBluetooth();
 void init_turnigy9x();
 

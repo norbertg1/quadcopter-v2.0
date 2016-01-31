@@ -13,7 +13,7 @@
 #define MOTOR 1
 #define PID_tuning 1
 #define BATTERY_MINIMUM_VOLTAGE 3.3
-#define ADC_avg 2
+#define ADC_AVG 2
 #define DATA_OVER_UART 0
 
 int abs(int number);

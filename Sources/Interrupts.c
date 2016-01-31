@@ -19,10 +19,10 @@ short flag,LOW_BATT_FLAG;
 char flag_landing=0;
 float output_ALT=0;
 float output_x,output_y,output_z;// csak debugoolas vegett deklaralva fent
-long adc[15],adc_temp[15];
-float batt1_vol,batt2_vol,batt3_vol,BATT_VOLT;
+//long adc[15],adc_temp[15];
+float bat1_volt,bat2_volt,bat3_volt,BAT_VOLT;
 char adc_flag=0;
-int32_t t_period,t=0,tt[10];
+int32_t t_period,t=0,tt[10],t_period,t_period_temp;
 
 float PID_pitchroll(int setpoint, float measured_value,float *errorSum, float dErr)
 {
@@ -71,19 +71,18 @@ void read_BMP180()
 void PID_Interrupt(void)
 {
 	t_period=ticker;
-	//FTM1_CNT=0; 2015.11 idõmérésre van azthiszem
-	tt[0]=t-ticker;
-	t=ticker;
 	No++;
 	//DMAread_MPU6050();
+	t=ticker;
 	read_MPU6050();
 	tt[1]=t-ticker;
 	t=ticker;
 	Get_Angles();	//882
 	second_order_complementary_filter();		//kikiserletezeni 2015.12.23
+	turnigy_9x();
 //	complementary_filter();	//68
 //	Convert_Accel();
-	tt[1]=t-ticker;
+	tt[2]=t-ticker;
 	t=ticker;
 //	errorSum_x=((9.993/10.0)*errorSum_x)+(error_x*dt);
 //	errorSum_y=((9.993/10.0)*errorSum_y)+(error_y*dt);
@@ -94,19 +93,19 @@ void PID_Interrupt(void)
 	if(errorSum_alt>integral_alt_max)	errorSum_alt=integral_alt_max;
 	if(errorSum_alt<-integral_alt_max)	errorSum_alt=-integral_alt_max;
 	if(basepower<170) {errorSum_x=0, errorSum_y=0;}
-	tt[2]=t-ticker;
+	tt[3]=t-ticker;
 	t=ticker;
 	output_x=PID_pitchroll(setpoint_x,-COMPLEMENTARY_XANGLE,&errorSum_x,GYRO_XRATE);
 	output_y=PID_pitchroll(setpoint_y,COMPLEMENTARY_YANGLE,&errorSum_y,-GYRO_YRATE);
 	output_z=PID_yaw(setpoint_z,GYRO_ZANGLE,GYRO_ZRATE);
-	tt[3]=t-ticker;
+	tt[4]=t-ticker;
 	t=ticker;
 	A_f=basepower+output_y-output_z+output_ALT;
 	C_f=basepower-output_y-output_z+output_ALT;
 	B_f=basepower+output_x+output_z+output_ALT; //ha a B motor van feljebb mint a D motor akkor a COMPLEMENTARY_XANGLE pozitiv
 	D_f=basepower-output_x+output_z+output_ALT;
 	A=Convert_FORCEtoPWM(A_f),B=Convert_FORCEtoPWM(B_f),C=Convert_FORCEtoPWM(C_f),D=Convert_FORCEtoPWM(D_f);
-	tt[4]=t-ticker;
+	tt[5]=t-ticker;
 	t=ticker;
 	SetMotorPWM(A,B,C,D);	//180
 	if(abs(COMPLEMENTARY_XANGLE)>35 || 35<abs(COMPLEMENTARY_YANGLE) || flag_landing==1) 
@@ -129,7 +128,7 @@ void PID_Interrupt(void)
 		if(No%5 == 0 && setpoint_y>0) setpoint_y-=1;
 		if(No%5 == 0 && setpoint_y<0) setpoint_y+=1;
 		}
-	tt[5]=t-ticker;
+	tt[6]=t-ticker;
 	t=ticker;
 	//read_BMP180();	2015.12.01
 	if(No%400==1 && LOW_BATT_FLAG) 
@@ -148,8 +147,8 @@ void PID_Interrupt(void)
 	}
 #endif
 	ADC0_SC1A |= ADC_SC1_AIEN_MASK;
-	ADC0_SC1A |= ADC_SC1_AIEN_MASK;
-	tt[6]=t-ticker;
+	ADC1_SC1A |= ADC_SC1_AIEN_MASK;
+	tt[7]=t-ticker;
 	t=ticker;
 	PIT_TFLG0  |= PIT_TFLG_TIF_MASK;
 	PIT_LDVAL0 = PERIPHERAL_BUS_CLOCK / PIT0_OVERFLOW_FREQUENCY;
@@ -163,8 +162,8 @@ void SDcardw_Interrupt(void)
 
 	clear_SDcard_interrupt
 	write_dT(data,12,(int)No,(int)(100*COMPLEMENTARY_XANGLE),(int)(100*COMPLEMENTARY_YANGLE),(int)(A),(int)(B),
-			(int)(C),(int)D,(int)(basepower),(int)(100*batt1_vol),
-			(int)(100*batt2_vol),(int)(abs(ticker)),0/*elapsed_s*/);//,(int)RTC_TSR);	//963	
+			(int)(C),(int)D,(int)(basepower),(int)(100*bat1_volt),
+			(int)(100*bat2_volt),(int)(abs(ticker)),0/*elapsed_s*/);//,(int)RTC_TSR);	//963	
 	tt[7]=ttt-ticker;
 	ttt=ticker;
 	f_write(&fil,data,71,&x);	//168	itt valami tortenik, mert minden 7. lefutasnal 165 helyett 7566ig tart 
@@ -213,7 +212,7 @@ void UART_interrupt()
 	if(c=='b')				{Alt_Kd-=0.5;			dataout=(char)Alt_Kd;}
 	if(c=='n')				{Alt_Ki+=0.5;			dataout=(char)Alt_Ki;}
 	if(c=='m')				{Alt_Ki-=0.5;			dataout=(char)Alt_Ki;}
-	uart_putchar(UART4_BASE_PTR,/*dataout*/'a');
+	uart_putchar(UART4_BASE_PTR,dataout);
 #endif
 	if(setpoint_x>15) setpoint_x=15;
 	if(setpoint_x<-15) setpoint_x=-15;
@@ -221,74 +220,100 @@ void UART_interrupt()
 	if(setpoint_y<-15) setpoint_y=-15;
 	if(basepower>500) basepower=500;
 #if !PID_tuning
-	uart_putchar(UART4_BASE_PTR,(char)(10*BATT_VOLT));
+	uart_putchar(UART4_BASE_PTR,(char)(10*BAT_VOLT));
 #endif
 	//enable_irq(INT_PORTA - 16); 2015.12.9
 }
 
-void bluetooth_lostconnection()
+void ADC0()
 {
-	flag_landing=1;
-	PORTA_PCR5 |= PORT_PCR_IRQC(5);
-	disable_irq(INT_PORTA - 16);
+	char i,adc_register;
+	static uint8_t adc0_avg=0;
+	static long adc0_temp[1];
+	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 0) {adc0_temp[0]+=ADC0_RA;	adc_register=0 | 0b1000000; adc0_avg++;}
+	if(adc0_avg>=ADC_AVG){
+		for(i=0;i<1;i++)	adc0_temp[i]=adc0_temp[i]/ADC_AVG;
+		bat1_volt=0.99*bat1_volt+0.01*(float)(adc0_temp[0])/11717;
+		for(i=0;i<1;i++)	adc0_temp[i]=0;
+		ADC0_SC1A &= ~ADC_SC1_AIEN_MASK;	//Turn off interrupt
+		adc0_avg=0;
+	}
+	ADC0_SC1A=adc_register;
 }
 
-void ADC()
+void ADC1()
 {
-	char mode=0,adc_register;
-	//FTM1_CNT=0;	2015.11
-#if ADC_avg==1	
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 23)	{adc[0]=ADC0_RA;	adc_register=21 | 0b1000000;}	//read conversation result; start new conversation
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 21)	{adc[1]=ADC0_RA;	adc_register=0 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 0)	{adc[2]=ADC0_RA;	adc_register=8 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 8)	{adc[3]=ADC0_RA;	adc_register=9 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 9)	{adc[4]=ADC0_RA;	adc_register=14 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 14)	{adc[5]=ADC0_RA;	adc_register=15 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 15)	{adc[6]=ADC0_RA;	adc_register=19 | 0b1000000;}
-	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 19)	{adc[7]=ADC0_RA;	adc_register=23 | 0b1000000; disable_irq(INT_ADC0 - 16);}
-	batt1_vol=0.99*batt1_vol+0.01*(float)(adc[0]<<mode)/13538;
-	batt2_vol=0.99*batt2_vol+0.01*((float)(adc[1]<<mode)/7019-batt1_vol);
-	batt3_vol=0.99*batt3_vol+0.01*((float)(adc[2]<<mode)/4955-batt1_vol-batt2_vol);
-	BATT_VOLT=batt1_vol+batt2_vol+batt3_vol;
-	if((batt1_vol<BATTERY_MINIMUM_VOLTAGE || batt2_vol<BATTERY_MINIMUM_VOLTAGE || batt3_vol<BATTERY_MINIMUM_VOLTAGE) && No>400) LOW_BATT_FLAG=1;
-#else
-	static uint8_t ADC_SEL=0;
-	//read conversation result; start new conversation
-	if(ADC_SEL == 0)		{adc_temp[0]+=ADC0_RA;	adc_register=1 	| 0b1000000; ADC_SEL = 1;	goto end;}										//read ADC0_SE5b,	start conversation ADC0_SE6b
-	if(ADC_SEL == 1)		{adc_temp[1]+=ADC1_RA;	adc_register=0 	| 0b1000000; ADC_SEL = 2;	goto end;}
-	if(ADC_SEL == 2)		{adc_temp[2]+=ADC1_RA;	adc_register=0 	| 0b1000000; ADC_SEL = 0;	adc_flag++;	goto end;}										//read ADC0_SE15,	start conversation ADC0_SE23
-end:
-	if(adc_flag>=ADC_avg) 
-		{
-		int i;
-		for(i=0;i<15;i++)	{
-			adc[i]=adc_temp[i]/(adc_flag); 
-			adc_temp[i]=0;
-		}
-		batt1_vol=0.99*batt1_vol+0.01*(float)(adc[0]<<mode)/22172;	//17007, 16500, 22939
-		batt2_vol=0.99*batt2_vol+0.01*((float)(adc[1]<<mode)/13442-batt1_vol);//10646
-		batt3_vol=0.99*batt3_vol+0.01*((float)(adc[2]<<mode)/7347-batt1_vol-batt2_vol);
-		BATT_VOLT=batt1_vol+batt2_vol+batt3_vol;
-		if((batt1_vol<BATTERY_MINIMUM_VOLTAGE || batt2_vol<BATTERY_MINIMUM_VOLTAGE || batt3_vol<BATTERY_MINIMUM_VOLTAGE) && No>2000) 
+	char i,adc_register;
+	static uint8_t adc1_avg=0;
+	static long adc1_temp[2];
+	if((ADC1_SC1A & ADC_SC1_ADCH_MASK) == 0) {adc1_temp[0]+=ADC1_RA;	adc_register=1 | 0b1000000;}
+	if((ADC1_SC1A & ADC_SC1_ADCH_MASK) == 1) {adc1_temp[1]+=ADC1_RA;	adc_register=0 | 0b1000000; adc1_avg++;}
+	if(adc1_avg>=ADC_AVG){
+		for(i=0;i<2;i++)	adc1_temp[i]=adc1_temp[i]/ADC_AVG;
+		bat2_volt=0.99*bat2_volt+0.01*((float)(adc1_temp[1])/7086-bat1_volt);//10646
+		bat3_volt=0.99*bat3_volt+0.01*((float)(adc1_temp[0])/3862-bat1_volt-bat2_volt);
+		BAT_VOLT=bat1_volt+bat2_volt+bat3_volt;
+		for(i=0;i<2;i++)	adc1_temp[i]=0;
+		ADC1_SC1A &= ~ADC_SC1_AIEN_MASK;		//Turn off interrupt
+		adc1_avg=0;
+	}
+	if((bat1_volt<BATTERY_MINIMUM_VOLTAGE || bat2_volt<BATTERY_MINIMUM_VOLTAGE || bat3_volt<BATTERY_MINIMUM_VOLTAGE) && No>2000) 
 			{
-			//LOW_BATT_FLAG=1;
+			LOW_BATT_FLAG=1;
 			}
-		ADC0_SC1A = ADC0_SC1A & ~ADC_SC1_AIEN_MASK;
-		ADC0_SC1A = ADC0_SC1A & ~ADC_SC1_AIEN_MASK;
-//		disable_irq(INT_ADC0 - 16);
-//		disable_irq(INT_ADC1 - 16);
+	ADC1_SC1A=adc_register;
+	
+}
+
+void capture_ppm(){
+	if(ch1_pulse){
+		if(ch1_rising_edge)	{ch1_temp=PIT_CVAL2; 		ch1_set_rising_edge;}
+		else{ch1=ch1_temp-PIT_CVAL2;	ch1_set_falling_edge;	ch1=(ch1-ch1_offset);
+							if(ch1_offset!=0)	ch1=(-1*ch1);
+		} //877281
+		ch1_clear_interrupt;
+	}
+	if(ch2_pulse){
+		if(ch2_rising_edge)	{ch2_temp=PIT_CVAL2; 	ch2_set_rising_edge;}
+		else{
+			ch2=ch2_temp-PIT_CVAL2;	
+			ch2_set_falling_edge;	
+			ch2=(ch2-ch2_offset); 
+			if(ch2_offset!=0)	ch2=(-1*ch2);
 		}
-#endif
-	if(ADC_SEL == 0) ADC0_SC1A=adc_register;
-	else	ADC1_SC1A=adc_register;
+		ch2_clear_interrupt;
+	}
+	if(ch3_pulse){
+		if(ch3_rising_edge)	{ch3_temp=PIT_CVAL2; 	ch3_set_rising_edge;}
+		else{
+			ch3=ch3_temp-PIT_CVAL2;
+			ch3_set_falling_edge;
+			ch3=(ch3-ch3_offset);
+			if(ch3_offset!=0)	ch3=(-1*ch3);
+		}
+		ch3_clear_interrupt;
+	}
+	if(ch4_pulse){
+		if(ch4_rising_edge)	{ch4_temp=PIT_CVAL2; 		ch4_set_rising_edge;}
+		else{
+			ch4=ch4_temp-PIT_CVAL2;
+			ch4_set_falling_edge;
+			ch4=(ch4-ch4_offset);
+			if(ch4_offset!=0)	ch4=(-1*ch4);
+		}
+		ch4_clear_interrupt;
+	}
+	
+	if((ch1_offset == 1) || (ch2_offset == 1) || (ch3_offset == 1) || (ch4_offset == 1))	{ch1=0;	ch2=0;	ch3=0;	ch4=0;}	//Prevent using remote control without calibration
 }
 
-void turnigy_timer(){
-	
-}
-
-void turnigy_interrupt(){
-	
+int sz=0;
+void FTM0_interrupt(){
+	sz++;
+	if(sz%2==0)	GPIOE_PSOR = 1<<24;
+	else		GPIOE_PCOR = 1<<24;
+	GPIOE_PTOR = 1<<25;
+	FTM0_SC &= ~FTM_SC_TOF_MASK;
 }
 
 void ADC_DMA()

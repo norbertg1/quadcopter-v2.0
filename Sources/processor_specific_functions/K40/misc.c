@@ -82,6 +82,16 @@ void initTimer1()		//TPM2 Timer for SDcard save
 	PIT_TCTRL1 |= PIT_TCTRL_TEN_MASK;	// Enable timer
 }
 
+void initTimer2()		//TPM2 Timer for Turnigy 9x PPM
+{
+	SIM_SCGC6 |= SIM_SCGC6_PIT_MASK;
+	PIT_MCR = 0;
+	PIT_MCR = PIT_MCR_FRZ_MASK;		// Enable PIT module clock with debug freeze	
+	PIT_LDVAL2 = 0xFFFFFFFF;	// Calculate and Load timer reset value
+//	PIT_TCTRL1 = PIT_TCTRL_TIE_MASK;	// Enable timer interrupt
+	PIT_TCTRL2 |= PIT_TCTRL_TEN_MASK;	// Enable timer
+}
+
 void initBluetooth()		//Configure interrupt on lost signal
 {
 	PORTA_PCR5 = PORT_PCR_MUX(1);

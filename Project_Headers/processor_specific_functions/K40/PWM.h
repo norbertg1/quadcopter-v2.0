@@ -10,6 +10,11 @@
 
 #define FTM_MOD_VALUE	(int)((float)(PERIPHERAL_BUS_CLOCK)/TFC_MOTOR_SWITCHING_FREQUENCY)
 
+#define MOTOR_A		FTM1_C0V
+#define MOTOR_B		FTM1_C1V
+#define MOTOR_C		FTM2_C0V
+#define MOTOR_D		FTM2_C1V
+
 #define FTM_CLOCK                                   	      (CORE_CLOCK/2)
 #define PWM_FREQUNECY 400								  //the frequeny of PWM
 #define FTM_CLK_PRESCALE	4							// Prescale Selector value - see comments in Status Control (SC) section for more details
