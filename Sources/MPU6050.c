@@ -42,7 +42,7 @@ float ACCEL_YANGLE;
 float gyro_xsensitivity=66.5;
 float gyro_ysensitivity=66.5;
 float gyro_zsensitivity=66.5;
-float a;
+float a=0.995;
 float dt=0.0025;
 
 float COMPLEMENTARY_XANGLE = 0;
@@ -52,10 +52,11 @@ float filter_xterm[3] = {0,0,0};
 float filter_yterm[3] = {0,0,0};
 
 float TEMP;
-float timeConstant=15;//0.35;//0.35;
+float timeConstant=5.5;//0.35;//0.35;
 
 float Gx_offset=0,Gy_offset=0,Gz_offset=0;
-float XANGLE_OFFSET=0,YANGLE_OFFSET=0;
+float XANGLE_OFFSET=0, YANGLE_OFFSET=0;
+float X_Angle_user=1, Y_Angle_user=-4.0;
 
 char MPU6050_Test_I2C()
 {
@@ -265,15 +266,11 @@ void Calibrate_Gyros()
 		temp[3]=~I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_YOUT_L);
 		temp[4]=~I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_ZOUT_H);
 		temp[5]=~I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_ZOUT_L);
-		temp[6]=~I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_XOUT_H);
 		
-	/*	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_GYRO_XOUT_L, &temp[1], 1);
-		I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_GYRO_YOUT_H, &temp[2], 1);
-		I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_GYRO_YOUT_L, &temp[3], 1);
-		I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_GYRO_ZOUT_H, &temp[4], 1);
-		I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_GYRO_ZOUT_L, &temp[5], 1);
-	*/	
-		GYRO_XOUT_OFFSET_SUM += (int16_t)((temp[0]<<8)|temp[1]);
+//		I2CReadMultiRegisters(MPU6050_ADDRESS,MPU6050_RA_GYRO_XOUT_H,&temp[0],6);
+
+		
+		GYRO_XOUT_OFFSET_SUM += ((temp[0]<<8)|temp[1]);
 		GYRO_YOUT_OFFSET_SUM += ((temp[2]<<8)|temp[3]);
 		GYRO_ZOUT_OFFSET_SUM += ((temp[4]<<8)|temp[5]);
  
@@ -292,16 +289,16 @@ void Get_Gyro_Rates()
 {
 	char temp[6];
 	
-	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_GYRO_XOUT_H, &temp[0], 1);
-	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_GYRO_XOUT_L, &temp[1], 1);
-	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_GYRO_YOUT_H, &temp[2], 1);
-	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_GYRO_YOUT_L, &temp[3], 1);
-	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_GYRO_ZOUT_H, &temp[4], 1);
-	I2CReadMultiRegisters(MPU6050_ADDRESS, MPU6050_RA_GYRO_ZOUT_L, &temp[5], 1);
+	temp[0]=~I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_XOUT_H);
+	temp[1]=~I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_XOUT_L);
+	temp[2]=~I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_YOUT_H);
+	temp[3]=~I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_YOUT_L);
+	temp[4]=~I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_ZOUT_H);
+	temp[5]=~I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_ZOUT_L);
 	
-	GYRO_XOUT = ((temp[0]<<8)|temp[1]) + GYRO_XOUT_OFFSET;
-	GYRO_YOUT = ((temp[2]<<8)|temp[3]) + GYRO_YOUT_OFFSET;
-	GYRO_ZOUT = ((temp[4]<<8)|temp[5]) + GYRO_ZOUT_OFFSET;
+	GYRO_XOUT = ((temp[0]<<8)|temp[1]) - GYRO_XOUT_OFFSET;
+	GYRO_YOUT = ((temp[2]<<8)|temp[3]) - GYRO_YOUT_OFFSET;
+	GYRO_ZOUT = ((temp[4]<<8)|temp[5]) - GYRO_ZOUT_OFFSET;
  
  
 	GYRO_XRATE = (float)GYRO_XOUT/gyro_xsensitivity;
@@ -321,9 +318,9 @@ void RAW_convert(char *MPU_6050_buffer){
 	TEMP = (((((signed short)MPU_6050_buffer[6]<<8) & 0xFF00) | ((signed short)MPU_6050_buffer[7] & 0x00FF)));
 	TEMP = (TEMP/340)+36.53;	//see datasheet
 	
-	GYRO_XOUT = ((MPU_6050_buffer[8]<<8)|MPU_6050_buffer[9]) + GYRO_XOUT_OFFSET;
-	GYRO_YOUT = ((MPU_6050_buffer[10]<<8)|MPU_6050_buffer[11]) + GYRO_YOUT_OFFSET;
-	GYRO_ZOUT = ((MPU_6050_buffer[12]<<8)|MPU_6050_buffer[13]) + GYRO_ZOUT_OFFSET;
+	GYRO_XOUT = ((MPU_6050_buffer[8]<<8)|MPU_6050_buffer[9]) - GYRO_XOUT_OFFSET;
+	GYRO_YOUT = ((MPU_6050_buffer[10]<<8)|MPU_6050_buffer[11]) - GYRO_YOUT_OFFSET;
+	GYRO_ZOUT = ((MPU_6050_buffer[12]<<8)|MPU_6050_buffer[13]) - GYRO_ZOUT_OFFSET;
 	
 	GYRO_XRATE = (float)GYRO_XOUT/gyro_xsensitivity;
 	GYRO_YRATE = (float)GYRO_YOUT/gyro_ysensitivity;
@@ -345,8 +342,8 @@ void read_MPU6050(){
 //Converts the already acquired accelerometer data into 3D euler angles
 void Get_Angles()
 {
-	ACCEL_XANGLE = (57.295*atan((float)-ACCEL_YOUT/ sqrt(pow((float)ACCEL_ZOUT,2)+pow((float)ACCEL_XOUT,2))))-XANGLE_OFFSET;
-	ACCEL_YANGLE = (57.295*atan((float)ACCEL_XOUT/ sqrt(pow((float)ACCEL_ZOUT,2)+pow((float)ACCEL_YOUT,2))))-YANGLE_OFFSET;
+	ACCEL_XANGLE = (float)(57.295*atan((float)-ACCEL_YOUT/ sqrt(pow((float)ACCEL_ZOUT,2)+pow((float)ACCEL_XOUT,2))))+X_Angle_user/*-XANGLE_OFFSET*/;
+	ACCEL_YANGLE = (float)(57.295*atan((float)ACCEL_XOUT/ sqrt(pow((float)ACCEL_ZOUT,2)+pow((float)ACCEL_YOUT,2))))+Y_Angle_user/*-YANGLE_OFFSET*/;
 	
 	GYRO_XANGLE += (float)GYRO_XRATE*dt;
 	GYRO_YANGLE += (float)GYRO_YRATE*dt;
@@ -386,7 +383,7 @@ void init_MPU6050()
 {
 	MPU6050_Test_I2C();
 	MPU6050_Setup();
-	Delay_mS(1000);
+	Delay_mS(2000);
 	Calibrate_Gyros();
 	Calibrate_Accel();
 }

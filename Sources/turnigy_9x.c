@@ -6,39 +6,43 @@
  */
 #include "init.h"
 
-int32_t ch1=0,ch2=0,ch3=0,ch4=0; 
-int32_t ch1_temp,ch2_temp,ch3_temp,ch4_temp;
-int32_t ch1_offset=0,ch2_offset=0,ch3_offset=0,ch4_offset=0;
+int32_t ch1=0,ch2=0,ch3=0,ch4=0,ch5=0,ch6=0,ch7=0; 
+int32_t ch1_temp,ch2_temp,ch3_temp,ch4_temp,ch5_temp,ch6_temp,ch7_temp;
+int32_t ch1_offset=0,ch2_offset=0,ch3_offset=0,ch4_offset=0,ch5_offset=0,ch6_offset=0,ch7_offset=0;
+int32_t	ch3_watchdog=0;
 
 /*----PPM----------------------------
  * 
  * 
- * I need to identify the where is the PPM signal(see PPM wiki,etc..)
- * The timer period must be same as the PPM period is
- * 1. synchronization(needed only one time): The timer synchronizes with the PPM rising edge, this is the default value of ppm (zero value)
- * 2. measure where the ppm is, how distant is the falling edge from the synchronization value.
- * 
- *      |	    :	      |  			:	|
- *		|       : 		  |				:	|
- *______|_______:_________|_____________:___|_________
- *    Timer   ~40%      Timer		  80%	Timer
- * 	 period	   PPM		period		  PPM	period
  * 
  * 
  * 
  * 
 */
 
+/*
+ * chx_offset = 1 ha a taviranyito nem volt bekapcsolva a kopter bekapcsolasanal	
+ * ch1 értéke -20 000tõl +20 000ig lehet, a távirányitot a kopter bekapcsolasa elõtt kell bekapcsolni
+ * A távirányit 
+ * 
+ * 
+ * 
+*/
 void turnigy_9x()							
 {												//The timer peri
 	if((ch1_offset != 1) || (ch2_offset != 1) || (ch3_offset != 1) || (ch4_offset != 1))
 	{
-		basepower=ch3/20;
-		setpoint_x = ch1/1000;
-		setpoint_y = -ch2/1000;
+		basepower=ch3/50;
+		setpoint_x = ch1/500;
+		setpoint_y = -ch2/500;
+		setpoint_z = ch4/500;
+		ch3_watchdog++;
+		Kp_receiver=(float)ch5/2000;
+		Kd_receiver=(float)ch6/2000;
+		Ki_receiver=(float)ch7/2000;
 	}
+	else ch3_watchdog=0;
 }
-
 void init_turnigy_timer(){
 	SIM_SCGC6 |= SIM_SCGC6_PIT_MASK;
 	PIT_MCR = 0;
@@ -51,7 +55,7 @@ void init_turnigy_timer(){
 void calibrate_offset()
 {
 	int i;
-	int32_t ch1_tmp=0,ch2_tmp=0,ch3_tmp=0,ch4_tmp=0;
+	int32_t ch1_tmp=0,ch2_tmp=0,ch3_tmp=0,ch4_tmp=0,ch5_tmp=0,ch6_tmp=0,ch7_tmp=0;
 	Delay_mS(1000);
 	for(i=0;i<TURNIGY_CALIBRATE_NUMBER;i++)
 	{
@@ -60,6 +64,9 @@ void calibrate_offset()
 		ch2_tmp+=ch2;
 		ch3_tmp+=ch3;
 		ch4_tmp+=ch4;
+		ch5_tmp+=ch5;
+		ch6_tmp+=ch6;
+		ch7_tmp+=ch7;
 	}
 	if((ch1_tmp!=0) && (ch2_tmp!=0) && (ch3_tmp!=0) && (ch4_tmp!=0))
 	{
@@ -67,27 +74,31 @@ void calibrate_offset()
 		ch2_offset=ch2_tmp/TURNIGY_CALIBRATE_NUMBER;
 		ch3_offset=ch3_tmp/TURNIGY_CALIBRATE_NUMBER;
 		ch4_offset=ch4_tmp/TURNIGY_CALIBRATE_NUMBER;
+		ch5_offset=881705;//ch5_tmp/TURNIGY_CALIBRATE_NUMBER;
+		ch6_offset=881090;//ch6_tmp/TURNIGY_CALIBRATE_NUMBER;
+		ch7_offset=881056;//ch7_tmp/TURNIGY_CALIBRATE_NUMBER;
 	}
 	else{
 		ch1_offset=1;
 		ch2_offset=1;
 		ch3_offset=1;
-		ch4_offset=1;				
+		ch4_offset=1;
+		ch5_offset=1;
+		ch6_offset=1;
+		ch7_offset=1;
 	}	
 }
 
 void init_turnigy9x()
 {
-	SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK;
+	SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK | SIM_SCGC5_PORTE_MASK;
 	ch1_pin = PORT_PCR_MUX(1) | PORT_PCR_IRQC(0b1010);
 	ch2_pin	= PORT_PCR_MUX(1) | PORT_PCR_IRQC(0b1010);
 	ch3_pin	= PORT_PCR_MUX(1) | PORT_PCR_IRQC(0b1010);
 	ch4_pin	= PORT_PCR_MUX(1) | PORT_PCR_IRQC(0b1010);
-	
+	ch5_pin	= PORT_PCR_MUX(1) | PORT_PCR_IRQC(0b1010);
+	ch6_pin	= PORT_PCR_MUX(1) | PORT_PCR_IRQC(0b1010);
+	ch7_pin	= PORT_PCR_MUX(1) | PORT_PCR_IRQC(0b1010);
+
 	calibrate_offset();
-/*	
-	GPIOA_PDDR |= 1<<14;
-	GPIOA_PDDR |= 1<<15;
-	GPIOA_PDDR |= 1<<16;
-	GPIOA_PDDR |= 1<<17;*/
 }

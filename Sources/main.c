@@ -31,20 +31,31 @@ void calibrate_ESC()						//ESC kalibrasa, 1. Az MCU-t ne a kalibralando ESCrol 
 	int A=0; int B=0; int C=0;int D=0;
 	int x=190;
 	
-	initLEDs();			//!!!!!-----MPU6050 plug off%!!!---!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	LED_Toggle_RED;						
-	Delay_mS(100);						
-	LED_Toggle_RED;						
-	Delay_mS(100);
-	LED_Toggle_RED;
-	Delay_mS(100);
-	LED_Toggle_RED;
+//	initLEDs();			//!!!!!-----MPU6050 plug off%!!!---!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//	LED_Toggle_RED;						
+	_SLCDModule_TurnOffAllSegments();
+	_SLCDModule_PrintString(".",5);		
+	Delay_mS(1000);
+//	LED_Toggle_RED;
+	_SLCDModule_TurnOffAllSegments();
+	_SLCDModule_PrintString("..",5);
+	Delay_mS(1000);
+//	LED_Toggle_RED;
+	_SLCDModule_TurnOffAllSegments();
+	_SLCDModule_PrintString("...",5);
+	Delay_mS(1000);
+//	LED_Toggle_RED;
+	_SLCDModule_TurnOffAllSegments();
+	_SLCDModule_PrintString("MAX",0);
 	SetMotorPWM(999,999,999,999);	//2. Adjunk 100% PWM-et majd csatlakoztassuk a kalibrálni kivant ESC-et(tápellátása meg kell hogy legyen szakitva)
 	Delay_mS(7000);						//3. Csatlakoztassuk a kalibralando ESCet a tapfeszültséghez
-	LED_On_RED;
+//	LED_On_RED;
+	_SLCDModule_TurnOffAllSegments();
+	_SLCDModule_PrintString("MIN",0);
 	SetMotorPWM(1,1,1,1);
 	Delay_mS(2000);
-	
+	_SLCDModule_TurnOffAllSegments();
+	_SLCDModule_PrintString("END",0);
 	while(1)							//4. Varjuk ki még lefut a program
 	{
 		SetMotorPWM(A,B,C,D);
@@ -153,27 +164,27 @@ void error(FRESULT *fr)
 }
 
 int main(void)
-   {	
+{	
+	uint32_t cnt=0;
 	UINT x=5;
 	FRESULT fr;    /* FatFs return code */
 	uint16_t p=0,t=0;
 	char string_lcd[6];
 	Init();
-	PORTA_PCR13 = PORT_PCR_MUX(1);
-	GPIOA_PDDR |= 1<<13;
-	PORTA_PCR8 = PORT_PCR_MUX(1);
-	GPIOA_PDDR |= 1<<8;
-	//Set_LEDPWM(0,0,0); helyett LCDre valami
+//Set_LEDPWM(0,0,0); helyett LCDre valami
 //	calibrate_ESC();	//MPU6050 plug off!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //	calibrate_BATT_voltmeter();
 
 //	fr=create_log(&fil);
 //	fr=f_write(&fil," No.    A     B     C     D   acc.x acc.y acc.z res.x res.y res.z timer\r\n",70,&x);	
 	
-	//Zero_Sensors();
+	Zero_Sensors();
 	motor_test();
+	kalman_init(&x_kalmandata);
+	kalman_init(&y_kalmandata);
 	a=1.0/(1+(1.0/400.0));
 	dt=0.0025;
+	a=0.9675;
 	ADC0_SC1A = (0 | 0b1000000);		//start ADC conversion
 	ADC1_SC1A = (0 | 0b1000000);
 	enable_PID_interrupts
@@ -183,21 +194,15 @@ int main(void)
 	
 	while(1)
 	{	  
-//		_SLCDModule_TurnOffAllSegments();
-//		sprintf(string_lcd,"%d",(int)(t_period/10));
-//		_SLCDModule_PrintString(string_lcd,5);
-//		Delay_mS(500);
-		//uart_putchar(UART4_BASE_PTR,'a');
+		a=Kp_prev/Kp;
+		if(cnt%1000==0){
+			_SLCDModule_TurnOffAllSegments();
+			sprintf(string_lcd,"%d",(int)(BAT_VOLT*100));
+			_SLCDModule_PrintString(string_lcd,5);	
+			}
+		cnt++;
 		UART4_S1 &= UART_S1_OR_MASK;		//UARTra kell debuggolásnal, receive overrun
 		error(&fr);
-		
-		//Set_LEDPWM(0,0,p);
-		//SDcardw_Interrupt();
-	//	ADC();
-	//	FTM0_C4V=(15600/2)-200*COMPLEMENTARY_YANGLE;	//GREEN LED PWM gyro+acc
-	//	FTM0_C2V=(15600/2)+200*COMPLEMENTARY_YANGLE;	//RED LED PWM	gyro+acc
-	//	FTM0_C4V=(15600/2)-200*(relative_altittude-setpoint_alt)*10;	//GREEN LED PWM press
-	//	FTM0_C2V=(15600/2)+200*(relative_altittude-setpoint_alt)*10;	//RED LED PWM	press
 
 	}
 }

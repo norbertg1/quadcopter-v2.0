@@ -14,6 +14,8 @@ void initInterrupts()		//MAX priority is 3!
 	//set_irq_priority (INT_TPM2 - 16, 3); //Set priority 3
 	enable_irq(INT_PORTA - 16);		// Initialize the NVIC to enable the specified IRQ
 	set_irq_priority (INT_PORTA - 16, 1); //Set priority
+	enable_irq(INT_PORTE - 16);		// Initialize the NVIC to enable the specified IRQ
+	set_irq_priority (INT_PORTE - 16, 1); //Set priority
 }
 
 

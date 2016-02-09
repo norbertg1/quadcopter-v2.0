@@ -163,6 +163,8 @@ extern float filter_yterm[3];
 
 extern float XANGLE_OFFSET,YANGLE_OFFSET;
 
+extern float X_Angle_user,Y_Angle_user;
+
 extern float TEMP;
 
 extern float timeConstant;

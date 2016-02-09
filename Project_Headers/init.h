@@ -70,6 +70,7 @@
 #include "diskio.h"//FATfs
 #include "MPU6050.h"
 #include "BMP180.h"
+#include "kalman.h"
 
 void Init();
 void initClock();

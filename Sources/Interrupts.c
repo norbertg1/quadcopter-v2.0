@@ -7,10 +7,10 @@
 
 #include "init.h"
 #include "stdlib.h"
-#define integral_max 0.5
+#define integral_max 50
 #define integral_alt_max 10 
 
-float Kp=6.5,Kd=2.0/*2*/,Ki=0/*100*/,zKp=2.5,zKd=0.7,Alt_Kp=0/*25*/,Alt_Kd=0/*20*/,Alt_Ki=0/*0.5*/,Kp_mem,Kd_mem;
+float Kp=0,Kd=0,Ki=0,Kp_prev,Kd_prev,Ki_prev,Kp_user=0,Kd_user=0,Ki_user=0/*100*/,Kp_receiver=0,Kd_receiver=0,Ki_receiver=0,zKp=1.5,zKd=0.7,Alt_Kp=0/*25*/,Alt_Kd=0/*20*/,Alt_Ki=0/*0.5*/,Kp_mem,Kd_mem;
 int basepower=-50,setpoint_x=0,setpoint_y=0,setpoint_z=0,No=0,flag_kyb;
 float setpoint_alt=0;
 int A_f,B_f,C_f,D_f,A,B,C,D;
@@ -20,9 +20,10 @@ char flag_landing=0;
 float output_ALT=0;
 float output_x,output_y,output_z;// csak debugoolas vegett deklaralva fent
 //long adc[15],adc_temp[15];
-float bat1_volt,bat2_volt,bat3_volt,BAT_VOLT;
+float bat1_volt=4.2,bat2_volt=4.2,bat3_volt=4.2,BAT_VOLT=12.6;
 char adc_flag=0;
 int32_t t_period,t=0,tt[10],t_period,t_period_temp;
+int16_t basepower_reduction=0;
 
 float PID_pitchroll(int setpoint, float measured_value,float *errorSum, float dErr)
 {
@@ -74,11 +75,17 @@ void PID_Interrupt(void)
 	No++;
 	//DMAread_MPU6050();
 	t=ticker;
-	read_MPU6050();
+	//read_MPU6050();
+	Get_Accel_Values();
+	Get_Gyro_Rates();
 	tt[1]=t-ticker;
 	t=ticker;
 	Get_Angles();	//882
-	second_order_complementary_filter();		//kikiserletezeni 2015.12.23
+	//second_order_complementary_filter();
+	kalman_innovate(&x_kalmandata, ACCEL_XANGLE, GYRO_XRATE);
+	kalman_innovate(&y_kalmandata, ACCEL_YANGLE, GYRO_YRATE);
+	COMPLEMENTARY_XANGLE=x_kalmandata.x1;
+	COMPLEMENTARY_YANGLE=y_kalmandata.x1;
 	turnigy_9x();
 //	complementary_filter();	//68
 //	Convert_Accel();
@@ -86,20 +93,33 @@ void PID_Interrupt(void)
 	t=ticker;
 //	errorSum_x=((9.993/10.0)*errorSum_x)+(error_x*dt);
 //	errorSum_y=((9.993/10.0)*errorSum_y)+(error_y*dt);
+	Kp_prev=Kp;
+	Kp=Kp_user+Kp_receiver;
+	Kd_prev=Kd;
+	Kd=Kd_user+Kd_receiver;
+	Ki_prev=Ki;
+	Ki=Ki_user+Ki_receiver;
+	if(Kp<0) Kp=0;
+	if(Kd<0) Kd=0;
+	if(Ki<0) Ki=0;
 	if(errorSum_x>integral_max)	errorSum_x=integral_max;
 	if(errorSum_x<-integral_max)	errorSum_x=-integral_max;
 	if(errorSum_y>integral_max)	errorSum_y=integral_max;
 	if(errorSum_y<-integral_max)	errorSum_y=-integral_max;
 	if(errorSum_alt>integral_alt_max)	errorSum_alt=integral_alt_max;
 	if(errorSum_alt<-integral_alt_max)	errorSum_alt=-integral_alt_max;
-	if(basepower<170) {errorSum_x=0, errorSum_y=0;}
+	if(basepower<20) {errorSum_x=0, errorSum_y=0;}
 	tt[3]=t-ticker;
 	t=ticker;
-	output_x=PID_pitchroll(setpoint_x,-COMPLEMENTARY_XANGLE,&errorSum_x,GYRO_XRATE);
-	output_y=PID_pitchroll(setpoint_y,COMPLEMENTARY_YANGLE,&errorSum_y,-GYRO_YRATE);
-	output_z=PID_yaw(setpoint_z,GYRO_ZANGLE,GYRO_ZRATE);
+	output_x=PID_pitchroll(setpoint_x,-COMPLEMENTARY_XANGLE,&errorSum_x,-GYRO_XRATE);
+	output_y=PID_pitchroll(setpoint_y,COMPLEMENTARY_YANGLE,&errorSum_y,GYRO_YRATE);
+	if(basepower>300) output_z=PID_yaw(setpoint_z,-GYRO_ZANGLE,-GYRO_ZRATE);
+	else {
+		output_z=0; 
+		GYRO_ZANGLE=0;}
 	tt[4]=t-ticker;
 	t=ticker;
+	basepower-=basepower_reduction;
 	A_f=basepower+output_y-output_z+output_ALT;
 	C_f=basepower-output_y-output_z+output_ALT;
 	B_f=basepower+output_x+output_z+output_ALT; //ha a B motor van feljebb mint a D motor akkor a COMPLEMENTARY_XANGLE pozitiv
@@ -108,7 +128,7 @@ void PID_Interrupt(void)
 	tt[5]=t-ticker;
 	t=ticker;
 	SetMotorPWM(A,B,C,D);	//180
-	if(abs(COMPLEMENTARY_XANGLE)>35 || 35<abs(COMPLEMENTARY_YANGLE) || flag_landing==1) 
+	if(abs(COMPLEMENTARY_XANGLE)>50 || 50<abs(COMPLEMENTARY_YANGLE) || flag_landing==1) 
 		{
 			//SetMotorPWM(0,0,0,0);
 			//set_irq_priority (INT_PIT1 - 16, 1);
@@ -131,11 +151,13 @@ void PID_Interrupt(void)
 	tt[6]=t-ticker;
 	t=ticker;
 	//read_BMP180();	2015.12.01
-	if(No%400==1 && LOW_BATT_FLAG) 
+	if(No%400==1 && (LOW_BATT_FLAG || ch3_watchdog>400)) 
 		{
-		initRed();
-		LED_Toggle_RED;	//enable RED LED
-		basepower-=10;
+		//initRed();
+		//LED_Toggle_RED;	//enable RED LED
+		_SLCDModule_TurnOffAllSegments();
+		_SLCDModule_PrintString("LOW BAT",0);
+		basepower_reduction+=30;
 		}
 #if DATA_OVER_UART
 	//uart_putchar(UART1_BASE_PTR,(char)(D));
@@ -153,7 +175,7 @@ void PID_Interrupt(void)
 	PIT_TFLG0  |= PIT_TFLG_TIF_MASK;
 	PIT_LDVAL0 = PERIPHERAL_BUS_CLOCK / PIT0_OVERFLOW_FREQUENCY;
 	t_period=t_period-ticker;	
-}	
+}
 void SDcardw_Interrupt(void)
 {
 	char data[71];
@@ -179,7 +201,7 @@ void SDcardw_Interrupt(void)
 void UART_interrupt()
 {
 	char c;
-	char dataout;
+	char dataout=0;
 	c=uart_getchar(UART4_BASE_PTR);
 	
 	if(c=='d')				{setpoint_x+=3;setpoint_y+=3;	flag_kyb=No;}	//forward
@@ -198,21 +220,28 @@ void UART_interrupt()
 	if(c=='0')				flag_landing=1;
 	if(c=='1' || c=='x')				{SetMotorPWM(0,0,0,0); disable_irq(INT_PIT0 - 16);}	//turn off 
 #if PID_tuning	
-	if(c=='r')				{Kp+=0.5;				dataout=(char)(Kp);}	
-	if(c=='f')				{Kp-=0.5;				dataout=(char)(Kp);}
+	if(c=='r')				{Kp+=0.25;				dataout=(char)(Kp);}	
+	if(c=='f')				{Kp-=0.25;				dataout=(char)(Kp);}
 	if(c=='t')				{Kd+=0.05;				dataout=(char)(Kd);}
 	if(c=='g')				{Kd-=0.05;				dataout=(char)(Kd);}
-	if(c=='y')				{Ki+=1;					dataout=(char)(Ki);}
-	if(c=='h')				{Ki-=1;					dataout=(char)(Ki);}
+	if(c=='y' || c=='z')	{Ki+=0.05;					dataout=(char)(Ki);}
+	if(c=='h')				{Ki-=0.05;					dataout=(char)(Ki);}
 	if(c=='u')				{timeConstant+=0.1;	dataout=(char)10*timeConstant;}
-	if(c=='j')				{timeConstant-=0.1;	dataout=(char)10*timeConstant;}
-	if(c=='y')				{Alt_Kp++;				dataout=(char)Alt_Kp;}
+	if(c=='j')				{timeConstant-=0.1;	dataout=(char)10*timeConstant;} 
+/*	if(c=='u')				{a+=0.001;	if(a>1) a=1;dataout=(char)(1000*(a-0.9));}
+	if(c==u'j')				{a-=0.001;	dataout=(char)(1000*(a-0.9));}*/
+	if(c=='i')				{X_Angle_user+=0.2;	dataout=(char)10*X_Angle_user;}
+	if(c=='k')				{X_Angle_user-=0.2;	dataout=(char)10*X_Angle_user;}
+	if(c=='o')				{Y_Angle_user+=0.2;	dataout=(char)10*Y_Angle_user;}
+	if(c=='l')				{Y_Angle_user-=0.2;	dataout=(char)10*Y_Angle_user;}
+	if(c=='q')				{Alt_Kp++;				dataout=(char)Alt_Kp;}
 	if(c=='x')				{Alt_Kp--;				dataout=(char)Alt_Kp;}
 	if(c=='v')				{Alt_Kd+=0.5;			dataout=(char)Alt_Kd;}
 	if(c=='b')				{Alt_Kd-=0.5;			dataout=(char)Alt_Kd;}
 	if(c=='n')				{Alt_Ki+=0.5;			dataout=(char)Alt_Ki;}
 	if(c=='m')				{Alt_Ki-=0.5;			dataout=(char)Alt_Ki;}
-	uart_putchar(UART4_BASE_PTR,dataout);
+	
+	uart_putchar(UART4_BASE_PTR,dataout);	
 #endif
 	if(setpoint_x>15) setpoint_x=15;
 	if(setpoint_x<-15) setpoint_x=-15;
@@ -222,7 +251,6 @@ void UART_interrupt()
 #if !PID_tuning
 	uart_putchar(UART4_BASE_PTR,(char)(10*BAT_VOLT));
 #endif
-	//enable_irq(INT_PORTA - 16); 2015.12.9
 }
 
 void ADC0()
@@ -233,7 +261,7 @@ void ADC0()
 	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 0) {adc0_temp[0]+=ADC0_RA;	adc_register=0 | 0b1000000; adc0_avg++;}
 	if(adc0_avg>=ADC_AVG){
 		for(i=0;i<1;i++)	adc0_temp[i]=adc0_temp[i]/ADC_AVG;
-		bat1_volt=0.99*bat1_volt+0.01*(float)(adc0_temp[0])/11717;
+		bat1_volt=0.9995*bat1_volt+0.0005*(float)(adc0_temp[0])/11667;
 		for(i=0;i<1;i++)	adc0_temp[i]=0;
 		ADC0_SC1A &= ~ADC_SC1_AIEN_MASK;	//Turn off interrupt
 		adc0_avg=0;
@@ -250,14 +278,14 @@ void ADC1()
 	if((ADC1_SC1A & ADC_SC1_ADCH_MASK) == 1) {adc1_temp[1]+=ADC1_RA;	adc_register=0 | 0b1000000; adc1_avg++;}
 	if(adc1_avg>=ADC_AVG){
 		for(i=0;i<2;i++)	adc1_temp[i]=adc1_temp[i]/ADC_AVG;
-		bat2_volt=0.99*bat2_volt+0.01*((float)(adc1_temp[1])/7086-bat1_volt);//10646
-		bat3_volt=0.99*bat3_volt+0.01*((float)(adc1_temp[0])/3862-bat1_volt-bat2_volt);
-		BAT_VOLT=bat1_volt+bat2_volt+bat3_volt;
+		bat2_volt=0.9995*bat2_volt+0.0005*((float)(adc1_temp[1])/7075-bat1_volt);//10646
+		bat3_volt=0.9995*bat3_volt+0.0005*((float)(adc1_temp[0])/3325-bat1_volt-bat2_volt);
+		BAT_VOLT=0.9995*BAT_VOLT+0.0005*((float)(adc1_temp[0])/3325);
 		for(i=0;i<2;i++)	adc1_temp[i]=0;
 		ADC1_SC1A &= ~ADC_SC1_AIEN_MASK;		//Turn off interrupt
 		adc1_avg=0;
 	}
-	if((bat1_volt<BATTERY_MINIMUM_VOLTAGE || bat2_volt<BATTERY_MINIMUM_VOLTAGE || bat3_volt<BATTERY_MINIMUM_VOLTAGE) && No>2000) 
+	if((/*bat1_volt<BATTERY_MINIMUM_VOLTAGE || */bat2_volt<BATTERY_MINIMUM_VOLTAGE /*|| bat3_volt<BATTERY_MINIMUM_VOLTAGE*/) && No>4000) 
 			{
 			LOW_BATT_FLAG=1;
 			}
@@ -265,48 +293,91 @@ void ADC1()
 	
 }
 
-void capture_ppm(){
+void capture_ppm_PORTA(){
+	static int16_t ch1_prev,ch2_prev,ch3_prev,ch4_prev;
 	if(ch1_pulse){
+		ch1_prev=ch1;
 		if(ch1_rising_edge)	{ch1_temp=PIT_CVAL2; 		ch1_set_rising_edge;}
 		else{ch1=ch1_temp-PIT_CVAL2;	ch1_set_falling_edge;	ch1=(ch1-ch1_offset);
-							if(ch1_offset!=0)	ch1=(-1*ch1);
+							if(ch1_offset!=0)	{ch1=PPM_FILTER_CH1*ch1_prev+(1-PPM_FILTER_CH1)*(-ch1);}
 		} //877281
 		ch1_clear_interrupt;
 	}
 	if(ch2_pulse){
 		if(ch2_rising_edge)	{ch2_temp=PIT_CVAL2; 	ch2_set_rising_edge;}
 		else{
+			ch2_prev=ch2;
 			ch2=ch2_temp-PIT_CVAL2;	
 			ch2_set_falling_edge;	
 			ch2=(ch2-ch2_offset); 
-			if(ch2_offset!=0)	ch2=(-1*ch2);
+			if(ch2_offset!=0)	{ch2=PPM_FILTER_CH2*ch2_prev+(1-PPM_FILTER_CH2)*(-ch2);}
 		}
 		ch2_clear_interrupt;
 	}
 	if(ch3_pulse){
 		if(ch3_rising_edge)	{ch3_temp=PIT_CVAL2; 	ch3_set_rising_edge;}
 		else{
+			ch3_prev=ch3;
 			ch3=ch3_temp-PIT_CVAL2;
 			ch3_set_falling_edge;
 			ch3=(ch3-ch3_offset);
-			if(ch3_offset!=0)	ch3=(-1*ch3);
+			if(ch3_offset!=0)	{ch3=PPM_FILTER_CH3*ch3_prev+(1-PPM_FILTER_CH3)*(-ch3);}
 		}
+		ch3_watchdog=0;
 		ch3_clear_interrupt;
 	}
 	if(ch4_pulse){
 		if(ch4_rising_edge)	{ch4_temp=PIT_CVAL2; 		ch4_set_rising_edge;}
 		else{
+			ch4_prev=ch4;
 			ch4=ch4_temp-PIT_CVAL2;
 			ch4_set_falling_edge;
 			ch4=(ch4-ch4_offset);
-			if(ch4_offset!=0)	ch4=(-1*ch4);
+			if(ch4_offset!=0)	{ch4=PPM_FILTER_CH4*ch4_prev+(1-PPM_FILTER_CH4)*(-ch4);}
 		}
 		ch4_clear_interrupt;
 	}
-	
 	if((ch1_offset == 1) || (ch2_offset == 1) || (ch3_offset == 1) || (ch4_offset == 1))	{ch1=0;	ch2=0;	ch3=0;	ch4=0;}	//Prevent using remote control without calibration
 }
 
+void capture_ppm_PORTE(){
+	static int32_t ch5_prev,ch6_prev,ch7_prev;
+	if(ch5_pulse){
+			if(ch5_rising_edge)	{ch5_temp=PIT_CVAL2; 		ch5_set_rising_edge;}
+			else{
+				ch5_prev=ch5;
+				ch5=ch5_temp-PIT_CVAL2;
+				ch5_set_falling_edge;
+				ch5=(ch5-ch5_offset);
+			if(ch5_offset!=0)	{ch5=PPM_FILTER_CH5*ch5_prev+(1-PPM_FILTER_CH5)*(-ch5);}
+			}
+			ch5_clear_interrupt;
+		}
+		if(ch6_pulse){
+				if(ch6_rising_edge)	{ch6_temp=PIT_CVAL2; 		ch6_set_rising_edge;}
+				else{
+					ch6_prev=ch6;
+					ch6=ch6_temp-PIT_CVAL2;
+					ch6_set_falling_edge;
+					ch6=(ch6-ch6_offset);
+					if(ch6_offset!=0)	{ch6=PPM_FILTER_CH6*ch6_prev+(1-PPM_FILTER_CH6)*(-ch6);}
+				}
+				ch6_clear_interrupt;
+			}
+		if(ch7_pulse){
+				if(ch7_rising_edge)	{ch7_temp=PIT_CVAL2; 		ch7_set_rising_edge;}
+				else{
+					ch7_prev=ch7;
+					ch7=ch7_temp-PIT_CVAL2;
+					ch7_set_falling_edge;
+					ch7=(ch7-ch7_offset);
+					if(ch7_offset!=0)	{ch7=PPM_FILTER_CH7*ch7_prev+(1-PPM_FILTER_CH7)*(-ch7);}
+				}
+				ch7_clear_interrupt;
+			}
+		if((ch5_offset == 1) || (ch6_offset == 1) || (ch7_offset == 1)) { ch5=0; ch6=0; ch7=0; }
+
+}
 int sz=0;
 void FTM0_interrupt(){
 	sz++;
