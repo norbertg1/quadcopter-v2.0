@@ -36,6 +36,7 @@
 *.args
 *.apconfig
 *.launch
+*.cwGeneratedFileSetLog
 /*.g_c
 /*.g_x
 /*.cwGeneratedFileSetLog
@@ -46,5 +47,6 @@
 /ProjectInfo.xml
 /FLASH
 /RAM
+
 
 /FLASH/

@@ -76,3 +76,4 @@ FRESULT create_log(FIL* file);
 void write_dT(char *data,int n,...);
 
 #endif /* SDCARD_H_ */
+

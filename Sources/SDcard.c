@@ -29,6 +29,8 @@
  * 		pin 7(MISO)-----------PORTE3
  * 		pin 8-----------------NOT CONNECTED
  * 		pin 9-----------------NOT CONNECTED 
+ * 		
+ * 		KL25 VERSION
 */
 
 
