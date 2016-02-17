@@ -52,11 +52,11 @@ float filter_xterm[3] = {0,0,0};
 float filter_yterm[3] = {0,0,0};
 
 float TEMP;
-float timeConstant=5.5;//0.35;//0.35;
+float timeConstant=0.1;//0.35;//0.35;
 
 float Gx_offset=0,Gy_offset=0,Gz_offset=0;
 float XANGLE_OFFSET=0, YANGLE_OFFSET=0;
-float X_Angle_user=1, Y_Angle_user=-4.0;
+float X_Angle_user=0.2, Y_Angle_user=-1.3;
 
 char MPU6050_Test_I2C()
 {
@@ -69,6 +69,9 @@ char MPU6050_Test_I2C()
     }
     else
     {
+    	_SLCDModule_TurnOffAllSegments();
+    	_SLCDModule_PrintString("ERROR",0);
+    	while(1) {}
     	return 19;  
     }
 
@@ -76,14 +79,19 @@ char MPU6050_Test_I2C()
 
 void MPU6050_Setup()
 {
+	Delay_mS(200);
 	//Sets sample rate to 8000/1+7 = 500Hz
-	I2CWriteRegister(MPU6050_ADDRESS, MPU6050_RA_SMPLRT_DIV, 0x03);
+	I2CWriteRegister(MPU6050_ADDRESS, MPU6050_RA_SMPLRT_DIV, 0x01);
+	Delay_mS(200);
 	//Disable FSync, 256Hz DLPF
 	I2CWriteRegister(MPU6050_ADDRESS, MPU6050_RA_CONFIG, 0x03);
+	Delay_mS(200);
 	//Disable gyro self tests, scale of 500 degrees/s
 	I2CWriteRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_CONFIG, 0b00001000);
+	Delay_mS(200);
 	//Disable accel self tests, scale of +-4g, no DHPF
 	I2CWriteRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_CONFIG, 0b00001000);
+	Delay_mS(200);
 	//Freefall threshold of <|0mg|
 	I2CWriteRegister(MPU6050_ADDRESS, MPU6050_RA_FF_THR, 0x00);
 	//Freefall duration limit of 0
@@ -198,8 +206,38 @@ void MPU6050_Setup()
 	//MPU6050_RA_WHO_AM_I 			//Read-only, I2C address
 	
 	//printf("\nMPU6050 Setup Complete");
+	
+	//For some reason somehere above this point the modul resetting, maybe power filtering problems
+	//Sets sample rate to 8000/1+7 = 500Hz
+		I2CWriteRegister(MPU6050_ADDRESS, MPU6050_RA_SMPLRT_DIV, 0x01);
+		Delay_mS(200);
+		//Disable FSync, 48Hz DLPF
+		I2CWriteRegister(MPU6050_ADDRESS, MPU6050_RA_CONFIG, 0x03);
+		Delay_mS(200);
+		//Disable gyro self tests, scale of 500 degrees/s
+		I2CWriteRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_CONFIG, 0b00001000);
+		Delay_mS(200);
+		//Disable accel self tests, scale of +-4g, no DHPF
+		I2CWriteRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_CONFIG, 0b00001000);
+		Delay_mS(200);
 }
+int MPU6050_Check_Registers()
+{
+	unsigned char Data = 0x00;
+	unsigned char Failed = 0;
 
+	Data=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_SMPLRT_DIV);
+	if(Data != 0x01) {  Failed = 1; }
+	Data=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_CONFIG);
+	if(Data != 0x03) {   Failed = 1; }
+	Data=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_GYRO_CONFIG);
+	if(Data != 0b00001000) {  Failed = 1; }
+	Data=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_ACCEL_CONFIG);
+	if(Data != 0b00001000) {   Failed = 1; }
+	Data=I2CReadRegister(MPU6050_ADDRESS, MPU6050_RA_FF_THR);
+	if(Data != 0x00) {   Failed = 1; }
+	return Failed;
+}
 void Calibrate_Accel()
 {
 	double XANGLE_SUM=0,YANGLE_SUM=0,Gx_sum=0,Gy_sum=0,Gz_sum=0;
@@ -244,7 +282,7 @@ void Convert_Accel()
 
 void Calibrate_Gyros()
 {
-	char temp[6];
+	char temp[6], string_lcd[10];
 	int x = 0;
 	int32_t GYRO_XOUT_OFFSET_SUM = 0;
 	int32_t GYRO_YOUT_OFFSET_SUM = 0;
@@ -279,7 +317,12 @@ void Calibrate_Gyros()
 	GYRO_XOUT_OFFSET = GYRO_XOUT_OFFSET_SUM/1000;
 	GYRO_YOUT_OFFSET = GYRO_YOUT_OFFSET_SUM/1000;
 	GYRO_ZOUT_OFFSET = GYRO_ZOUT_OFFSET_SUM/1000;
- 
+	_SLCDModule_TurnOffAllSegments();
+	sprintf(string_lcd,"%d",(int)(GYRO_XOUT_OFFSET));
+	_SLCDModule_PrintString(string_lcd,5);	
+	GYRO_XOUT_OFFSET = 119;
+	GYRO_YOUT_OFFSET = -56;
+	GYRO_ZOUT_OFFSET = 45;
 //	printf("\nGyro X offset sum: %ld Gyro X offset: %d", GYRO_XOUT_OFFSET_1000SUM, GYRO_XOUT_OFFSET);
 //	printf("\nGyro Y offset sum: %ld Gyro Y offset: %d", GYRO_YOUT_OFFSET_1000SUM, GYRO_YOUT_OFFSET);
 //	printf("\nGyro Z offset sum: %ld Gyro Z offset: %d", GYRO_ZOUT_OFFSET_1000SUM, GYRO_ZOUT_OFFSET);
@@ -383,7 +426,14 @@ void init_MPU6050()
 {
 	MPU6050_Test_I2C();
 	MPU6050_Setup();
-	Delay_mS(2000);
+	Delay_mS(5000);
+	_SLCDModule_TurnOffAllSegments();
+	_SLCDModule_PrintString("CAL.",0);
 	Calibrate_Gyros();
 	Calibrate_Accel();
+	if(MPU6050_Check_Registers()){
+		_SLCDModule_TurnOffAllSegments();
+		_SLCDModule_PrintString("ERR. MPU6050",0);
+		while(1)	{}
+	}	
 }

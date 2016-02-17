@@ -7,11 +7,11 @@
 
 #include "init.h"
 #include "stdlib.h"
-#define integral_max 50
+#define integral_max 0.5
 #define integral_alt_max 10 
 
-float Kp=0,Kd=0,Ki=0,Kp_prev,Kd_prev,Ki_prev,Kp_user=0,Kd_user=0,Ki_user=0/*100*/,Kp_receiver=0,Kd_receiver=0,Ki_receiver=0,zKp=1.5,zKd=0.7,Alt_Kp=0/*25*/,Alt_Kd=0/*20*/,Alt_Ki=0/*0.5*/,Kp_mem,Kd_mem;
-int basepower=-50,setpoint_x=0,setpoint_y=0,setpoint_z=0,No=0,flag_kyb;
+float Kp=0,Kd=0,Ki=0,Kp_prev,Kd_prev,Ki_prev,Kp_user=26,Kd_user=7,Ki_user=200/*100*/,Kp_receiver=0,Kd_receiver=0,Ki_receiver=0,zKp=3.0,zKd=2.0,Alt_Kp=0/*25*/,Alt_Kd=0/*20*/,Alt_Ki=0/*0.5*/,Kp_mem,Kd_mem;
+int basepower=-200,setpoint_x=0,setpoint_y=0,setpoint_z=0,No=0,flag_kyb;
 float setpoint_alt=0;
 int A_f,B_f,C_f,D_f,A,B,C,D;
 float errorSum_x=0,errorSum_y=0,errorSum_alt=0,errorPrev_alt;
@@ -24,7 +24,7 @@ float bat1_volt=4.2,bat2_volt=4.2,bat3_volt=4.2,BAT_VOLT=12.6;
 char adc_flag=0;
 int32_t t_period,t=0,tt[10],t_period,t_period_temp;
 int16_t basepower_reduction=0;
-
+int x;
 float PID_pitchroll(int setpoint, float measured_value,float *errorSum, float dErr)
 {
 	float error;
@@ -81,11 +81,11 @@ void PID_Interrupt(void)
 	tt[1]=t-ticker;
 	t=ticker;
 	Get_Angles();	//882
-	//second_order_complementary_filter();
-	kalman_innovate(&x_kalmandata, ACCEL_XANGLE, GYRO_XRATE);
-	kalman_innovate(&y_kalmandata, ACCEL_YANGLE, GYRO_YRATE);
-	COMPLEMENTARY_XANGLE=x_kalmandata.x1;
-	COMPLEMENTARY_YANGLE=y_kalmandata.x1;
+	second_order_complementary_filter();
+//	kalman_innovate(&x_kalmandata, ACCEL_XANGLE, GYRO_XRATE);
+//	kalman_innovate(&y_kalmandata, ACCEL_YANGLE, GYRO_YRATE);
+//	COMPLEMENTARY_XANGLE=x_kalmandata.x1;
+//	COMPLEMENTARY_YANGLE=y_kalmandata.x1;
 	turnigy_9x();
 //	complementary_filter();	//68
 //	Convert_Accel();
@@ -108,15 +108,17 @@ void PID_Interrupt(void)
 	if(errorSum_y<-integral_max)	errorSum_y=-integral_max;
 	if(errorSum_alt>integral_alt_max)	errorSum_alt=integral_alt_max;
 	if(errorSum_alt<-integral_alt_max)	errorSum_alt=-integral_alt_max;
-	if(basepower<20) {errorSum_x=0, errorSum_y=0;}
 	tt[3]=t-ticker;
 	t=ticker;
 	output_x=PID_pitchroll(setpoint_x,-COMPLEMENTARY_XANGLE,&errorSum_x,-GYRO_XRATE);
 	output_y=PID_pitchroll(setpoint_y,COMPLEMENTARY_YANGLE,&errorSum_y,GYRO_YRATE);
-	if(basepower>300) output_z=PID_yaw(setpoint_z,-GYRO_ZANGLE,-GYRO_ZRATE);
+	if(basepower>350) output_z=PID_yaw(setpoint_z,-GYRO_ZANGLE,-GYRO_ZRATE);
 	else {
 		output_z=0; 
-		GYRO_ZANGLE=0;}
+		GYRO_ZANGLE=0;
+		errorSum_x=0;
+		errorSum_y=0;
+	}
 	tt[4]=t-ticker;
 	t=ticker;
 	basepower-=basepower_reduction;
@@ -127,6 +129,7 @@ void PID_Interrupt(void)
 	A=Convert_FORCEtoPWM(A_f),B=Convert_FORCEtoPWM(B_f),C=Convert_FORCEtoPWM(C_f),D=Convert_FORCEtoPWM(D_f);
 	tt[5]=t-ticker;
 	t=ticker;
+	if(basepower<0)	{A=0;B=0;C=0;D=0;}
 	SetMotorPWM(A,B,C,D);	//180
 	if(abs(COMPLEMENTARY_XANGLE)>50 || 50<abs(COMPLEMENTARY_YANGLE) || flag_landing==1) 
 		{
@@ -134,13 +137,14 @@ void PID_Interrupt(void)
 			//set_irq_priority (INT_PIT1 - 16, 1);
 			//Delay_mS(10000);
 			flag_landing=1;
-			if(No%50 == 0 && (A>50 || B>50 || C>50 || D>50)) basepower-=5;
+			if(No%50 == 0 && (A>50 || B>50 || C>50 || D>50)) basepower_reduction+=5;
 			Kp_mem=Kp;Kd_mem=Kd;
 			//Kp=5; Kd=1;
 			setpoint_alt=1;
 			//if(A<50 && B<50 && C<50 && D<50) {flag_landing=0; Kp=Kp_mem; Kd=Kd_mem;}
 			setpoint_alt=0;
 		}
+	if(abs(COMPLEMENTARY_XANGLE)>70 || 70<abs(COMPLEMENTARY_YANGLE))	{ SetMotorPWM(0,0,0,0); disable_PID_interrupts;	}
 	if(abs(No-flag_kyb)>40) 
 		{
 		if(No%5 == 0 && setpoint_x>0) setpoint_x-=1;
@@ -155,9 +159,7 @@ void PID_Interrupt(void)
 		{
 		//initRed();
 		//LED_Toggle_RED;	//enable RED LED
-		_SLCDModule_TurnOffAllSegments();
-		_SLCDModule_PrintString("LOW BAT",0);
-		basepower_reduction+=30;
+		if(basepower_reduction<9999)	basepower_reduction+=30;
 		}
 #if DATA_OVER_UART
 	//uart_putchar(UART1_BASE_PTR,(char)(D));
@@ -261,7 +263,7 @@ void ADC0()
 	if((ADC0_SC1A & ADC_SC1_ADCH_MASK) == 0) {adc0_temp[0]+=ADC0_RA;	adc_register=0 | 0b1000000; adc0_avg++;}
 	if(adc0_avg>=ADC_AVG){
 		for(i=0;i<1;i++)	adc0_temp[i]=adc0_temp[i]/ADC_AVG;
-		bat1_volt=0.9995*bat1_volt+0.0005*(float)(adc0_temp[0])/11667;
+		bat1_volt=0.9995*bat1_volt+0.0005*(float)(adc0_temp[0])/11478;
 		for(i=0;i<1;i++)	adc0_temp[i]=0;
 		ADC0_SC1A &= ~ADC_SC1_AIEN_MASK;	//Turn off interrupt
 		adc0_avg=0;
@@ -278,14 +280,14 @@ void ADC1()
 	if((ADC1_SC1A & ADC_SC1_ADCH_MASK) == 1) {adc1_temp[1]+=ADC1_RA;	adc_register=0 | 0b1000000; adc1_avg++;}
 	if(adc1_avg>=ADC_AVG){
 		for(i=0;i<2;i++)	adc1_temp[i]=adc1_temp[i]/ADC_AVG;
-		bat2_volt=0.9995*bat2_volt+0.0005*((float)(adc1_temp[1])/7075-bat1_volt);//10646
-		bat3_volt=0.9995*bat3_volt+0.0005*((float)(adc1_temp[0])/3325-bat1_volt-bat2_volt);
-		BAT_VOLT=0.9995*BAT_VOLT+0.0005*((float)(adc1_temp[0])/3325);
+		bat2_volt=0.9995*bat2_volt+0.0005*((float)(adc1_temp[1])/6150-bat1_volt);//10646
+		bat3_volt=0.9995*bat3_volt+0.0005*((float)(adc1_temp[0])/3315-bat1_volt-bat2_volt);
+		BAT_VOLT=0.9995*BAT_VOLT+0.0005*((float)(adc1_temp[0])/3315);
 		for(i=0;i<2;i++)	adc1_temp[i]=0;
 		ADC1_SC1A &= ~ADC_SC1_AIEN_MASK;		//Turn off interrupt
 		adc1_avg=0;
 	}
-	if((/*bat1_volt<BATTERY_MINIMUM_VOLTAGE || */bat2_volt<BATTERY_MINIMUM_VOLTAGE /*|| bat3_volt<BATTERY_MINIMUM_VOLTAGE*/) && No>4000) 
+	if((bat1_volt<BATTERY_MINIMUM_VOLTAGE || bat2_volt<BATTERY_MINIMUM_VOLTAGE || BAT_VOLT<(BATTERY_MINIMUM_VOLTAGE*3) || bat3_volt<BATTERY_MINIMUM_VOLTAGE) && No>4000) 
 			{
 			LOW_BATT_FLAG=1;
 			}

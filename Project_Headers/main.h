@@ -12,7 +12,7 @@
 #define	MOTOR_MIN 1
 #define MOTOR 1
 #define PID_tuning 1
-#define BATTERY_MINIMUM_VOLTAGE 3.4
+#define BATTERY_MINIMUM_VOLTAGE 3.3
 #define ADC_AVG 2
 #define DATA_OVER_UART 0
 

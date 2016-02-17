@@ -23,6 +23,7 @@
 
 //------------------------Interrupt--------------------------------------------
 #define enable_PID_interrupts		PIT_TCTRL0 |= PIT_TCTRL_TIE_MASK;
+#define	disable_PID_interrupts		PIT_TCTRL0 &= ~PIT_TCTRL_TIE_MASK;
 #define enable_SDcard_interrupts	PIT_TCTRL1 |= PIT_TCTRL_TIE_MASK;
 #define clear_PID_interrupt			PIT_TFLG0  |= PIT_TFLG_TIF_MASK;
 #define clear_SDcard_interrupt		PIT_TFLG1  |= PIT_TFLG_TIF_MASK;

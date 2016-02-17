@@ -32,14 +32,14 @@ void turnigy_9x()
 {												//The timer peri
 	if((ch1_offset != 1) || (ch2_offset != 1) || (ch3_offset != 1) || (ch4_offset != 1))
 	{
-		basepower=ch3/50;
-		setpoint_x = ch1/500;
-		setpoint_y = -ch2/500;
-		setpoint_z = ch4/500;
+		basepower=(ch3/40)-20;
+		setpoint_x = ch1/2000;
+		setpoint_y = -ch2/2000;
+		setpoint_z = ch4/2000;
 		ch3_watchdog++;
-		Kp_receiver=(float)ch5/2000;
+		Kp_receiver=(float)ch5/1000;
 		Kd_receiver=(float)ch6/2000;
-		Ki_receiver=(float)ch7/2000;
+		Ki_receiver=(float)ch7/500;
 	}
 	else ch3_watchdog=0;
 }
@@ -70,13 +70,19 @@ void calibrate_offset()
 	}
 	if((ch1_tmp!=0) && (ch2_tmp!=0) && (ch3_tmp!=0) && (ch4_tmp!=0))
 	{
-		ch1_offset=ch1_tmp/TURNIGY_CALIBRATE_NUMBER;
-		ch2_offset=ch2_tmp/TURNIGY_CALIBRATE_NUMBER;
+		ch1_offset=861932;//ch1_tmp/TURNIGY_CALIBRATE_NUMBER;
+		ch2_offset=861472;//ch2_tmp/TURNIGY_CALIBRATE_NUMBER;
 		ch3_offset=ch3_tmp/TURNIGY_CALIBRATE_NUMBER;
-		ch4_offset=ch4_tmp/TURNIGY_CALIBRATE_NUMBER;
-		ch5_offset=881705;//ch5_tmp/TURNIGY_CALIBRATE_NUMBER;
-		ch6_offset=881090;//ch6_tmp/TURNIGY_CALIBRATE_NUMBER;
-		ch7_offset=881056;//ch7_tmp/TURNIGY_CALIBRATE_NUMBER;
+		ch4_offset=861816;//ch4_tmp/TURNIGY_CALIBRATE_NUMBER;
+//		ch5_offset=881705;								//az irányítón talállható (-) jelzésrõl indul a ch5 értéke, nincsenek negatív érték 
+		ch5_offset=861866;								//az irányítón talállható (0) jelzésrõl indul a ch5 értéke, negatív és pozitív irányba
+//		ch5_offset=ch5_tmp/TURNIGY_CALIBRATE_NUMBER;	//az kopter bekapcsolási pillanatában a potméter pozíciója lesz a ch5 nulla értéke
+//		ch6_offset=881090;								//az irányítón talállható (-) jelzésrõl indul a ch6 értéke, nincsenek negatív érték
+		ch6_offset=860368;								//az irányítón talállható (0) jelzésrõl indul a ch6 értéke, negatív és pozitív irányba
+//		ch6_offset=ch6_tmp/TURNIGY_CALIBRATE_NUMBER;	//az kopter bekapcsolási pillanatában a potméter pozíciója lesz a ch5 nulla értéke
+//		ch7_offset=881056;								//az irányítón talállható (-) jelzésrõl indul a ch7 értéke, nincsenek negatív érték
+		ch7_offset=861403;								//az irányítón talállható (0) jelzésrõl indul a ch7 értéke, negatív és pozitív irányba
+//		ch7_offset=ch7_tmp/TURNIGY_CALIBRATE_NUMBER;	//az kopter bekapcsolási pillanatában a potméter pozíciója lesz a ch5 nulla értéke
 	}
 	else{
 		ch1_offset=1;

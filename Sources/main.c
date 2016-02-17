@@ -153,7 +153,7 @@ void bluetoothSetup(void)
 
 int abs(int number)
 {
-	if(number<0) return number=-number*-1;
+	if(number<0) return number=-number;
 	else return number;
 }
 
@@ -165,7 +165,8 @@ void error(FRESULT *fr)
 
 int main(void)
 {	
-	uint32_t cnt=0;
+	uint32_t 	cnt=0;
+	uint8_t		cnt_1=0;
 	UINT x=5;
 	FRESULT fr;    /* FatFs return code */
 	uint16_t p=0,t=0;
@@ -180,26 +181,39 @@ int main(void)
 	
 	Zero_Sensors();
 	motor_test();
-	kalman_init(&x_kalmandata);
-	kalman_init(&y_kalmandata);
+//	kalman_init(&x_kalmandata);
+//	kalman_init(&y_kalmandata);
 	a=1.0/(1+(1.0/400.0));
 	dt=0.0025;
 	a=0.9675;
 	ADC0_SC1A = (0 | 0b1000000);		//start ADC conversion
 	ADC1_SC1A = (0 | 0b1000000);
 	enable_PID_interrupts
-//	enable_SDcard_interrupts
+
 	_SLCDModule_TurnOffAllSegments();
 	_SLCDModule_TurnOnFreescaleSign();
 	
 	while(1)
 	{	  
 		a=Kp_prev/Kp;
-		if(cnt%1000==0){
-			_SLCDModule_TurnOffAllSegments();
-			sprintf(string_lcd,"%d",(int)(BAT_VOLT*100));
-			_SLCDModule_PrintString(string_lcd,5);	
+		if(cnt%10000==0){
+			if(LOW_BATT_FLAG){
+				cnt_1++;
+				if(cnt_1%80==0)		{ _SLCDModule_TurnOffAllSegments(); _SLCDModule_PrintString("LOW BAT",0); }
+				if(cnt_1%80==20)	{ _SLCDModule_TurnOffAllSegments();	_SLCDModule_PrintString("1:",0);	sprintf(string_lcd,"%d",(int)(bat1_volt*100)); _SLCDModule_PrintString(string_lcd,15); }
+				if(cnt_1%80==40)	{ _SLCDModule_TurnOffAllSegments(); _SLCDModule_PrintString("2:",0);	sprintf(string_lcd,"%d",(int)(bat2_volt*100)); _SLCDModule_PrintString(string_lcd,15); }
+				if(cnt_1%80==60)	{ _SLCDModule_TurnOffAllSegments(); _SLCDModule_PrintString("3:",0);	sprintf(string_lcd,"%d",(int)(bat3_volt*100)); _SLCDModule_PrintString(string_lcd,15); }
 			}
+			else{
+				_SLCDModule_TurnOffAllSegments();
+				if(errorSum_x<0) _SLCDModule_TurnOnClockSign();
+				sprintf(string_lcd,"%d",(int)(errorSum_x*10));
+				_SLCDModule_PrintString(string_lcd,0);	
+				sprintf(string_lcd,"%d",(int)(errorSum_y*10));
+				_SLCDModule_PrintString(string_lcd,25);
+				
+			}
+		}
 		cnt++;
 		UART4_S1 &= UART_S1_OR_MASK;		//UARTra kell debuggolásnal, receive overrun
 		error(&fr);

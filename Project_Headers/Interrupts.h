@@ -24,5 +24,7 @@ extern int basepower,setpoint_x,setpoint_y,setpoint_z;
 extern float setpoint_alt;
 extern  float bat1_volt,bat2_volt,bat3_volt,BAT_VOLT;
 extern int32_t t_period;
+extern float errorSum_x,errorSum_y;
+extern short LOW_BATT_FLAG;
 
 #endif /* INTERRUPTS_H_ */
